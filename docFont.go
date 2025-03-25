@@ -1,0 +1,136 @@
+package tinypdf
+
+import "strings"
+
+// FontConfig represents different font configurations for document sections
+type FontConfig struct {
+	Family   Font
+	Normal   TextStyle
+	Header1  TextStyle
+	Header2  TextStyle
+	Header3  TextStyle
+	Footer   TextStyle
+	Footnote TextStyle
+}
+
+// Font represents font files for different styles
+type Font struct {
+	Regular string
+	Bold    string
+	Italic  string
+	Path    string // Base path for fonts
+}
+
+// loadFonts loads the fonts from the Font struct
+func (d *Document) loadFonts() error {
+	fontPath := d.fontConfig.Family.Path
+
+	// add regular font
+	if err := d.AddTTFFont(FontRegular, fontPath+d.fontConfig.Family.Regular); err != nil {
+		return err
+	}
+	// add bold font
+	if d.fontConfig.Family.Bold == "" {
+		d.fontConfig.Family.Bold = d.fontConfig.Family.Regular
+	} else {
+		if err := d.AddTTFFont(FontBold, fontPath+d.fontConfig.Family.Bold); err != nil {
+			return err
+		}
+	}
+	// add italic font
+	if d.fontConfig.Family.Italic == "" {
+		d.fontConfig.Family.Italic = d.fontConfig.Family.Regular
+	} else {
+		if err := d.AddTTFFont(FontItalic, fontPath+d.fontConfig.Family.Italic); err != nil {
+			return err
+		}
+	}
+
+	if d.fontConfig.Family.Path == "" {
+		d.fontConfig.Family.Path = "fonts/"
+	}
+
+	return nil
+}
+
+// extracts the font name from the font path eg: "fonts/Rubik-Regular.ttf" => "Rubik-Regular"
+func extractNameFromPath(path string) string {
+	if path == "" {
+		return ""
+	}
+	// normalize path separators to forward slash
+	path = strings.ReplaceAll(path, "\\", "/")
+
+	// split the path by "/"
+	parts := strings.Split(path, "/")
+
+	// get the last part (filename)
+	filename := parts[len(parts)-1]
+
+	// split by dot to get all parts
+	nameParts := strings.Split(filename, ".")
+
+	// remove the last part if it's an extension (ttf, otf, etc)
+	if len(nameParts) > 1 {
+		nameParts = nameParts[:len(nameParts)-1]
+	}
+
+	// join all parts without dots
+	return strings.Join(nameParts, "")
+}
+
+func (d *Document) setDefaultFont() {
+	style := d.fontConfig.Normal
+	d.SetFont("regular", "", style.Size)
+	d.SetTextColor(style.Color.R, style.Color.G, style.Color.B)
+	d.SetLineWidth(1)
+	d.SetStrokeColor(0, 0, 0)
+}
+
+// DefaultFontConfig returns word-processor like defaults
+func DefaultFontConfig() FontConfig {
+	return FontConfig{
+		Family: Font{
+			Regular: "Rubik-Regular.ttf",
+			Bold:    "Rubik-Bold.ttf",
+			Italic:  "Rubik-Italic.ttf",
+			Path:    "fonts/",
+		},
+		Normal: TextStyle{
+			Size:        11,
+			Color:       RGBColor{0, 0, 0},
+			LineSpacing: 1.15,
+			Alignment:   Left | Top,
+		},
+		Header1: TextStyle{
+			Size:        16,
+			Color:       RGBColor{0, 0, 0},
+			LineSpacing: 1.5,
+			Alignment:   Left | Top,
+		},
+		Header2: TextStyle{
+			Size:        14,
+			Color:       RGBColor{0, 0, 0},
+			LineSpacing: 1.3,
+			Alignment:   Left | Top,
+		},
+		Header3: TextStyle{
+			Size:        12,
+			Color:       RGBColor{0, 0, 0},
+			LineSpacing: 1.2,
+			Alignment:   Left | Top,
+		},
+		Footer: TextStyle{
+			Size:        9,
+			Color:       RGBColor{128, 128, 128},
+			LineSpacing: 1.0,
+			Alignment:   Center | Top,
+		},
+		Footnote: TextStyle{
+			Size:        8,
+			Color:       RGBColor{128, 128, 128},
+			LineSpacing: 1.0,
+			Alignment:   Left | Top,
+		},
+	}
+}
