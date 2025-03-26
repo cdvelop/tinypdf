@@ -5,8 +5,8 @@ import (
 	"unicode"
 )
 
-// JustifiedText representa un texto justificado con sus espacios ajustados
-type JustifiedText struct {
+// justifiedText representa un texto justificado con sus espacios ajustados
+type justifiedText struct {
 	words       []string
 	spaces      []float64
 	originalStr string
@@ -14,7 +14,7 @@ type JustifiedText struct {
 }
 
 // parseTextForJustification divide un texto en sus palabras y calcula los espacios necesarios
-func parseTextForJustification(gp *GoPdf, text string, width float64) (*JustifiedText, error) {
+func parseTextForJustification(gp *GoPdf, text string, width float64) (*justifiedText, error) {
 	// Si el texto está vacío o no tiene espacios, no hay nada que justificar
 	if text == "" {
 		return nil, ErrEmptyString
@@ -30,7 +30,7 @@ func parseTextForJustification(gp *GoPdf, text string, width float64) (*Justifie
 	words := strings.FieldsFunc(text, unicode.IsSpace)
 	if len(words) <= 1 {
 		// No hay suficientes palabras para justificar
-		return &JustifiedText{
+		return &justifiedText{
 			words:       words,
 			spaces:      []float64{0},
 			originalStr: text,
@@ -66,7 +66,7 @@ func parseTextForJustification(gp *GoPdf, text string, width float64) (*Justifie
 			spaces[i] = normalSpaceWidth
 		}
 
-		return &JustifiedText{
+		return &justifiedText{
 			words:       words,
 			spaces:      spaces,
 			originalStr: text,
@@ -88,7 +88,7 @@ func parseTextForJustification(gp *GoPdf, text string, width float64) (*Justifie
 		spaces[i] = spaceWidth
 	}
 
-	return &JustifiedText{
+	return &justifiedText{
 		words:       words,
 		spaces:      spaces,
 		originalStr: text,
@@ -97,7 +97,7 @@ func parseTextForJustification(gp *GoPdf, text string, width float64) (*Justifie
 }
 
 // drawJustifiedLine dibuja una línea de texto justificado
-func drawJustifiedLine(gp *GoPdf, jText *JustifiedText, x, y float64) error {
+func drawJustifiedLine(gp *GoPdf, jText *justifiedText, x, y float64) error {
 	if len(jText.words) == 0 {
 		return nil
 	}

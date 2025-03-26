@@ -96,11 +96,13 @@ func DefaultFontConfig() FontConfig {
 			Italic:  "Rubik-Italic.ttf",
 			Path:    "fonts/",
 		},
+
 		Normal: TextStyle{
-			Size:        11,
-			Color:       RGBColor{0, 0, 0},
-			LineSpacing: 1.15,
-			Alignment:   Left | Top,
+			Size:  11,
+			Color: RGBColor{0, 0, 0},
+			// LineSpacing: 0.5,
+			// LineSpacing: 1.15,
+			Alignment: Left | Top,
 		},
 		Header1: TextStyle{
 			Size:        16,

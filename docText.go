@@ -131,20 +131,42 @@ func (tb *TextBuilder) Regular() *TextBuilder {
 	return tb
 }
 
-// Draw render the text with the specified options
 func (tb *TextBuilder) Draw() error {
-	// Draw the text
-	err := tb.doc.MultiCellWithOption(tb.rect, tb.text, tb.opts)
+	// Calculate how many lines the text will occupy
+	textSplits, err := tb.doc.SplitTextWithOption(tb.text, tb.rect.W, tb.opts.BreakOption)
 	if err != nil {
 		return err
 	}
+
+	// Get line height in current font and size
+	_, lineHeight, _, err := createContent(tb.doc.curr.FontISubset, tb.text,
+		tb.doc.curr.FontSize, tb.doc.curr.CharSpacing, nil)
+	if err != nil {
+		return err
+	}
+
+	tb.doc.PointsToUnitsVar(&lineHeight)
+
+	// Calculate total height needed for all lines
+	totalHeight := float64(len(textSplits)) * lineHeight
+
+	// Set the rectangle height to accommodate all text
+	tb.rect.H = totalHeight
+
+	// Draw the text with the properly sized rectangle
+	err = tb.doc.MultiCellWithOption(tb.rect, tb.text, tb.opts)
+	if err != nil {
+		return err
+	}
+
 	// Reset font to regular for next text (prevents style bleed)
 	tb.doc.setDefaultFont()
 
-	// Calculate appropriate spacing based on the current text style
-	// Use the font size and line spacing from the text style
-	spacing := tb.style.Size * tb.style.LineSpacing
+	// Add spacing after the text based on style - reduce from previous implementation
+	spacing := tb.style.Size // Use a smaller multiplier for consistent spacing
+	// spacing := tb.style.Size * 0.3 // Use a smaller multiplier for consistent spacing
 
+	// Update Y position considering the actual text height used
 	tb.doc.SetY(tb.doc.GetY() + spacing)
 
 	return nil
