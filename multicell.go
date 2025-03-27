@@ -154,15 +154,6 @@ func (gp *GoPdf) MultiCellWithOption(rectangle *Rect, text string, opt CellOptio
 		return err
 	}
 
-	// startHeight := rectangle.H
-	// if l := len(textSplits); l > 1 {
-	// 	shiftLines := l / 2
-	// 	if l%2 != 0 {
-	// 		shiftLines += 1
-	// 	}
-	// 	startHeight = rectangle.H - (lineHeight+1.5)*float64(shiftLines)
-	// }
-
 	// Última línea no se justifica normalmente
 	lastLineIndex := len(textSplits) - 1
 
@@ -185,6 +176,8 @@ func (gp *GoPdf) MultiCellWithOption(rectangle *Rect, text string, opt CellOptio
 			shouldJustify = lineWidth >= (rectangle.W * 0.7)
 		}
 
+		beforeY := gp.GetY()
+
 		if shouldJustify {
 			// Procesar para justificación
 			jText, err := parseTextForJustification(gp, text, rectangle.W)
@@ -199,6 +192,10 @@ func (gp *GoPdf) MultiCellWithOption(rectangle *Rect, text string, opt CellOptio
 		} else {
 			// Usar el método normal para alineación no justificada o última línea
 			gp.CellWithOption(&Rect{W: rectangle.W, H: lineHeight}, string(text), opt)
+
+			// Reset Y position to ensure consistent behavior with justified text
+			// CellWithOption advances Y, so we need to undo that advancement
+			gp.SetY(beforeY)
 		}
 
 		// Use consistent line spacing for both justified and non-justified text
