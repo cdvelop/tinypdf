@@ -162,12 +162,11 @@ func (tb *TextBuilder) Draw() error {
 	// Reset font to regular for next text (prevents style bleed)
 	tb.doc.setDefaultFont()
 
-	// Add spacing after the text based on style - reduce from previous implementation
-	spacing := tb.style.Size // Use a smaller multiplier for consistent spacing
-	// spacing := tb.style.Size * 0.3 // Use a smaller multiplier for consistent spacing
+	// add space for the next paragraph of text
+	nextTextSpacing := tb.style.Size
 
-	// Update Y position considering the actual text height used
-	tb.doc.SetY(tb.doc.GetY() + spacing)
+	// Update Y position considering the default text height used
+	tb.doc.SetY(tb.doc.GetY() + nextTextSpacing)
 
 	return nil
 }
