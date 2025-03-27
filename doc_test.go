@@ -55,7 +55,7 @@ func TestDocumentAPIUsage(t *testing.T) {
 	doc.AddText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.").Draw()
 
 	// Space between examples
-	doc.Br(5)
+	doc.SpaceBefore(3)
 
 	// Justified text
 	doc.AddText("JUSTIFIED TEXT:").Bold().Draw()

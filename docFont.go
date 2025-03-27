@@ -83,7 +83,7 @@ func (d *Document) setDefaultFont() {
 	style := d.fontConfig.Normal
 	d.SetFont("regular", "", style.Size)
 	d.SetTextColor(style.Color.R, style.Color.G, style.Color.B)
-	d.SetLineWidth(1)
+	d.SetLineWidth(0.7)
 	d.SetStrokeColor(0, 0, 0)
 }
 

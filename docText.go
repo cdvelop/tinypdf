@@ -175,8 +175,20 @@ func (tb *TextBuilder) Draw() error {
 	return nil
 }
 
-// Br adds vertical space (in mm)
-func (d *Document) Br(mm float64) {
-	// Convert mm to points (1 mm = 72.0/25.4 points)
-	d.SetY(d.GetY() + mm*(72.0/25.4))
+// SpaceBefore adds vertical space (in font spaces)
+// example: SpaceBefore(2) adds 2 spaces before the text
+func (d *Document) SpaceBefore(spaces ...float64) {
+	space := 1.0 // Default value is 1 space if no parameter provided
+	if len(spaces) > 0 && spaces[0] > 0 {
+		space = spaces[0]
+	}
+
+	// Get the current font size
+	fontSize := d.curr.FontSize
+	if fontSize <= 0 {
+		fontSize = d.fontConfig.Normal.Size // Default font size if none is set
+	}
+
+	// Add vertical space based on font size
+	d.SetY(d.GetY() + fontSize*space)
 }
