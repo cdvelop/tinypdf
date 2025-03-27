@@ -102,36 +102,48 @@ func DefaultFontConfig() FontConfig {
 			Color:       RGBColor{0, 0, 0},
 			LineSpacing: 1.15,
 			Alignment:   Left | Top,
+			SpaceBefore: 0,
+			SpaceAfter:  8, // ~0.73x font size (Word default is similar)
 		},
 		Header1: TextStyle{
 			Size:        16,
 			Color:       RGBColor{0, 0, 0},
 			LineSpacing: 1.5,
 			Alignment:   Left | Top,
+			SpaceBefore: 12,
+			SpaceAfter:  8,
 		},
 		Header2: TextStyle{
 			Size:        14,
 			Color:       RGBColor{0, 0, 0},
 			LineSpacing: 1.3,
 			Alignment:   Left | Top,
+			SpaceBefore: 10,
+			SpaceAfter:  6,
 		},
 		Header3: TextStyle{
 			Size:        12,
 			Color:       RGBColor{0, 0, 0},
 			LineSpacing: 1.2,
 			Alignment:   Left | Top,
+			SpaceBefore: 8,
+			SpaceAfter:  4,
 		},
 		Footer: TextStyle{
 			Size:        9,
 			Color:       RGBColor{128, 128, 128},
 			LineSpacing: 1.0,
 			Alignment:   Center | Top,
+			SpaceBefore: 4,
+			SpaceAfter:  0,
 		},
 		Footnote: TextStyle{
 			Size:        8,
 			Color:       RGBColor{128, 128, 128},
 			LineSpacing: 1.0,
 			Alignment:   Left | Top,
+			SpaceBefore: 2,
+			SpaceAfter:  2,
 		},
 	}
 }

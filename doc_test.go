@@ -48,7 +48,7 @@ func TestDocumentAPIUsage(t *testing.T) {
 	doc.AddText("This text has a border around it.").WithBorder().Draw()
 
 	// Compare justified vs non-justified
-	doc.AddHeader3("Comparison: Normal Text vs Justified Text").Draw()
+	doc.AddHeader1("Comparison: Normal Text vs Justified Text").Draw()
 
 	// Normal text (left-aligned)
 	doc.AddText("NORMAL TEXT (left-aligned):").Bold().Draw()

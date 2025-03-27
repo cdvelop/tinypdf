@@ -12,7 +12,9 @@ type TextStyle struct {
 	Size        float64
 	Color       RGBColor
 	LineSpacing float64
-	Alignment   int // Uses same alignment constants as CellOption (Left, Center, Right, etc)
+	Alignment   int     // Uses same alignment constants as CellOption (Left, Center, Right, etc)
+	SpaceBefore float64 // Space before paragraph (in points)
+	SpaceAfter  float64 // Space after paragraph (in points)
 }
 
 // TextBuilder is a helper struct to build text cells
@@ -132,6 +134,11 @@ func (tb *TextBuilder) Regular() *TextBuilder {
 }
 
 func (tb *TextBuilder) Draw() error {
+	// Apply space before the paragraph
+	if tb.style.SpaceBefore > 0 {
+		tb.doc.SetY(tb.doc.GetY() + tb.style.SpaceBefore)
+	}
+
 	// Calculate how many lines the text will occupy
 	textSplits, err := tb.doc.SplitTextWithOption(tb.text, tb.rect.W, tb.opts.BreakOption)
 	if err != nil {
@@ -162,11 +169,8 @@ func (tb *TextBuilder) Draw() error {
 	// Reset font to regular for next text (prevents style bleed)
 	tb.doc.setDefaultFont()
 
-	// add space for the next paragraph of text
-	nextTextSpacing := tb.style.Size
-
-	// Update Y position considering the default text height used
-	tb.doc.SetY(tb.doc.GetY() + nextTextSpacing)
+	// Apply space after the paragraph
+	tb.doc.SetY(tb.doc.GetY() + tb.style.Size + tb.style.SpaceAfter)
 
 	return nil
 }
