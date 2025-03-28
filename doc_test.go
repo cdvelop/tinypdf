@@ -52,14 +52,14 @@ func TestDocumentAPIUsage(t *testing.T) {
 
 	// Normal text (left-aligned)
 	doc.AddText("NORMAL TEXT (left-aligned):").Bold().Draw()
-	doc.AddText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.").Draw()
+	doc.AddText("This is a sample text that demonstrates normal text flow. The text continues across multiple lines to show how words wrap naturally at the margins. This creates a simple left-aligned paragraph that is easy to read. When text is not justified, it maintains consistent spacing between words while keeping a ragged right edge.").Draw()
 
 	// Space between examples
 	doc.SpaceBefore(3)
 
 	// Justified text
 	doc.AddText("JUSTIFIED TEXT:").Bold().Draw()
-	doc.AddText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.").Justify().Draw()
+	doc.AddText("This is an example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
 
 	// Add a footnote (in italic by default)
 	doc.AddFootnote("This is a footnote.").Draw()

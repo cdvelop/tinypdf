@@ -7,6 +7,13 @@ const (
 	FontItalic  = "italic"
 )
 
+type elementPosition string
+
+const (
+	inlinePosition  elementPosition = "inline"
+	newlinePosition elementPosition = "newline"
+)
+
 // TextStyle defines text appearance properties
 type TextStyle struct {
 	Size        float64
@@ -19,23 +26,27 @@ type TextStyle struct {
 
 // TextBuilder is a helper struct to build text cells
 type TextBuilder struct {
-	doc      *Document
-	text     string
-	opts     CellOption
-	rect     *Rect
-	style    TextStyle
-	fontName string
+	doc         *Document
+	text        string
+	opts        CellOption
+	rect        *Rect
+	style       TextStyle
+	fontName    string
+	fullWidth   bool            // Por defecto es false (solo usa el ancho necesario)
+	positioning elementPosition // "inline", "newline" (por defecto newline)
 }
 
 // newTextBuilder creates a new TextBuilder with the given style
 func (d *Document) newTextBuilder(text string, style TextStyle, fontName string) *TextBuilder {
 	builder := &TextBuilder{
-		doc:      d,
-		text:     text,
-		style:    style, // Store the style
-		fontName: fontName,
+		doc:         d,
+		text:        text,
+		style:       style, // Store the style
+		fontName:    fontName,
+		fullWidth:   true,            // Por defecto usar ancho completo para mantener compatibilidad
+		positioning: newlinePosition, // Por defecto es newline
 		rect: &Rect{
-			W: d.pageWidth,
+			W: 0, // se calcula en Draw()
 			H: 0,
 		},
 		opts: CellOption{
@@ -54,8 +65,15 @@ func (d *Document) newTextBuilder(text string, style TextStyle, fontName string)
 }
 
 // AddText crea texto normal
-func (d *Document) AddText(text string) *TextBuilder {
+func (d *Document) AddTextOLD(text string) *TextBuilder {
 	return d.newTextBuilder(text, d.fontConfig.Normal, FontRegular)
+}
+
+// AddText crea texto normal
+func (d *Document) AddText(text string) *TextBuilder {
+	tb := d.newTextBuilder(text, d.fontConfig.Normal, FontRegular)
+	tb.fullWidth = false // Solo para texto normal, usar ancho automático
+	return tb
 }
 
 // AddHeader1 crea un encabezado nivel 1
@@ -133,11 +151,116 @@ func (tb *TextBuilder) Regular() *TextBuilder {
 	return tb
 }
 
+// SpaceBefore adds vertical space (in font spaces)
+// example: SpaceBefore(2) adds 2 spaces before the text
+func (d *Document) SpaceBefore(spaces ...float64) {
+	space := 1.0 // Default value is 1 space if no parameter provided
+	if len(spaces) > 0 && spaces[0] > 0 {
+		space = spaces[0]
+	}
+
+	// Get the current font size
+	fontSize := d.curr.FontSize
+	if fontSize <= 0 {
+		fontSize = d.fontConfig.Normal.Size // Default font size if none is set
+	}
+
+	// Add vertical space based on font size
+	d.SetY(d.GetY() + fontSize*space)
+}
+
+// FullWidth hace que el texto ocupe todo el ancho disponible
+func (tb *TextBuilder) FullWidth() *TextBuilder {
+	tb.fullWidth = true
+	return tb
+}
+
+// WidthPercent establece el ancho como porcentaje del ancho de página
+func (tb *TextBuilder) WidthPercent(percent float64) *TextBuilder {
+	if percent > 0 && percent <= 100 {
+		tb.rect.W = tb.doc.pageWidth * (percent / 100)
+	}
+	return tb
+}
+
+// Inline intenta posicionar este elemento en la misma línea que el anterior
+func (tb *TextBuilder) Inline() *TextBuilder {
+	tb.positioning = inlinePosition
+	return tb
+}
+
+// retorna el factor de ancho para una fuente específica
+func (d *Document) measureTextWidthFactor(fontName string) float64 {
+	// Factor de escala para el ancho de caracteres, varía según el estilo
+	var widthFactor float64 = 0.6 // Factor para fuente regular
+
+	// Ajustar factor según el estilo de fuente
+	switch fontName {
+	case FontBold:
+		widthFactor = 0.65 // La negrita es un poco más ancha
+	case FontItalic:
+		widthFactor = 0.55 // La itálica suele ser ligeramente más estrecha
+	}
+
+	return widthFactor
+}
+
+// estima el ancho mínimo necesario para el texto
+func (tb *TextBuilder) minimumWidthRequiredForText() {
+	// Calcular ancho necesario para el texto si no se especificó un ancho fijo
+	// o si se solicitó ancho completo
+	if tb.fullWidth {
+		// Usar ancho completo de la página
+		tb.rect.W = tb.doc.pageWidth
+	} else {
+		// Si no se especificó un ancho, calcular el ancho mínimo necesario
+		if tb.rect.W <= 0 {
+			// Obtener el factor de ancho según el tipo de fuente
+			widthFactor := tb.doc.measureTextWidthFactor(tb.fontName)
+
+			// Calcular ancho considerando un factor de reducción más realista
+			charWidth := tb.style.Size * widthFactor
+
+			// Considerar longitud efectiva (algunos caracteres son más estrechos)
+			effectiveLength := float64(len(tb.text)) * 0.8 // Reducir un % por espacios y caracteres estrechos
+			// effectiveLength := float64(len(tb.text)) * 0.9 // Reducir un 10% por espacios y caracteres estrechos
+
+			// Calcular ancho estimado
+			width := effectiveLength * charWidth
+
+			// Añadir un pequeño margen
+			width += tb.style.Size // Añadir un margen completo del tamaño de la fuente
+
+			// Si el texto es largo usar el ancho de página
+			if width >= tb.doc.pageWidth {
+				width = tb.doc.pageWidth
+			}
+
+			// Asegurar un ancho mínimo razonable
+			minWidth := tb.style.Size
+			if width < minWidth {
+				width = minWidth
+			}
+
+			tb.rect.W = width
+		}
+	}
+}
+
+// Draw renders the text on the document
 func (tb *TextBuilder) Draw() error {
 	// Apply space before the paragraph
 	if tb.style.SpaceBefore > 0 {
 		tb.doc.SetY(tb.doc.GetY() + tb.style.SpaceBefore)
 	}
+
+	// Posicionamiento inline si se solicitó
+	if tb.positioning == inlinePosition {
+		// Mantener posición X actual
+		// tb.opts.Float = Right
+	}
+
+	tb.minimumWidthRequiredForText()
 
 	// Calculate how many lines the text will occupy
 	textSplits, err := tb.doc.SplitTextWithOption(tb.text, tb.rect.W, tb.opts.BreakOption)
@@ -173,22 +296,4 @@ func (tb *TextBuilder) Draw() error {
 	tb.doc.SetY(tb.doc.GetY() + tb.style.Size + tb.style.SpaceAfter)
 
 	return nil
-}
-
-// SpaceBefore adds vertical space (in font spaces)
-// example: SpaceBefore(2) adds 2 spaces before the text
-func (d *Document) SpaceBefore(spaces ...float64) {
-	space := 1.0 // Default value is 1 space if no parameter provided
-	if len(spaces) > 0 && spaces[0] > 0 {
-		space = spaces[0]
-	}
-
-	// Get the current font size
-	fontSize := d.curr.FontSize
-	if fontSize <= 0 {
-		fontSize = d.fontConfig.Normal.Size // Default font size if none is set
-	}
-
-	// Add vertical space based on font size
-	d.SetY(d.GetY() + fontSize*space)
 }
