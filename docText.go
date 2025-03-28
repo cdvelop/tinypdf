@@ -65,11 +65,6 @@ func (d *Document) newTextBuilder(text string, style TextStyle, fontName string)
 }
 
 // AddText crea texto normal
-func (d *Document) AddTextOLD(text string) *TextBuilder {
-	return d.newTextBuilder(text, d.fontConfig.Normal, FontRegular)
-}
-
-// AddText crea texto normal
 func (d *Document) AddText(text string) *TextBuilder {
 	tb := d.newTextBuilder(text, d.fontConfig.Normal, FontRegular)
 	tb.fullWidth = false // Solo para texto normal, usar ancho automático
@@ -248,7 +243,7 @@ func (tb *TextBuilder) minimumWidthRequiredForText() {
 }
 
 // Draw renders the text on the document
-func (tb *TextBuilder) Draw() error {
+func (tb *TextBuilder) DrawOLD() error {
 	// Apply space before the paragraph
 	if tb.style.SpaceBefore > 0 {
 		tb.doc.SetY(tb.doc.GetY() + tb.style.SpaceBefore)
@@ -289,11 +284,71 @@ func (tb *TextBuilder) Draw() error {
 		return err
 	}
 
-	// Reset font to regular for next text (prevents style bleed)
-	tb.doc.setDefaultFont()
-
-	// Apply space after the paragraph
-	tb.doc.SetY(tb.doc.GetY() + tb.style.Size + tb.style.SpaceAfter)
+	tb.doc.newLineBreakBasedOnDefaultFont(tb.doc.GetY())
 
 	return nil
+}
+
+// Draw renders the text on the document
+func (tb *TextBuilder) Draw() error {
+	// Apply space before the paragraph
+	if tb.style.SpaceBefore > 0 {
+		tb.doc.SetY(tb.doc.GetY() + tb.style.SpaceBefore)
+	}
+
+	// Handle positioning
+	if tb.positioning == inlinePosition {
+		// Keep current X position for inline elements
+	} else if tb.doc.inlineMode {
+		// Reset X to left margin if previous element was inline but this one isn't
+		tb.doc.SetX(tb.doc.margins.Left)
+		tb.doc.inlineMode = false
+	}
+
+	tb.minimumWidthRequiredForText()
+
+	// Calculate how many lines the text will occupy
+	textSplits, err := tb.doc.SplitTextWithOption(tb.text, tb.rect.W, tb.opts.BreakOption)
+	if err != nil {
+		return err
+	}
+
+	// Get line height in current font and size
+	_, lineHeight, _, err := createContent(tb.doc.curr.FontISubset, tb.text,
+		tb.doc.curr.FontSize, tb.doc.curr.CharSpacing, nil)
+	if err != nil {
+		return err
+	}
+
+	tb.doc.PointsToUnitsVar(&lineHeight)
+
+	// Calculate total height needed for all lines
+	totalHeight := float64(len(textSplits)) * lineHeight
+
+	// Set the rectangle height to accommodate all text
+	tb.rect.H = totalHeight
+
+	// Draw the text with the properly sized rectangle
+	err = tb.doc.MultiCellWithOption(tb.rect, tb.text, tb.opts)
+	if err != nil {
+		return err
+	}
+
+	// Update inline mode based on current element's positioning
+	tb.doc.inlineMode = (tb.positioning == inlinePosition)
+
+	// If not inline, ensure we do a proper line break
+	if tb.positioning != inlinePosition {
+		tb.doc.newLineBreakBasedOnDefaultFont(tb.doc.GetY())
+	}
+
+	return nil
+}
+
+func (doc *Document) newLineBreakBasedOnDefaultFont(originY float64) {
+	// Reset font to regular for next text (prevents style bleed)
+	doc.setDefaultFont()
+
+	// Apply space after the paragraph
+	doc.SetY(originY + doc.fontConfig.Normal.Size + doc.fontConfig.Normal.SpaceAfter)
 }

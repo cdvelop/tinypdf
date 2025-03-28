@@ -13,6 +13,9 @@ func TestDocumentAPIUsage(t *testing.T) {
 		t.Log(a...)
 	})
 
+	// add logo image
+	doc.AddImage("test/res/logo.png").Height(35).Inline().Draw()
+
 	// Add a centered header
 	doc.AddHeader1("Example Document").AlignCenter().Draw()
 
@@ -41,6 +44,13 @@ func TestDocumentAPIUsage(t *testing.T) {
 		"(except the last one in each paragraph) occupies the full available width. " +
 		"The last line is left-aligned by typographic convention.").Justify().Draw()
 
+	// bar chart image
+	doc.AddImage("test/res/barchart.png").Height(150).AlignCenter().Draw()
+	// Add a footnote (in italic by default)
+	doc.AddFootnote("This is a footnote.").AlignCenter().Draw()
+
+	// add gopher image as a right-aligned inline image
+	doc.AddImage("test/res/gopher-color.png").Height(50).Inline().AlignRight().Draw()
 	// Add level 3 header
 	doc.AddHeader3("Subsection 1.1: More examples").Draw()
 
@@ -60,9 +70,6 @@ func TestDocumentAPIUsage(t *testing.T) {
 	// Justified text
 	doc.AddText("JUSTIFIED TEXT:").Bold().Draw()
 	doc.AddText("This is an example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
-
-	// Add a footnote (in italic by default)
-	doc.AddFootnote("This is a footnote.").Draw()
 
 	// Add a centered footer
 	doc.AddFooter("Page 1 - Example Document").AlignCenter().Draw()

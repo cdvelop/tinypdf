@@ -4,6 +4,7 @@ type Document struct {
 	*GoPdf
 	fontConfig FontConfig
 	pageWidth  float64
+	inlineMode bool // Add this field to track inline element state
 	log        func(a ...any)
 }
 
@@ -65,4 +66,17 @@ func NewDocument(logPrint func(a ...any), configs ...any) *Document {
 	doc.setDefaultFont()
 
 	return doc
+}
+
+// GetLineHeight returns the current line height based on the active font and size
+func (doc *Document) GetLineHeight() float64 {
+	// Get current font size and add some padding
+	fontSize := doc.curr.FontSize
+	if fontSize <= 0 {
+		fontSize = doc.fontConfig.Normal.Size // Default font size as fallback
+	}
+
+	// Line height is typically 1.2 to 1.5 times the font size
+	// Using 1.2 as a conservative multiplier
+	return fontSize * 1.2
 }
