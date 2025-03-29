@@ -4,13 +4,14 @@ import "strings"
 
 // FontConfig represents different font configurations for document sections
 type FontConfig struct {
-	Family   Font
-	Normal   TextStyle
-	Header1  TextStyle
-	Header2  TextStyle
-	Header3  TextStyle
-	Footer   TextStyle
-	Footnote TextStyle
+	Family     Font
+	Normal     TextStyle
+	Header1    TextStyle
+	Header2    TextStyle
+	Header3    TextStyle
+	Footnote   TextStyle
+	PageHeader TextStyle
+	PageFooter TextStyle
 }
 
 // Font represents font files for different styles
@@ -129,14 +130,6 @@ func DefaultFontConfig() FontConfig {
 			SpaceBefore: 8,
 			SpaceAfter:  4,
 		},
-		Footer: TextStyle{
-			Size:        9,
-			Color:       RGBColor{128, 128, 128},
-			LineSpacing: 1.0,
-			Alignment:   Center | Top,
-			SpaceBefore: 4,
-			SpaceAfter:  0,
-		},
 		Footnote: TextStyle{
 			Size:        8,
 			Color:       RGBColor{128, 128, 128},
@@ -144,6 +137,22 @@ func DefaultFontConfig() FontConfig {
 			Alignment:   Left | Top,
 			SpaceBefore: 2,
 			SpaceAfter:  2,
+		},
+		PageHeader: TextStyle{
+			Size:        9,
+			Color:       RGBColor{128, 128, 128},
+			LineSpacing: 1.0,
+			Alignment:   Center | Top,
+			SpaceBefore: 0,
+			SpaceAfter:  2,
+		},
+		PageFooter: TextStyle{
+			Size:        9,
+			Color:       RGBColor{128, 128, 128},
+			LineSpacing: 1.0,
+			Alignment:   Right | Top,
+			SpaceBefore: 2,
+			SpaceAfter:  0,
 		},
 	}
 }

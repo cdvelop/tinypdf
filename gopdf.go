@@ -36,9 +36,7 @@ var ErrInvalidRectangleRadius = Err("Radius length cannot exceed rectangle heigh
 // GoPdf : A simple library for generating PDF written in Go lang
 type GoPdf struct {
 
-	//page Margin
-	//leftMargin float64
-	//topMargin  float64
+	// Page margins
 	margins Margins
 
 	pdfObjs []IObj
@@ -47,56 +45,55 @@ type GoPdf struct {
 
 	indexOfCatalogObj int
 
-	/*---index ของ obj สำคัญๆ เก็บเพื่อลด loop ตอนค้นหา---*/
-	//index ของ obj pages
+	/*--- Important obj indexes stored to reduce search loops ---*/
+	// Index of pages obj
 	indexOfPagesObj int
 
-	//number of pages
+	// Number of pages obj
 	numOfPagesObj int
 
-	//index ของ obj page อันแรก
+	// Index of first page obj
 	indexOfFirstPageObj int
 
-	//ต่ำแหน่งปัจจุบัน
+	// Current position
 	curr Current
 
 	indexEncodingObjFonts []int
 	indexOfContent        int
 
-	//index ของ procset ซึ่งควรจะมีอันเดียว
+	// Index of procset which should be unique
 	indexOfProcSet int
-
-	//IsUnderline bool
 
 	// Buffer for io.Reader compliance
 	buf bytes.Buffer
 
-	//pdf PProtection
+	// PDF protection
 	pdfProtection   *PDFProtection
 	encryptionObjID int
 
-	// content streams only
+	// Content streams only
 	compressLevel int
 
-	//info
+	// Document info
 	isUseInfo bool
 	info      *PdfInfo
 
-	//outlines
+	// Outlines/bookmarks
 	outlines           *OutlinesObj
 	indexOfOutlinesObj int
 
-	//header and footer functions
+	// Header and footer functions
 	headerFunc func()
 	footerFunc func()
 
 	// gofpdi free pdf document importer
 	fpdi *importer
 
-	//placeholder text
+	// Placeholder text
 	placeHolderTexts map[string]([]placeHolderTextInfo)
 
-	log func(...any) // log function for debugging
+	// Log function for debugging
+	log func(...any)
 }
 
 type DrawableRectOptions struct {
@@ -789,58 +786,6 @@ func (gp *GoPdf) ImageFromWithOption(img image.Image, opts ImageFromOption) erro
 	return gp.imageByHolder(imgh, imageOptions)
 }
 
-// AddPage : add new page
-func (gp *GoPdf) AddPage() {
-	emptyOpt := PageOption{}
-	gp.AddPageWithOption(emptyOpt)
-}
-
-// AddPageWithOption  : add new page with option
-func (gp *GoPdf) AddPageWithOption(opt PageOption) {
-	opt.TrimBox = opt.TrimBox.UnitsToPoints(gp.config.Unit)
-	opt.PageSize = opt.PageSize.UnitsToPoints(gp.config.Unit)
-
-	page := new(PageObj)
-	page.init(func() *GoPdf {
-		return gp
-	})
-
-	if !opt.isEmpty() { //use page option
-		page.setOption(opt)
-		gp.curr.pageSize = opt.PageSize
-
-		if opt.isTrimBoxSet() {
-			gp.curr.trimBox = opt.TrimBox
-		}
-	} else { //use default
-		gp.curr.pageSize = &gp.config.PageSize
-		gp.curr.trimBox = &gp.config.TrimBox
-	}
-
-	page.ResourcesRelate = strconv.Itoa(gp.indexOfProcSet+1) + " 0 R"
-	index := gp.addObj(page)
-	if gp.indexOfFirstPageObj == -1 {
-		gp.indexOfFirstPageObj = index
-	}
-	gp.curr.IndexOfPageObj = index
-
-	gp.numOfPagesObj++
-
-	//reset
-	gp.indexOfContent = -1
-	gp.resetCurrXY()
-
-	if gp.headerFunc != nil {
-		gp.headerFunc()
-		gp.resetCurrXY()
-	}
-
-	if gp.footerFunc != nil {
-		gp.footerFunc()
-		gp.resetCurrXY()
-	}
-}
-
 func (gp *GoPdf) AddOutline(title string) {
 	gp.outlines.AddOutline(gp.curr.IndexOfPageObj+1, title)
 }
@@ -848,16 +793,6 @@ func (gp *GoPdf) AddOutline(title string) {
 // AddOutlineWithPosition add an outline with position
 func (gp *GoPdf) AddOutlineWithPosition(title string) *OutlineObj {
 	return gp.outlines.AddOutlinesWithPosition(gp.curr.IndexOfPageObj+1, title, gp.config.PageSize.H-gp.curr.Y+20)
-}
-
-// AddHeader - add a header function, if present this will be automatically called by AddPage()
-func (gp *GoPdf) AddHeader(f func()) {
-	gp.headerFunc = f
-}
-
-// AddFooter - add a footer function, if present this will be automatically called by AddPage()
-func (gp *GoPdf) AddFooter(f func()) {
-	gp.footerFunc = f
 }
 
 // Start : init gopdf
@@ -1380,11 +1315,6 @@ func (gp *GoPdf) ImportPagesFromSource(source interface{}, box string) error {
 // GetNextObjectID gets the next object ID so that gofpdi knows where to start the object IDs.
 func (gp *GoPdf) GetNextObjectID() int {
 	return len(gp.pdfObjs) + 1
-}
-
-// GetNumberOfPages gets the number of pages from the PDF.
-func (gp *GoPdf) GetNumberOfPages() int {
-	return gp.numOfPagesObj
 }
 
 // ImportObjects imports objects from gofpdi into current document.
@@ -2166,23 +2096,6 @@ func (gp *GoPdf) IsCurrFontContainGlyph(r rune) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// SetPage set current page
-func (gp *GoPdf) SetPage(pageno int) error {
-	var pageIndex int
-	for i := 0; i < len(gp.pdfObjs); i++ {
-		switch gp.pdfObjs[i].(type) {
-		case *ContentObj:
-			pageIndex += 1
-			if pageIndex == pageno {
-				gp.indexOfContent = i
-				return nil
-			}
-		}
-	}
-
-	return Err("invalid page number")
 }
 
 //tool for validate pdf https://www.pdf-online.com/osa/validate.aspx

@@ -1,5 +1,7 @@
 package tinypdf
 
+import "strconv"
+
 type Document struct {
 	*GoPdf
 	fontConfig FontConfig
@@ -79,4 +81,73 @@ func (doc *Document) GetLineHeight() float64 {
 	// Line height is typically 1.2 to 1.5 times the font size
 	// Using 1.2 as a conservative multiplier
 	return fontSize * 1.2
+}
+
+// AddPage : add new page
+func (gp *GoPdf) AddPage() {
+	emptyOpt := PageOption{}
+	gp.AddPageWithOption(emptyOpt)
+}
+
+// AddPageWithOption  : add new page with option
+func (gp *GoPdf) AddPageWithOption(opt PageOption) {
+	opt.TrimBox = opt.TrimBox.UnitsToPoints(gp.config.Unit)
+	opt.PageSize = opt.PageSize.UnitsToPoints(gp.config.Unit)
+
+	page := new(PageObj)
+	page.init(func() *GoPdf {
+		return gp
+	})
+
+	if !opt.isEmpty() { //use page option
+		page.setOption(opt)
+		gp.curr.pageSize = opt.PageSize
+
+		if opt.isTrimBoxSet() {
+			gp.curr.trimBox = opt.TrimBox
+		}
+	} else { //use default
+		gp.curr.pageSize = &gp.config.PageSize
+		gp.curr.trimBox = &gp.config.TrimBox
+	}
+
+	page.ResourcesRelate = strconv.Itoa(gp.indexOfProcSet+1) + " 0 R"
+	index := gp.addObj(page)
+	if gp.indexOfFirstPageObj == -1 {
+		gp.indexOfFirstPageObj = index
+	}
+	gp.curr.IndexOfPageObj = index
+
+	gp.numOfPagesObj++
+
+	//reset
+	gp.indexOfContent = -1
+	gp.resetCurrXY()
+
+	if gp.headerFunc != nil {
+		gp.headerFunc()
+		gp.resetCurrXY()
+	}
+
+	if gp.footerFunc != nil {
+		gp.footerFunc()
+		gp.resetCurrXY()
+	}
+}
+
+// SetPage set current page
+func (gp *GoPdf) SetPage(pageno int) error {
+	var pageIndex int
+	for i := 0; i < len(gp.pdfObjs); i++ {
+		switch gp.pdfObjs[i].(type) {
+		case *ContentObj:
+			pageIndex += 1
+			if pageIndex == pageno {
+				gp.indexOfContent = i
+				return nil
+			}
+		}
+	}
+
+	return Err("invalid page number")
 }

@@ -10,8 +10,9 @@ const (
 type elementPosition string
 
 const (
-	inlinePosition  elementPosition = "inline"
-	newlinePosition elementPosition = "newline"
+	inlinePosition  elementPosition = "inline"  // posicionamiento en línea (inline)
+	newlinePosition elementPosition = "newline" // posicionamiento por defecto (salto de línea)
+	fixedPosition   elementPosition = "fixed"   //posicionamiento fijo (no se mueve con el texto)
 )
 
 // TextStyle defines text appearance properties
@@ -86,11 +87,6 @@ func (d *Document) AddHeader3(text string) *TextBuilder {
 	return d.newTextBuilder(text, d.fontConfig.Header3, FontBold)
 }
 
-// AddFooter crea un pie de página
-func (d *Document) AddFooter(text string) *TextBuilder {
-	return d.newTextBuilder(text, d.fontConfig.Footer, FontRegular)
-}
-
 // AddFootnote crea una nota al pie
 func (d *Document) AddFootnote(text string) *TextBuilder {
 	return d.newTextBuilder(text, d.fontConfig.Footnote, FontItalic)
@@ -109,6 +105,7 @@ func (tb *TextBuilder) AlignCenter() *TextBuilder {
 
 func (tb *TextBuilder) AlignRight() *TextBuilder {
 	tb.opts.Align = Right | Top
+	tb.fullWidth = true
 	return tb
 }
 
@@ -242,7 +239,7 @@ func (tb *TextBuilder) minimumWidthRequiredForText() {
 	}
 }
 
-// Draw renders the text on the document
+// Draw renders the text on the document to include page break handling
 func (tb *TextBuilder) Draw() error {
 	// Apply space before the paragraph
 	if tb.style.SpaceBefore > 0 {
@@ -281,6 +278,10 @@ func (tb *TextBuilder) Draw() error {
 	// Set the rectangle height to accommodate all text
 	tb.rect.H = totalHeight
 
+	// HERE IS THE NEW PART: Check if the text fits on current page
+	newY, _ := tb.doc.ensureElementFits(totalHeight, tb.style.SpaceAfter)
+	tb.doc.SetY(newY)
+
 	// Draw the text with the properly sized rectangle
 	err = tb.doc.MultiCellWithOption(tb.rect, tb.text, tb.opts)
 	if err != nil {
@@ -291,7 +292,7 @@ func (tb *TextBuilder) Draw() error {
 	tb.doc.inlineMode = (tb.positioning == inlinePosition)
 
 	// If not inline, ensure we do a proper line break
-	if tb.positioning != inlinePosition {
+	if tb.positioning == newlinePosition {
 		tb.doc.newLineBreakBasedOnDefaultFont(tb.doc.GetY())
 	}
 

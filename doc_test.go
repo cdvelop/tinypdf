@@ -16,6 +16,9 @@ func TestDocumentAPIUsage(t *testing.T) {
 	// add logo image
 	doc.AddImage("test/res/logo.png").Height(35).Inline().Draw()
 
+	// add date and time aligned to the right
+	doc.AddText("date: 2023-10-01").AlignRight().Inline().Draw()
+
 	// Add a centered header
 	doc.AddHeader1("Example Document").AlignCenter().Draw()
 
@@ -69,10 +72,11 @@ func TestDocumentAPIUsage(t *testing.T) {
 
 	// Justified text
 	doc.AddText("JUSTIFIED TEXT:").Bold().Draw()
-	doc.AddText("This is an example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
-
-	// Add a centered footer
-	doc.AddFooter("Page 1 - Example Document").AlignCenter().Draw()
+	doc.AddText("This is an Example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
+	doc.AddImage("test/res/barchart.png").Height(150).AlignCenter().Draw()
+	doc.AddText("This is an Example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
+	// Add a centered footer with page number
+	doc.AddPageFooter("Page").AlignCenter().WithPageNumber().Draw()
 
 	// Create output directory if it doesn't exist
 	outDir := "test/out"

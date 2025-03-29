@@ -110,7 +110,7 @@ func (img *imageElement) VerticalAlignBottom() *imageElement {
 	return img
 }
 
-// Draw renders the image on the document
+// Draw renders the image on the document to include page break handling
 func (img *imageElement) Draw() error {
 	// Get image dimensions to calculate aspect ratio if needed
 	imgWidth, imgHeight, err := img.getImageDimensions()
@@ -121,7 +121,18 @@ func (img *imageElement) Draw() error {
 	// Calculate final dimensions
 	finalWidth, finalHeight := img.calculateDimensions(imgWidth, imgHeight)
 
-	// Determine position
+	// Check if the image has a fixed position
+	if !img.hasPos {
+		// HERE IS THE NEW PART: Check if the image fits on current page
+		newY, _ := img.doc.ensureElementFits(finalHeight)
+
+		// Only update Y position if this is not an inline element
+		if !img.inline {
+			img.doc.SetY(newY)
+		}
+	}
+
+	// Determine position (after possible page break)
 	x, y := img.calculatePosition(finalWidth)
 
 	// Adjust vertical position for inline images based on alignment
