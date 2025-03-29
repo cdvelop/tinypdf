@@ -243,53 +243,6 @@ func (tb *TextBuilder) minimumWidthRequiredForText() {
 }
 
 // Draw renders the text on the document
-func (tb *TextBuilder) DrawOLD() error {
-	// Apply space before the paragraph
-	if tb.style.SpaceBefore > 0 {
-		tb.doc.SetY(tb.doc.GetY() + tb.style.SpaceBefore)
-	}
-
-	// Posicionamiento inline si se solicitó
-	if tb.positioning == inlinePosition {
-		// Mantener posición X actual
-		// tb.opts.Float = Right
-	}
-
-	tb.minimumWidthRequiredForText()
-
-	// Calculate how many lines the text will occupy
-	textSplits, err := tb.doc.SplitTextWithOption(tb.text, tb.rect.W, tb.opts.BreakOption)
-	if err != nil {
-		return err
-	}
-
-	// Get line height in current font and size
-	_, lineHeight, _, err := createContent(tb.doc.curr.FontISubset, tb.text,
-		tb.doc.curr.FontSize, tb.doc.curr.CharSpacing, nil)
-	if err != nil {
-		return err
-	}
-
-	tb.doc.PointsToUnitsVar(&lineHeight)
-
-	// Calculate total height needed for all lines
-	totalHeight := float64(len(textSplits)) * lineHeight
-
-	// Set the rectangle height to accommodate all text
-	tb.rect.H = totalHeight
-
-	// Draw the text with the properly sized rectangle
-	err = tb.doc.MultiCellWithOption(tb.rect, tb.text, tb.opts)
-	if err != nil {
-		return err
-	}
-
-	tb.doc.newLineBreakBasedOnDefaultFont(tb.doc.GetY())
-
-	return nil
-}
-
-// Draw renders the text on the document
 func (tb *TextBuilder) Draw() error {
 	// Apply space before the paragraph
 	if tb.style.SpaceBefore > 0 {
