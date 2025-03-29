@@ -107,7 +107,7 @@ func TestTable(t *testing.T) {
 	}
 
 	// Save the PDF to the specified path
-	err = pdf.WritePdf("examples/table/example_table.pdf")
+	err = pdf.WritePdf("test/out/table_custom.pdf")
 	if err != nil {
 		t.Errorf("Error saving PDF: %v", err)
 	}
@@ -214,7 +214,7 @@ func TestTableCenter(t *testing.T) {
 	}
 
 	// Save the PDF to the specified path
-	err = pdf.WritePdf("examples/table/example_table_center.pdf")
+	err = pdf.WritePdf("test/out/table_center.pdf")
 	if err != nil {
 		t.Errorf("Error saving PDF: %v", err)
 	}
@@ -371,7 +371,7 @@ func TestTableWithStyledRows(t *testing.T) {
 	}
 
 	// Save the PDF to the specified path
-	err = pdf.WritePdf("examples/table/example_table_with_styled_row.pdf")
+	err = pdf.WritePdf("test/out/table_with_styled_row.pdf")
 	if err != nil {
 		t.Errorf("Error saving PDF: %v", err)
 	}

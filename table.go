@@ -28,7 +28,7 @@ type CellStyle struct {
 
 type RowCell struct {
 	content      string    // Content (display value) of the cell
-	useCellStyle bool      // If true, use cellStyle instead of the style in the tableLayout
+	useCellStyle bool      // If true, use cellStyle instead of the style in the docTable
 	cellStyle    CellStyle // Style of the cell
 }
 
@@ -45,18 +45,8 @@ func newStyledRowCell(content string, useCellStyle bool, cellStyle CellStyle) Ro
 	}
 }
 
-type TableLayout interface {
-	AddColumn(header string, width float64, align string)
-	AddRow(row []string)
-	AddStyledRow(row []RowCell)
-	SetTableStyle(style CellStyle)
-	SetHeaderStyle(style CellStyle)
-	SetCellStyle(style CellStyle)
-	DrawTable() error
-}
-
 // Represents the layout of a table
-type tableLayout struct {
+type docTable struct {
 	pdf       *GoPdf      // Reference to the GoPdf instance
 	startX    float64     // Starting X coordinate of the table
 	startY    float64     // Starting Y coordinate of the table
@@ -72,8 +62,6 @@ type tableLayout struct {
 	cellStyle   CellStyle  // Style for regular cells
 }
 
-var _ TableLayout = (*tableLayout)(nil)
-
 // Represents a column in the table
 type column struct {
 	header string  // Header text for the column
@@ -82,8 +70,8 @@ type column struct {
 }
 
 // Creates a new table layout with the given parameters
-func (gp *GoPdf) NewTableLayout(startX, startY, rowHeight float64, maxRows int) TableLayout {
-	return &tableLayout{
+func (gp *GoPdf) NewTableLayout(startX, startY, rowHeight float64, maxRows int) *docTable {
+	return &docTable{
 		pdf:       gp,
 		startX:    startX,
 		startY:    startY,
@@ -124,12 +112,12 @@ func (gp *GoPdf) NewTableLayout(startX, startY, rowHeight float64, maxRows int) 
 }
 
 // Adds a column to the table with the specified header, width, and alignment
-func (t *tableLayout) AddColumn(header string, width float64, align string) {
+func (t *docTable) AddColumn(header string, width float64, align string) {
 	t.columns = append(t.columns, column{header, width, align})
 }
 
 // Adds a row of data to the table
-func (t *tableLayout) AddRow(row []string) {
+func (t *docTable) AddRow(row []string) {
 	rowCell := make([]RowCell, len(row))
 	for i, cell := range row {
 		rowCell[i] = newStyledRowCell(cell, false, CellStyle{})
@@ -139,27 +127,27 @@ func (t *tableLayout) AddRow(row []string) {
 
 // Adds a row of data to the table with individual styled cells
 // Useful for styling individual cells in a row
-func (t *tableLayout) AddStyledRow(row []RowCell) {
+func (t *docTable) AddStyledRow(row []RowCell) {
 	t.rows = append(t.rows, row)
 }
 
 // Sets the style for the entire table
-func (t *tableLayout) SetTableStyle(style CellStyle) {
+func (t *docTable) SetTableStyle(style CellStyle) {
 	t.tableStyle = style
 }
 
 // Sets the style for the header row
-func (t *tableLayout) SetHeaderStyle(style CellStyle) {
+func (t *docTable) SetHeaderStyle(style CellStyle) {
 	t.headerStyle = style
 }
 
 // Sets the style for regular cells
-func (t *tableLayout) SetCellStyle(style CellStyle) {
+func (t *docTable) SetCellStyle(style CellStyle) {
 	t.cellStyle = style
 }
 
 // DrawTable the entire table on the PDF
-func (t *tableLayout) DrawTable() error {
+func (t *docTable) DrawTable() error {
 	x := t.startX
 	y := t.startY
 
@@ -236,7 +224,7 @@ func (t *tableLayout) DrawTable() error {
 }
 
 // Draws the outer border of the table and header
-func (t *tableLayout) drawTableAndHeaderBorder() error {
+func (t *docTable) drawTableAndHeaderBorder() error {
 	x1 := t.startX
 	y1 := t.startY
 	x2 := t.startX
@@ -257,7 +245,7 @@ func (t *tableLayout) drawTableAndHeaderBorder() error {
 }
 
 // Draws a single cell of the table
-func (t *tableLayout) drawCell(
+func (t *docTable) drawCell(
 	x float64,
 	y float64,
 	width float64,
@@ -314,7 +302,7 @@ func (t *tableLayout) drawCell(
 }
 
 // Draws a border around a rectangular area
-func (t *tableLayout) drawBorder(x1, y1, x2, y2 float64, borderStyle BorderStyle) error {
+func (t *docTable) drawBorder(x1, y1, x2, y2 float64, borderStyle BorderStyle) error {
 	if borderStyle.Width <= 0 {
 		return nil
 	}

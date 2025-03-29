@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 )
 
-// imageElement represents an image to be added to the document
-type imageElement struct {
+// docImage represents an image to be added to the document
+type docImage struct {
 	doc       *Document
 	path      string
 	width     float64
@@ -21,14 +21,14 @@ type imageElement struct {
 }
 
 // AddImage creates a new image element
-func (doc *Document) AddImage(path string) *imageElement {
+func (doc *Document) AddImage(path string) *docImage {
 	// Use absolute path if provided path is relative
 	absolutePath, err := filepath.Abs(path)
 	if err == nil && fileExists(absolutePath) {
 		path = absolutePath
 	}
 
-	return &imageElement{
+	return &docImage{
 		doc:       doc,
 		path:      path,
 		keepRatio: true,
@@ -38,21 +38,21 @@ func (doc *Document) AddImage(path string) *imageElement {
 
 // Width sets the image width and maintains aspect ratio if height is not set
 // eg: img.Width(50) will set the width to 50 and calculate height based on aspect ratio
-func (img *imageElement) Width(w float64) *imageElement {
+func (img *docImage) Width(w float64) *docImage {
 	img.width = w
 	return img
 }
 
 // Height sets the image height and maintains aspect ratio if width is not set
 // eg: img.Height(50) will set the height to 100 and calculate width based on aspect ratio
-func (img *imageElement) Height(h float64) *imageElement {
+func (img *docImage) Height(h float64) *docImage {
 	img.height = h
 	return img
 }
 
 // Size sets both width and height explicitly (no aspect ratio preservation)
 // eg: img.Size(50, 100) will set the width to 50 and height to 100
-func (img *imageElement) Size(w, h float64) *imageElement {
+func (img *docImage) Size(w, h float64) *docImage {
 	img.width = w
 	img.height = h
 	img.keepRatio = false
@@ -60,7 +60,7 @@ func (img *imageElement) Size(w, h float64) *imageElement {
 }
 
 // FixedPosition places the image at specific coordinates
-func (img *imageElement) FixedPosition(x, y float64) *imageElement {
+func (img *docImage) FixedPosition(x, y float64) *docImage {
 	img.x = x
 	img.y = y
 	img.hasPos = true
@@ -68,50 +68,50 @@ func (img *imageElement) FixedPosition(x, y float64) *imageElement {
 }
 
 // AlignLeft aligns the image to the left margin
-func (img *imageElement) AlignLeft() *imageElement {
+func (img *docImage) AlignLeft() *docImage {
 	img.alignment = Left
 	return img
 }
 
 // AlignCenter centers the image horizontally
-func (img *imageElement) AlignCenter() *imageElement {
+func (img *docImage) AlignCenter() *docImage {
 	img.alignment = Center
 	return img
 }
 
 // AlignRight aligns the image to the right margin
-func (img *imageElement) AlignRight() *imageElement {
+func (img *docImage) AlignRight() *docImage {
 	img.alignment = Right
 	return img
 }
 
 // Inline makes the image display inline with text rather than breaking to a new line
 // The text will continue from the right side of the image
-func (img *imageElement) Inline() *imageElement {
+func (img *docImage) Inline() *docImage {
 	img.inline = true
 	return img
 }
 
 // VerticalAlignTop aligns the image with the top of the text line when inline
-func (img *imageElement) VerticalAlignTop() *imageElement {
+func (img *docImage) VerticalAlignTop() *docImage {
 	img.valign = 0
 	return img
 }
 
 // VerticalAlignMiddle aligns the image with the middle of the text line when inline
-func (img *imageElement) VerticalAlignMiddle() *imageElement {
+func (img *docImage) VerticalAlignMiddle() *docImage {
 	img.valign = 1
 	return img
 }
 
 // VerticalAlignBottom aligns the image with the bottom of the text line when inline
-func (img *imageElement) VerticalAlignBottom() *imageElement {
+func (img *docImage) VerticalAlignBottom() *docImage {
 	img.valign = 2
 	return img
 }
 
 // Draw renders the image on the document to include page break handling
-func (img *imageElement) Draw() error {
+func (img *docImage) Draw() error {
 	// Get image dimensions to calculate aspect ratio if needed
 	imgWidth, imgHeight, err := img.getImageDimensions()
 	if err != nil {
@@ -188,7 +188,7 @@ func (img *imageElement) Draw() error {
 }
 
 // getImageDimensions returns the natural width and height of the image
-func (img *imageElement) getImageDimensions() (float64, float64, error) {
+func (img *docImage) getImageDimensions() (float64, float64, error) {
 	file, err := os.Open(img.path)
 	if err != nil {
 		return 0, 0, err
@@ -204,7 +204,7 @@ func (img *imageElement) getImageDimensions() (float64, float64, error) {
 }
 
 // calculateDimensions determines the final width and height of the image
-func (img *imageElement) calculateDimensions(imgWidth, imgHeight float64) (float64, float64) {
+func (img *docImage) calculateDimensions(imgWidth, imgHeight float64) (float64, float64) {
 	// Default to original dimensions
 	finalWidth := imgWidth
 	finalHeight := imgHeight
@@ -238,7 +238,7 @@ func (img *imageElement) calculateDimensions(imgWidth, imgHeight float64) (float
 }
 
 // calculatePosition determines where to place the image
-func (img *imageElement) calculatePosition(width float64) (float64, float64) {
+func (img *docImage) calculatePosition(width float64) (float64, float64) {
 	if img.hasPos {
 		return img.x, img.y
 	}

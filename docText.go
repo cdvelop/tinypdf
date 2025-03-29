@@ -25,8 +25,8 @@ type TextStyle struct {
 	SpaceAfter  float64 // Space after paragraph (in points)
 }
 
-// TextBuilder is a helper struct to build text cells
-type TextBuilder struct {
+// docText is a helper struct to build text cells
+type docText struct {
 	doc         *Document
 	text        string
 	opts        CellOption
@@ -37,9 +37,9 @@ type TextBuilder struct {
 	positioning elementPosition // "inline", "newline" (por defecto newline)
 }
 
-// newTextBuilder creates a new TextBuilder with the given style
-func (d *Document) newTextBuilder(text string, style TextStyle, fontName string) *TextBuilder {
-	builder := &TextBuilder{
+// newTextBuilder creates a new docText with the given style
+func (d *Document) newTextBuilder(text string, style TextStyle, fontName string) *docText {
+	builder := &docText{
 		doc:         d,
 		text:        text,
 		style:       style, // Store the style
@@ -66,81 +66,81 @@ func (d *Document) newTextBuilder(text string, style TextStyle, fontName string)
 }
 
 // AddText crea texto normal
-func (d *Document) AddText(text string) *TextBuilder {
-	tb := d.newTextBuilder(text, d.fontConfig.Normal, FontRegular)
-	tb.fullWidth = false // Solo para texto normal, usar ancho automático
-	return tb
+func (d *Document) AddText(text string) *docText {
+	dt := d.newTextBuilder(text, d.fontConfig.Normal, FontRegular)
+	dt.fullWidth = false // Solo para texto normal, usar ancho automático
+	return dt
 }
 
 // AddHeader1 crea un encabezado nivel 1
-func (d *Document) AddHeader1(text string) *TextBuilder {
+func (d *Document) AddHeader1(text string) *docText {
 	return d.newTextBuilder(text, d.fontConfig.Header1, FontBold)
 }
 
 // AddHeader2 crea un encabezado nivel 2
-func (d *Document) AddHeader2(text string) *TextBuilder {
+func (d *Document) AddHeader2(text string) *docText {
 	return d.newTextBuilder(text, d.fontConfig.Header2, FontBold)
 }
 
 // AddHeader3 crea un encabezado nivel 3
-func (d *Document) AddHeader3(text string) *TextBuilder {
+func (d *Document) AddHeader3(text string) *docText {
 	return d.newTextBuilder(text, d.fontConfig.Header3, FontBold)
 }
 
 // AddFootnote crea una nota al pie
-func (d *Document) AddFootnote(text string) *TextBuilder {
+func (d *Document) AddFootnote(text string) *docText {
 	return d.newTextBuilder(text, d.fontConfig.Footnote, FontItalic)
 }
 
 // AddJustifiedText crea texto justificado directamente
-func (d *Document) AddJustifiedText(text string) *TextBuilder {
-	tb := d.AddText(text)
-	return tb.Justify()
+func (d *Document) AddJustifiedText(text string) *docText {
+	dt := d.AddText(text)
+	return dt.Justify()
 }
 
-func (tb *TextBuilder) AlignCenter() *TextBuilder {
-	tb.opts.Align = Center | Top
-	return tb
+func (dt *docText) AlignCenter() *docText {
+	dt.opts.Align = Center | Top
+	return dt
 }
 
-func (tb *TextBuilder) AlignRight() *TextBuilder {
-	tb.opts.Align = Right | Top
-	tb.fullWidth = true
-	return tb
+func (dt *docText) AlignRight() *docText {
+	dt.opts.Align = Right | Top
+	dt.fullWidth = true
+	return dt
 }
 
-func (tb *TextBuilder) AlignLeft() *TextBuilder {
-	tb.opts.Align = Left | Top
-	return tb
+func (dt *docText) AlignLeft() *docText {
+	dt.opts.Align = Left | Top
+	return dt
 }
 
-func (tb *TextBuilder) Justify() *TextBuilder {
-	tb.opts.Align = Justify | Top
-	return tb
+func (dt *docText) Justify() *docText {
+	dt.opts.Align = Justify | Top
+	return dt
 }
 
-func (tb *TextBuilder) WithBorder() *TextBuilder {
-	tb.opts.Border = AllBorders
-	return tb
+func (dt *docText) WithBorder() *docText {
+	dt.opts.Border = AllBorders
+	return dt
 }
 
 // Métodos para cambiar el estilo de fuente
-func (tb *TextBuilder) Bold() *TextBuilder {
-	tb.fontName = FontBold
-	tb.doc.SetFont(FontBold, "", tb.style.Size)
-	return tb
+func (dt *docText) Bold() *docText {
+	dt.fontName = FontBold
+	dt.doc.SetFont(FontBold, "", dt.style.Size)
+	return dt
 }
 
-func (tb *TextBuilder) Italic() *TextBuilder {
-	tb.fontName = FontItalic
-	tb.doc.SetFont(FontItalic, "", tb.style.Size)
-	return tb
+func (dt *docText) Italic() *docText {
+	dt.fontName = FontItalic
+	dt.doc.SetFont(FontItalic, "", dt.style.Size)
+	return dt
 }
 
-func (tb *TextBuilder) Regular() *TextBuilder {
-	tb.fontName = FontRegular
-	tb.doc.SetFont(FontRegular, "", tb.style.Size)
-	return tb
+func (dt *docText) Regular() *docText {
+	dt.fontName = FontRegular
+	dt.doc.SetFont(FontRegular, "", dt.style.Size)
+	return dt
 }
 
 // SpaceBefore adds vertical space (in font spaces)
@@ -162,23 +162,23 @@ func (d *Document) SpaceBefore(spaces ...float64) {
 }
 
 // FullWidth hace que el texto ocupe todo el ancho disponible
-func (tb *TextBuilder) FullWidth() *TextBuilder {
-	tb.fullWidth = true
-	return tb
+func (dt *docText) FullWidth() *docText {
+	dt.fullWidth = true
+	return dt
 }
 
 // WidthPercent establece el ancho como porcentaje del ancho de página
-func (tb *TextBuilder) WidthPercent(percent float64) *TextBuilder {
+func (dt *docText) WidthPercent(percent float64) *docText {
 	if percent > 0 && percent <= 100 {
-		tb.rect.W = tb.doc.pageWidth * (percent / 100)
+		dt.rect.W = dt.doc.pageWidth * (percent / 100)
 	}
-	return tb
+	return dt
 }
 
 // Inline intenta posicionar este elemento en la misma línea que el anterior
-func (tb *TextBuilder) Inline() *TextBuilder {
-	tb.positioning = inlinePosition
-	return tb
+func (dt *docText) Inline() *docText {
+	dt.positioning = inlinePosition
+	return dt
 }
 
 // retorna el factor de ancho para una fuente específica
@@ -198,102 +198,102 @@ func (d *Document) measureTextWidthFactor(fontName string) float64 {
 }
 
 // estima el ancho mínimo necesario para el texto
-func (tb *TextBuilder) minimumWidthRequiredForText() {
+func (dt *docText) minimumWidthRequiredForText() {
 	// Calcular ancho necesario para el texto si no se especificó un ancho fijo
 	// o si se solicitó ancho completo
-	if tb.fullWidth {
+	if dt.fullWidth {
 		// Usar ancho completo de la página
-		tb.rect.W = tb.doc.pageWidth
+		dt.rect.W = dt.doc.pageWidth
 	} else {
 		// Si no se especificó un ancho, calcular el ancho mínimo necesario
-		if tb.rect.W <= 0 {
+		if dt.rect.W <= 0 {
 			// Obtener el factor de ancho según el tipo de fuente
-			widthFactor := tb.doc.measureTextWidthFactor(tb.fontName)
+			widthFactor := dt.doc.measureTextWidthFactor(dt.fontName)
 
 			// Calcular ancho considerando un factor de reducción más realista
-			charWidth := tb.style.Size * widthFactor
+			charWidth := dt.style.Size * widthFactor
 
 			// Considerar longitud efectiva (algunos caracteres son más estrechos)
-			effectiveLength := float64(len(tb.text)) * 0.8 // Reducir un % por espacios y caracteres estrechos
-			// effectiveLength := float64(len(tb.text)) * 0.9 // Reducir un 10% por espacios y caracteres estrechos
+			effectiveLength := float64(len(dt.text)) * 0.8 // Reducir un % por espacios y caracteres estrechos
+			// effectiveLength := float64(len(dt.text)) * 0.9 // Reducir un 10% por espacios y caracteres estrechos
 
 			// Calcular ancho estimado
 			width := effectiveLength * charWidth
 
 			// Añadir un pequeño margen
-			width += tb.style.Size // Añadir un margen completo del tamaño de la fuente
+			width += dt.style.Size // Añadir un margen completo del tamaño de la fuente
 
 			// Si el texto es largo usar el ancho de página
-			if width >= tb.doc.pageWidth {
-				width = tb.doc.pageWidth
+			if width >= dt.doc.pageWidth {
+				width = dt.doc.pageWidth
 			}
 
 			// Asegurar un ancho mínimo razonable
-			minWidth := tb.style.Size
+			minWidth := dt.style.Size
 			if width < minWidth {
 				width = minWidth
 			}
 
-			tb.rect.W = width
+			dt.rect.W = width
 		}
 	}
 }
 
 // Draw renders the text on the document to include page break handling
-func (tb *TextBuilder) Draw() error {
+func (dt *docText) Draw() error {
 	// Apply space before the paragraph
-	if tb.style.SpaceBefore > 0 {
-		tb.doc.SetY(tb.doc.GetY() + tb.style.SpaceBefore)
+	if dt.style.SpaceBefore > 0 {
+		dt.doc.SetY(dt.doc.GetY() + dt.style.SpaceBefore)
 	}
 
 	// Handle positioning
-	if tb.positioning == inlinePosition {
+	if dt.positioning == inlinePosition {
 		// Keep current X position for inline elements
-	} else if tb.doc.inlineMode {
+	} else if dt.doc.inlineMode {
 		// Reset X to left margin if previous element was inline but this one isn't
-		tb.doc.SetX(tb.doc.margins.Left)
-		tb.doc.inlineMode = false
+		dt.doc.SetX(dt.doc.margins.Left)
+		dt.doc.inlineMode = false
 	}
 
-	tb.minimumWidthRequiredForText()
+	dt.minimumWidthRequiredForText()
 
 	// Calculate how many lines the text will occupy
-	textSplits, err := tb.doc.SplitTextWithOption(tb.text, tb.rect.W, tb.opts.BreakOption)
+	textSplits, err := dt.doc.SplitTextWithOption(dt.text, dt.rect.W, dt.opts.BreakOption)
 	if err != nil {
 		return err
 	}
 
 	// Get line height in current font and size
-	_, lineHeight, _, err := createContent(tb.doc.curr.FontISubset, tb.text,
-		tb.doc.curr.FontSize, tb.doc.curr.CharSpacing, nil)
+	_, lineHeight, _, err := createContent(dt.doc.curr.FontISubset, dt.text,
+		dt.doc.curr.FontSize, dt.doc.curr.CharSpacing, nil)
 	if err != nil {
 		return err
 	}
 
-	tb.doc.PointsToUnitsVar(&lineHeight)
+	dt.doc.PointsToUnitsVar(&lineHeight)
 
 	// Calculate total height needed for all lines
 	totalHeight := float64(len(textSplits)) * lineHeight
 
 	// Set the rectangle height to accommodate all text
-	tb.rect.H = totalHeight
+	dt.rect.H = totalHeight
 
 	// HERE IS THE NEW PART: Check if the text fits on current page
-	newY, _ := tb.doc.ensureElementFits(totalHeight, tb.style.SpaceAfter)
-	tb.doc.SetY(newY)
+	newY, _ := dt.doc.ensureElementFits(totalHeight, dt.style.SpaceAfter)
+	dt.doc.SetY(newY)
 
 	// Draw the text with the properly sized rectangle
-	err = tb.doc.MultiCellWithOption(tb.rect, tb.text, tb.opts)
+	err = dt.doc.MultiCellWithOption(dt.rect, dt.text, dt.opts)
 	if err != nil {
 		return err
 	}
 
 	// Update inline mode based on current element's positioning
-	tb.doc.inlineMode = (tb.positioning == inlinePosition)
+	dt.doc.inlineMode = (dt.positioning == inlinePosition)
 
 	// If not inline, ensure we do a proper line break
-	if tb.positioning == newlinePosition {
-		tb.doc.newLineBreakBasedOnDefaultFont(tb.doc.GetY())
+	if dt.positioning == newlinePosition {
+		dt.doc.newLineBreakBasedOnDefaultFont(dt.doc.GetY())
 	}
 
 	return nil

@@ -13,7 +13,7 @@ func (gp *GoPdf) AddFooter(f func()) {
 }
 
 // AddPageHeader adds a header to the document
-func (d *Document) AddPageHeader(text string) *TextBuilder {
+func (d *Document) AddPageHeader(text string) *docText {
 	// Create text builder with header style
 	builder := d.newTextBuilder(text, d.fontConfig.PageHeader, FontRegular)
 
@@ -40,7 +40,7 @@ func (d *Document) AddPageHeader(text string) *TextBuilder {
 }
 
 // AddPageFooter adds a footer to the document
-func (d *Document) AddPageFooter(text string) *TextBuilder {
+func (d *Document) AddPageFooter(text string) *docText {
 	// Create text builder with footer style
 	builder := d.newTextBuilder(text, d.fontConfig.PageFooter, FontRegular)
 
@@ -73,18 +73,18 @@ func (d *Document) AddPageFooter(text string) *TextBuilder {
 }
 
 // WithPageNumber adds page number to the text builder
-func (tb *TextBuilder) WithPageNumber() *TextBuilder {
+func (dt *docText) WithPageNumber() *docText {
 	// Get current text
-	currentText := tb.text
+	currentText := dt.text
 
 	// Add page number
 	if currentText != "" {
 		currentText += " "
 	}
-	currentText += strconv.Itoa(tb.doc.GetNumberOfPages())
+	currentText += strconv.Itoa(dt.doc.GetNumberOfPages())
 
 	// Update text in the builder
-	tb.text = currentText
+	dt.text = currentText
 
-	return tb
+	return dt
 }
