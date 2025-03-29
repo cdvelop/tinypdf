@@ -17,13 +17,13 @@ type justifiedText struct {
 func parseTextForJustification(gp *GoPdf, text string, width float64) (*justifiedText, error) {
 	// Si el texto está vacío o no tiene espacios, no hay nada que justificar
 	if text == "" {
-		return nil, ErrEmptyString
+		return nil, errEmptyString
 	}
 
 	// Ignorar espacios iniciales y finales
 	text = strings.TrimSpace(text)
 	if text == "" {
-		return nil, ErrEmptyString
+		return nil, errEmptyString
 	}
 
 	// Dividir el texto en palabras

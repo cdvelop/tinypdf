@@ -4,6 +4,175 @@ import (
 	"strings"
 )
 
+// Left left
+const Left = 8 //001000
+// Top top
+const Top = 4 //000100
+// Right right
+const Right = 2 //000010
+// Bottom bottom
+const Bottom = 1 //000001
+// Center center
+const Center = 16 //010000
+// Middle middle
+const Middle = 32 //100000
+// Justify justify text
+const Justify = 64 //1000000
+// AllBorders allborders
+const AllBorders = 15 //001111
+
+// CellOption cell option
+type CellOption struct {
+	Align                  int //Allows to align the text. Possible values are: Left,Center,Right,Top,Bottom,Middle
+	Border                 int //Indicates if borders must be drawn around the cell. Possible values are: Left, Top, Right, Bottom, ALL
+	Float                  int //Indicates where the current position should go after the call. Possible values are: Right, Bottom
+	Transparency           *Transparency
+	CoefUnderlinePosition  float64
+	CoefLineHeight         float64
+	CoefUnderlineThickness float64
+	BreakOption            *BreakOption
+
+	extGStateIndexes []int
+}
+
+// Text write text start at current x,y ( current y is the baseline of text )
+func (gp *GoPdf) Text(text string) error {
+
+	text, err := gp.curr.FontISubset.AddChars(text)
+	if err != nil {
+		return err
+	}
+
+	err = gp.getContent().AppendStreamText(text)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CellWithOption create cell of text ( use current x,y is upper-left corner of cell)
+func (gp *GoPdf) CellWithOption(rectangle *Rect, text string, opt CellOption) error {
+	transparency, err := gp.getCachedTransparency(opt.Transparency)
+	if err != nil {
+		return err
+	}
+
+	if transparency != nil {
+		opt.extGStateIndexes = append(opt.extGStateIndexes, transparency.extGStateIndex)
+	}
+
+	rectangle = rectangle.UnitsToPoints(gp.config.Unit)
+	text, err = gp.curr.FontISubset.AddChars(text)
+	if err != nil {
+		return err
+	}
+	if err := gp.getContent().AppendStreamSubsetFont(rectangle, text, opt); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Cell : create cell of text ( use current x,y is upper-left corner of cell)
+// Note that this has no effect on Rect.H pdf (now). Fix later :-)
+func (gp *GoPdf) Cell(rectangle *Rect, text string) error {
+	rectangle = rectangle.UnitsToPoints(gp.config.Unit)
+	defaultopt := CellOption{
+		Align:  Left | Top,
+		Border: 0,
+		Float:  Right,
+	}
+
+	text, err := gp.curr.FontISubset.AddChars(text)
+	if err != nil {
+		return err
+	}
+	err = gp.getContent().AppendStreamSubsetFont(rectangle, text, defaultopt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// [experimental]
+// PlaceHolderText Create a text placehold for fillin text later with function FillInPlaceHoldText.
+func (gp *GoPdf) PlaceHolderText(placeHolderName string, placeHolderWidth float64) error {
+
+	//placeHolderText := fmt.Sprintf("{%s}", placeHolderName)
+	_, err := gp.curr.FontISubset.AddChars("")
+	if err != nil {
+		return err
+	}
+
+	gp.PointsToUnitsVar(&placeHolderWidth)
+	err = gp.getContent().appendStreamPlaceHolderText(placeHolderWidth)
+	if err != nil {
+		return err
+	}
+
+	content := gp.pdfObjs[gp.indexOfContent].(*ContentObj)
+	indexInContent := len(content.listCache.caches) - 1
+	indexOfContent := gp.indexOfContent
+	fontISubset := gp.curr.FontISubset
+
+	gp.placeHolderTexts[placeHolderName] = append(
+		gp.placeHolderTexts[placeHolderName],
+		placeHolderTextInfo{
+			indexOfContent:   indexOfContent,
+			indexInContent:   indexInContent,
+			fontISubset:      fontISubset,
+			placeHolderWidth: placeHolderWidth,
+			fontSize:         gp.curr.FontSize,
+			charSpacing:      gp.curr.CharSpacing,
+		},
+	)
+
+	return nil
+}
+
+// [experimental]
+// fill in text that created by function PlaceHolderText
+// align: Left,Right,Center
+func (gp *GoPdf) FillInPlaceHoldText(placeHolderName string, text string, align int) error {
+
+	infos, ok := gp.placeHolderTexts[placeHolderName]
+	if !ok {
+		return newErr("placeHolderName not found")
+	}
+
+	for _, info := range infos {
+		content, ok := gp.pdfObjs[info.indexOfContent].(*ContentObj)
+		if !ok {
+			return newErr("gp.pdfObjs is not *ContentObj")
+		}
+		contentText, ok := content.listCache.caches[info.indexInContent].(*cacheContentText)
+		if !ok {
+			return newErr("listCache.caches is not *cacheContentText")
+		}
+		info.fontISubset.AddChars(text)
+		contentText.text = text
+
+		//Calculate position
+		_, _, textWidthPdfUnit, err := createContent(gp.curr.FontISubset, text, info.fontSize, info.charSpacing, nil)
+		if err != nil {
+			return err
+		}
+		width := pointsToUnits(gp.config, textWidthPdfUnit)
+
+		if align == Right {
+			diff := info.placeHolderWidth - width
+			contentText.x = contentText.x + diff
+		} else if align == Center {
+			diff := info.placeHolderWidth - width
+			contentText.x = contentText.x + diff/2
+		}
+	}
+
+	return nil
+}
+
 // MultiCell : create of text with line breaks (use current x,y is upper-left corner of cell)
 func (gp *GoPdf) MultiCell(rectangle *Rect, text string) error {
 	var line []rune
@@ -237,7 +406,7 @@ func (gp *GoPdf) SplitTextWithOption(text string, width float64, opt *BreakOptio
 	utf8Texts := []rune(text)
 	utf8TextsLen := len(utf8Texts) // utf8 string quantity
 	if utf8TextsLen == 0 {
-		return lineTexts, ErrEmptyString
+		return lineTexts, errEmptyString
 	}
 	separatorWidth, err := gp.MeasureTextWidth(opt.Separator)
 	if err != nil {

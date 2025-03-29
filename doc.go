@@ -149,5 +149,5 @@ func (gp *GoPdf) SetPage(pageno int) error {
 		}
 	}
 
-	return Err("invalid page number")
+	return newErr("invalid page number")
 }

@@ -1,10 +1,5 @@
 package tinypdf
 
-// Margins type.
-type Margins struct {
-	Left, Top, Right, Bottom float64
-}
-
 // SetLeftMargin sets left margin.
 func (gp *GoPdf) SetLeftMargin(margin float64) {
 	gp.UnitsToPointsVar(&margin)

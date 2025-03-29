@@ -6,8 +6,8 @@ import (
 )
 
 func TestErrAllTypes(t *testing.T) {
-	// Llamada al método Err con varios tipos
-	e := Err(
+	// Llamada al método newErr con varios tipos
+	e := newErr(
 		"stringTest",
 		[]string{"array", "of", "strings"},
 		rune(':'), // Solo se une sin espacio adicional

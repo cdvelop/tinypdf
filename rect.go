@@ -1,14 +1,5 @@
 package tinypdf
 
-// Rect defines a rectangle by its width and height.
-// This is used for defining page sizes, content areas, and other rectangular regions in PDF documents.
-// The dimensions are stored in the current unit system (points by default, but can be mm, cm, inches, or pixels).
-type Rect struct {
-	W            float64 // Width of the rectangle
-	H            float64 // Height of the rectangle
-	unitOverride defaultUnitConfig
-}
-
 // PointsToUnits converts the rectangle's width and height from points to the specified unit system.
 // When this is called it is assumed the values of the rectangle are in points.
 // The method creates a new Rect instance with dimensions converted to the specified units.

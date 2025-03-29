@@ -365,7 +365,7 @@ func writeFile(name string, data []byte, perm os.FileMode) error {
 func generatePDFBytesByAddTTFFontData(pdf *GoPdf, fontData []byte) ([]byte, error) {
 	pdf.Start(Config{PageSize: *PageSizeA4})
 	if pdf.GetNumberOfPages() != 0 {
-		return nil, Err("Invalid starting number of pages, should be 0")
+		return nil, newErr("Invalid starting number of pages, should be 0")
 	}
 
 	if err := pdf.AddTTFFontData("LiberationSerif-Regular", fontData); err != nil {

@@ -45,8 +45,8 @@ func TestJustify(t *testing.T) {
 	// Test with empty text
 	t.Run("EmptyText", func(t *testing.T) {
 		_, err := parseTextForJustification(pdf, "", 200.0)
-		if err != ErrEmptyString {
-			t.Errorf("Empty text should return ErrEmptyString, but got: %v", err)
+		if err != errEmptyString {
+			t.Errorf("Empty text should return errEmptyString, but got: %v", err)
 		}
 	})
 

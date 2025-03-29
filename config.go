@@ -220,16 +220,6 @@ type unitConfigurator interface {
 	getConversionForUnit() float64
 }
 
-// defaultUnitConfig is the standard implementation of the unitConfigurator interface.
-// It stores the unit type and an optional custom conversion factor.
-type defaultUnitConfig struct {
-	// Unit specifies the unit type (UnitPT, UnitMM, UnitCM, UnitIN, UnitPX)
-	Unit int
-
-	// ConversionForUnit is an optional custom conversion factor
-	ConversionForUnit float64
-}
-
 // getUnit returns the unit type from the defaultUnitConfig
 func (d defaultUnitConfig) getUnit() int {
 	return d.Unit
