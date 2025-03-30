@@ -244,18 +244,34 @@ func (t *DocTable) Draw() error {
 		x = t.doc.margins.Left + (t.doc.pageWidth - (t.doc.margins.Left + t.doc.margins.Right) - t.width)
 	}
 
-	// Draw header row
+	// Colección para guardar información de los encabezados para dibujar sus bordes al final
+	type headerInfo struct {
+		x, y, width, height float64
+		style               CellStyle
+	}
+	headers := []headerInfo{}
+
+	// Draw header row (sin bordes por ahora, solo contenido y fondo)
 	currentX := x
 	for _, col := range t.columns {
-		// Los encabezados siempre usan la alineación de la columna
-		t.drawCell(
+		// Guardamos información del encabezado para dibujar los bordes después
+		headers = append(headers, headerInfo{
+			x:      currentX,
+			y:      y,
+			width:  col.width,
+			height: t.rowHeight,
+			style:  t.headerStyle,
+		})
+
+		// Dibujar contenido y fondo de la celda de encabezado
+		t.drawCellContent(
 			currentX,
 			y,
 			col.width,
 			t.rowHeight,
 			col.header,
-			col.align, // Usamos la alineación de la columna para el encabezado
-			true,      // isHeader
+			col.align,
+			true, // isHeader
 			t.headerStyle,
 		)
 		currentX += col.width
@@ -271,11 +287,24 @@ func (t *DocTable) Draw() error {
 			t.doc.AddPage()
 			currentY = t.doc.margins.Top
 
-			// Redraw the header row on the new page
+			// Limpiar la lista de encabezados para la nueva página
+			headers = []headerInfo{}
+
+			// Redraw the header row on the new page (solo contenido y fondo)
 			headerY := currentY
 			headerX := x
 			for _, col := range t.columns {
-				t.drawCell(
+				// Guardamos información del encabezado para dibujar los bordes después
+				headers = append(headers, headerInfo{
+					x:      headerX,
+					y:      headerY,
+					width:  col.width,
+					height: t.rowHeight,
+					style:  t.headerStyle,
+				})
+
+				// Dibujar contenido y fondo de la celda de encabezado
+				t.drawCellContent(
 					headerX,
 					headerY,
 					col.width,
@@ -304,6 +333,7 @@ func (t *DocTable) Draw() error {
 					style = cell.cellStyle
 				}
 
+				// Dibujar celda completa (contenido, fondo y bordes)
 				t.drawCell(
 					currentX,
 					currentY,
@@ -320,14 +350,19 @@ func (t *DocTable) Draw() error {
 		}
 	}
 
+	// Ahora dibujamos los bordes de los encabezados al final
+	for _, h := range headers {
+		t.drawCellBorder(h.x, h.y, h.width, h.height, h.style.BorderStyle)
+	}
+
 	// Update document position to after the table
 	t.doc.SetY(y + totalHeight + t.doc.fontConfig.Normal.SpaceAfter)
 
 	return nil
 }
 
-// drawCell draws a single cell of the table
-func (t *DocTable) drawCell(
+// drawCellContent dibuja solo el contenido y fondo de una celda (sin bordes)
+func (t *DocTable) drawCellContent(
 	x float64,
 	y float64,
 	width float64,
@@ -341,29 +376,6 @@ func (t *DocTable) drawCell(
 	if (style.FillColor != RGBColor{}) {
 		t.doc.SetFillColor(style.FillColor.R, style.FillColor.G, style.FillColor.B)
 		t.doc.RectFromUpperLeftWithStyle(x, y, width, height, "F")
-	}
-
-	// Draw the cell border
-	if style.BorderStyle.Width > 0 {
-		t.doc.SetLineWidth(style.BorderStyle.Width)
-		t.doc.SetStrokeColor(
-			style.BorderStyle.RGBColor.R,
-			style.BorderStyle.RGBColor.G,
-			style.BorderStyle.RGBColor.B,
-		)
-
-		if style.BorderStyle.Top {
-			t.doc.Line(x, y, x+width, y)
-		}
-		if style.BorderStyle.Bottom {
-			t.doc.Line(x, y+height, x+width, y+height)
-		}
-		if style.BorderStyle.Left {
-			t.doc.Line(x, y, x, y+height)
-		}
-		if style.BorderStyle.Right {
-			t.doc.Line(x+width, y, x+width, y+height)
-		}
 	}
 
 	// Set text properties
@@ -381,7 +393,7 @@ func (t *DocTable) drawCell(
 	// Create cell options
 	cellOpt := CellOption{
 		Align:  align | Middle, // Combine horizontal alignment with vertical middle alignment
-		Border: 0,              // We've already drawn the borders
+		Border: 0,              // No borders
 		BreakOption: &BreakOption{
 			Mode:           BreakModeIndicatorSensitive,
 			BreakIndicator: ' ',
@@ -394,4 +406,53 @@ func (t *DocTable) drawCell(
 	if err != nil && err.Error() != "empty string" {
 		t.doc.log("Error drawing table cell:", err)
 	}
+}
+
+// drawCellBorder dibuja solo los bordes de una celda
+func (t *DocTable) drawCellBorder(
+	x float64,
+	y float64,
+	width float64,
+	height float64,
+	borderStyle BorderStyle,
+) {
+	if borderStyle.Width > 0 {
+		t.doc.SetLineWidth(borderStyle.Width)
+		t.doc.SetStrokeColor(
+			borderStyle.RGBColor.R,
+			borderStyle.RGBColor.G,
+			borderStyle.RGBColor.B,
+		)
+
+		if borderStyle.Top {
+			t.doc.Line(x, y, x+width, y)
+		}
+		if borderStyle.Bottom {
+			t.doc.Line(x, y+height, x+width, y+height)
+		}
+		if borderStyle.Left {
+			t.doc.Line(x, y, x, y+height)
+		}
+		if borderStyle.Right {
+			t.doc.Line(x+width, y, x+width, y+height)
+		}
+	}
+}
+
+// drawCell draws a single cell of the table
+func (t *DocTable) drawCell(
+	x float64,
+	y float64,
+	width float64,
+	height float64,
+	content string,
+	align int,
+	isHeader bool,
+	style CellStyle,
+) {
+	// Primero dibujamos el contenido y el fondo
+	t.drawCellContent(x, y, width, height, content, align, isHeader, style)
+
+	// Luego dibujamos los bordes
+	t.drawCellBorder(x, y, width, height, style.BorderStyle)
 }
