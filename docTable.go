@@ -79,22 +79,22 @@ func (doc *Document) NewTable(headers ...string) *DocTable {
 
 	// First pass: Calculate minimum width for each column based on header text
 	for i, header := range headers {
-		// Estimate width based on header text
-		textWidthFactor := doc.measureTextWidthFactor(FontBold)
+		// Estimate width based on header text - MEJORADO para evitar cortes de texto
+		textWidthFactor := 0.85 // Usar un factor más generoso que el de measureTextWidthFactor
 		estWidth := float64(len(header)) * doc.fontConfig.Header3.Size * textWidthFactor
 
 		// Add padding to ensure header fits comfortably
 		minWidth := estWidth + (table.cellPadding * 2)
 
-		// Ensure minimum reasonable width
-		if minWidth < 30 {
-			minWidth = 30
+		// Ensure minimum reasonable width and add extra space for encabezados
+		if minWidth < 40 {
+			minWidth = 40 // Aumentado de 30 a 40 para dar más espacio
 		}
 
 		columns[i] = tableColumn{
 			header: header,
 			width:  minWidth,
-			align:  Left, // Default alignment
+			align:  Center, // Cambiado a Center para centrar los encabezados por defecto
 		}
 
 		totalWidth += minWidth
@@ -247,14 +247,15 @@ func (t *DocTable) Draw() error {
 	// Draw header row
 	currentX := x
 	for _, col := range t.columns {
+		// Los encabezados siempre usan la alineación de la columna
 		t.drawCell(
 			currentX,
 			y,
 			col.width,
 			t.rowHeight,
 			col.header,
-			col.align,
-			true, // isHeader
+			col.align, // Usamos la alineación de la columna para el encabezado
+			true,      // isHeader
 			t.headerStyle,
 		)
 		currentX += col.width
