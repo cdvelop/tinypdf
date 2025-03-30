@@ -249,8 +249,9 @@ func (dt *docText) Draw() error {
 	// Handle positioning
 	if dt.positioning == inlinePosition {
 		// Keep current X position for inline elements
-	} else if dt.doc.inlineMode {
-		// Reset X to left margin if previous element was inline but this one isn't
+	} else {
+		// Si no es inline, siempre restauramos la posición X al margen izquierdo
+		// independientemente de si el elemento anterior era inline o no
 		dt.doc.SetX(dt.doc.margins.Left)
 		dt.doc.inlineMode = false
 	}
@@ -278,7 +279,7 @@ func (dt *docText) Draw() error {
 	// Set the rectangle height to accommodate all text
 	dt.rect.H = totalHeight
 
-	// HERE IS THE NEW PART: Check if the text fits on current page
+	// Check if the text fits on current page
 	newY, _ := dt.doc.ensureElementFits(totalHeight, dt.style.SpaceAfter)
 	dt.doc.SetY(newY)
 
