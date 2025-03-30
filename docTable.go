@@ -1,7 +1,7 @@
 package tinypdf
 
-// DocTable represents a table to be added to the document
-type DocTable struct {
+// docTable represents a table to be added to the document
+type docTable struct {
 	doc          *Document
 	columns      []tableColumn
 	rows         [][]tableCell
@@ -16,9 +16,12 @@ type DocTable struct {
 
 // tableColumn represents a column in the table
 type tableColumn struct {
-	header string  // Header text
-	width  float64 // Width of the column
-	align  int     // Text alignment within cells (Left, Center, Right)
+	header      string  // Header text
+	width       float64 // Width of the column
+	headerAlign int     // Text alignment for header (Left, Center, Right)
+	align       int     // Text alignment within cells (Left, Center, Right)
+	prefix      string  // Prefix to add before each value in the column
+	suffix      string  // Suffix to add after each value in the column
 }
 
 // tableCell represents a cell in the table
@@ -29,9 +32,17 @@ type tableCell struct {
 }
 
 // NewTable creates a new table with the specified headers
-// It automatically determines column widths based on header text
-func (doc *Document) NewTable(headers ...string) *DocTable {
-	table := &DocTable{
+// Headers can include formatting options in the following format:
+// "headerTitle|[HeaderAlignment][ColumnAlignment][Prefix][Suffix]"
+//
+// Examples:
+//   - "Name" - Normal header, left-aligned column
+//   - "Price|HR" - Right-aligned header, left-aligned column
+//   - "Amount|HRR" - Right-aligned header, right-aligned column
+//   - "Price|HRRP:$" - Right-aligned header, right-aligned column with "$" prefix
+//   - "Percentage|HCS:%" - Center-aligned header, center-aligned column with "%" suffix
+func (doc *Document) NewTable(headers ...string) *docTable {
+	table := &docTable{
 		doc:         doc,
 		rowHeight:   25, // Default row height
 		cellPadding: 5,  // Default padding
@@ -70,7 +81,7 @@ func (doc *Document) NewTable(headers ...string) *DocTable {
 		FontSize:  doc.fontConfig.Normal.Size,
 	}
 
-	// Estimate widths for columns based on header text
+	// Parse headers and estimate widths for columns
 	columns := make([]tableColumn, len(headers))
 
 	// Calculate total table width
@@ -78,23 +89,29 @@ func (doc *Document) NewTable(headers ...string) *DocTable {
 	totalWidth := 0.0
 
 	// First pass: Calculate minimum width for each column based on header text
-	for i, header := range headers {
+	for i, headerFormat := range headers {
+		// Parse the header format
+		options := parseHeaderFormat(headerFormat)
+
 		// Estimate width based on header text - MEJORADO para evitar cortes de texto
 		textWidthFactor := 0.85 // Usar un factor más generoso que el de measureTextWidthFactor
-		estWidth := float64(len(header)) * doc.fontConfig.Header3.Size * textWidthFactor
+		estWidth := float64(len(options.HeaderTitle)) * doc.fontConfig.Header3.Size * textWidthFactor
 
 		// Add padding to ensure header fits comfortably
 		minWidth := estWidth + (table.cellPadding * 2)
 
-		// Ensure minimum reasonable width and add extra space for encabezados
+		// Ensure minimum reasonable width
 		if minWidth < 40 {
-			minWidth = 40 // Aumentado de 30 a 40 para dar más espacio
+			minWidth = 40
 		}
 
 		columns[i] = tableColumn{
-			header: header,
-			width:  minWidth,
-			align:  Center, // Cambiado a Center para centrar los encabezados por defecto
+			header:      options.HeaderTitle,
+			width:       minWidth,
+			headerAlign: options.HeaderAlignment,
+			align:       options.ColumnAlignment,
+			prefix:      options.Prefix,
+			suffix:      options.Suffix,
 		}
 
 		totalWidth += minWidth
@@ -118,7 +135,7 @@ func (doc *Document) NewTable(headers ...string) *DocTable {
 }
 
 // Width sets the total width of the table
-func (t *DocTable) Width(width float64) *DocTable {
+func (t *docTable) Width(width float64) *docTable {
 	if width > 0 {
 		scaleFactor := width / t.currentWidth
 		for i := range t.columns {
@@ -131,7 +148,7 @@ func (t *DocTable) Width(width float64) *DocTable {
 }
 
 // RowHeight sets the height of rows
-func (t *DocTable) RowHeight(height float64) *DocTable {
+func (t *docTable) RowHeight(height float64) *docTable {
 	if height > 0 {
 		t.rowHeight = height
 	}
@@ -139,7 +156,7 @@ func (t *DocTable) RowHeight(height float64) *DocTable {
 }
 
 // SetColumnWidth sets the width of a specific column by index
-func (t *DocTable) SetColumnWidth(columnIndex int, width float64) *DocTable {
+func (t *docTable) SetColumnWidth(columnIndex int, width float64) *docTable {
 	if columnIndex >= 0 && columnIndex < len(t.columns) && width > 0 {
 		// Adjust total width
 		t.currentWidth = t.currentWidth - t.columns[columnIndex].width + width
@@ -148,50 +165,78 @@ func (t *DocTable) SetColumnWidth(columnIndex int, width float64) *DocTable {
 	return t
 }
 
-// SetColumnAlignment sets the text alignment for a specific column
-func (t *DocTable) SetColumnAlignment(columnIndex int, alignment int) *DocTable {
+// SetHeaderAlignment sets the text alignment for a specific header
+func (t *docTable) SetHeaderAlignment(columnIndex int, alignment int) *docTable {
 	if columnIndex >= 0 && columnIndex < len(t.columns) {
-		t.columns[columnIndex].align = alignment
+		t.columns[columnIndex].headerAlign = alignment
+	}
+	return t
+}
+
+// SetColumnPrefix sets a prefix for all values in a column
+func (t *docTable) SetColumnPrefix(columnIndex int, prefix string) *docTable {
+	if columnIndex >= 0 && columnIndex < len(t.columns) {
+		t.columns[columnIndex].prefix = prefix
+	}
+	return t
+}
+
+// SetColumnSuffix sets a suffix for all values in a column
+func (t *docTable) SetColumnSuffix(columnIndex int, suffix string) *docTable {
+	if columnIndex >= 0 && columnIndex < len(t.columns) {
+		t.columns[columnIndex].suffix = suffix
 	}
 	return t
 }
 
 // AlignLeft aligns the table to the left margin
-func (t *DocTable) AlignLeft() *DocTable {
+func (t *docTable) AlignLeft() *docTable {
 	t.alignment = Left
 	return t
 }
 
 // AlignCenter centers the table horizontally (default)
-func (t *DocTable) AlignCenter() *DocTable {
+func (t *docTable) AlignCenter() *docTable {
 	t.alignment = Center
 	return t
 }
 
 // AlignRight aligns the table to the right margin
-func (t *DocTable) AlignRight() *DocTable {
+func (t *docTable) AlignRight() *docTable {
 	t.alignment = Right
 	return t
 }
 
 // HeaderStyle sets the style for the header row
-func (t *DocTable) HeaderStyle(style CellStyle) *DocTable {
+func (t *docTable) HeaderStyle(style CellStyle) *docTable {
 	t.headerStyle = style
 	return t
 }
 
 // CellStyle sets the default style for regular cells
-func (t *DocTable) CellStyle(style CellStyle) *DocTable {
+func (t *docTable) CellStyle(style CellStyle) *docTable {
 	t.cellStyle = style
 	return t
 }
 
 // AddRow adds a row of data to the table
-func (t *DocTable) AddRow(cells ...string) *DocTable {
+func (t *docTable) AddRow(cells ...string) *docTable {
 	rowCells := make([]tableCell, len(cells))
 	for i, content := range cells {
+		formattedContent := content
+
+		// Apply prefix and suffix if column exists
+		if i < len(t.columns) {
+			if t.columns[i].prefix != "" {
+				formattedContent = t.columns[i].prefix + formattedContent
+			}
+			if t.columns[i].suffix != "" {
+				formattedContent = formattedContent + t.columns[i].suffix
+			}
+		}
+
 		rowCells[i] = tableCell{
-			content:      content,
+			content:      formattedContent,
 			useCellStyle: false,
 		}
 	}
@@ -200,11 +245,23 @@ func (t *DocTable) AddRow(cells ...string) *DocTable {
 }
 
 // AddStyledRow adds a row with individually styled cells
-func (t *DocTable) AddStyledRow(cells ...StyledCell) *DocTable {
+func (t *docTable) AddStyledRow(cells ...StyledCell) *docTable {
 	rowCells := make([]tableCell, len(cells))
 	for i, cell := range cells {
+		formattedContent := cell.Content
+
+		// Apply prefix and suffix if column exists
+		if i < len(t.columns) {
+			if t.columns[i].prefix != "" {
+				formattedContent = t.columns[i].prefix + formattedContent
+			}
+			if t.columns[i].suffix != "" {
+				formattedContent = formattedContent + t.columns[i].suffix
+			}
+		}
+
 		rowCells[i] = tableCell{
-			content:      cell.Content,
+			content:      formattedContent,
 			useCellStyle: true,
 			cellStyle:    cell.Style,
 		}
@@ -228,7 +285,7 @@ func (doc *Document) NewStyledCell(content string, style CellStyle) StyledCell {
 }
 
 // Draw renders the table on the document
-func (t *DocTable) Draw() error {
+func (t *docTable) Draw() error {
 	// Calculate total height of table
 	totalHeight := t.rowHeight * float64(len(t.rows)+1) // +1 for header row
 
@@ -263,15 +320,15 @@ func (t *DocTable) Draw() error {
 			style:  t.headerStyle,
 		})
 
-		// Dibujar contenido y fondo de la celda de encabezado
+		// Dibujar contenido y fondo de la celda de encabezado usando la alineación especificada
 		t.drawCellContent(
 			currentX,
 			y,
 			col.width,
 			t.rowHeight,
 			col.header,
-			col.align,
-			true, // isHeader
+			col.headerAlign, // Use header-specific alignment
+			true,            // isHeader
 			t.headerStyle,
 		)
 		currentX += col.width
@@ -303,15 +360,15 @@ func (t *DocTable) Draw() error {
 					style:  t.headerStyle,
 				})
 
-				// Dibujar contenido y fondo de la celda de encabezado
+				// Dibujar contenido y fondo de la celda de encabezado usando la alineación especificada
 				t.drawCellContent(
 					headerX,
 					headerY,
 					col.width,
 					t.rowHeight,
 					col.header,
-					col.align,
-					true, // isHeader
+					col.headerAlign, // Use header-specific alignment
+					true,            // isHeader
 					t.headerStyle,
 				)
 				headerX += col.width
@@ -362,7 +419,7 @@ func (t *DocTable) Draw() error {
 }
 
 // drawCellContent dibuja solo el contenido y fondo de una celda (sin bordes)
-func (t *DocTable) drawCellContent(
+func (t *docTable) drawCellContent(
 	x float64,
 	y float64,
 	width float64,
@@ -409,7 +466,7 @@ func (t *DocTable) drawCellContent(
 }
 
 // drawCellBorder dibuja solo los bordes de una celda
-func (t *DocTable) drawCellBorder(
+func (t *docTable) drawCellBorder(
 	x float64,
 	y float64,
 	width float64,
@@ -440,7 +497,7 @@ func (t *DocTable) drawCellBorder(
 }
 
 // drawCell draws a single cell of the table
-func (t *DocTable) drawCell(
+func (t *docTable) drawCell(
 	x float64,
 	y float64,
 	width float64,

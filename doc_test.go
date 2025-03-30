@@ -73,8 +73,6 @@ func TestDocumentAPIUsage(t *testing.T) {
 	// Justified text
 	doc.AddText("JUSTIFIED TEXT:").Bold().Draw()
 	doc.AddText("This is an Example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
-	doc.AddImage("test/res/barchart.png").Height(150).AlignCenter().Draw()
-	doc.AddText("This is an Example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
 
 	// Add example of table usage
 	doc.AddHeader2("Section 2: Table Example").Draw()
@@ -83,32 +81,10 @@ func TestDocumentAPIUsage(t *testing.T) {
 	// Create a new table with headers
 	table := doc.NewTable("CODE", "DESCRIPTION", "QTY.", "PRICE", "TOTAL")
 
-	// Set column alignments (left for text, right for numbers)
-	table.SetColumnAlignment(0, Left)  // CODE
-	table.SetColumnAlignment(1, Left)  // DESCRIPTION
-	table.SetColumnAlignment(2, Right) // QTY
-	table.SetColumnAlignment(3, Right) // PRICE
-	table.SetColumnAlignment(4, Right) // TOTAL
-
 	// Add regular rows
 	table.AddRow("001", "Product A", "2", "$10.00", "$20.00")
 	table.AddRow("002", "Product B", "1", "$15.00", "$15.00")
 	table.AddRow("003", "Product C", "3", "$5.00", "$15.00")
-
-	// Create a styled cell for the total row
-	boldStyle := CellStyle{
-		TextColor: RGBColor{R: 0, G: 0, B: 128}, // Dark blue
-		Font:      FontBold,
-	}
-
-	// Add a styled row for the total
-	table.AddStyledRow(
-		doc.NewStyledCell("", CellStyle{}),
-		doc.NewStyledCell("TOTAL", boldStyle),
-		doc.NewStyledCell("6", boldStyle),
-		doc.NewStyledCell("", CellStyle{}),
-		doc.NewStyledCell("$50.00", boldStyle),
-	)
 
 	// Draw the table
 	table.Draw()
@@ -122,6 +98,39 @@ func TestDocumentAPIUsage(t *testing.T) {
 	rightTable.AddRow("Item 2", "$200.00")
 	rightTable.AddRow("Item 3", "$300.00")
 	rightTable.Draw()
+
+	// Add examples using the new enhanced header format
+	doc.AddHeader2("Section 3: Enhanced Table Format").Draw()
+	doc.AddText("The table below demonstrates the new header format with built-in alignment and prefix/suffix options:").Draw()
+
+	// Create a table using the enhanced format
+	enhancedTable := doc.NewTable(
+		"Product|HL",     // Left-aligned header
+		"Description",    // Default (centered header, left-aligned column)
+		"Quantity|HRR",   // Right-aligned header and column
+		"Price|HRRP:$",   // Right-aligned header and column with $ prefix
+		"Discount|HCS:%", // Centered header, centered column with % suffix
+	)
+
+	// Add rows (notice we don't need to add $ prefix or % suffix manually)
+	enhancedTable.AddRow("Laptop", "High-performance laptop", "2", "1200", "10")
+	enhancedTable.AddRow("Monitor", "27-inch 4K display", "1", "400", "5")
+	enhancedTable.AddRow("Keyboard", "Mechanical keyboard", "3", "80", "15")
+	enhancedTable.Draw()
+
+	// Example with complex formatting
+	doc.AddText("Here's another example with more complex formatting:").Draw()
+	complexTable := doc.NewTable(
+		"Item|HL",                   // Left-aligned header
+		"Price (Before Tax)|HRRP:$", // Right-aligned with $ prefix
+		"Tax|HRRS:%",                // Right-aligned with % suffix
+		"Total Cost|HRRP:$",         // Right-aligned with $ prefix
+	)
+
+	complexTable.AddRow("Product A", "100", "20", "120")
+	complexTable.AddRow("Product B", "200", "15", "230")
+	complexTable.AddRow("Product C", "50", "10", "55")
+	complexTable.Draw()
 
 	// Add a centered footer with page number
 	doc.AddPageFooter("Page").AlignCenter().WithPageNumber().Draw()
