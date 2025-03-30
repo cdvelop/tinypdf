@@ -32,15 +32,24 @@ type tableCell struct {
 }
 
 // NewTable creates a new table with the specified headers
-// Headers can include formatting options in the following format:
-// "headerTitle|[HeaderAlignment][ColumnAlignment][Prefix][Suffix]"
+// Headers can include formatting options in the following format.
+//
+// Format: "headerTitle|option1,option2,option3,..."
+//
+// Available options:
+//   - Header alignment: "HL" (left), "HC" (center, default), "HR" (right)
+//   - Column alignment: "CL" (left, default), "CC" (center), "CR" (right)
+//   - Prefix/Suffix: "P:value" (adds prefix), "S:value" (adds suffix)
+//   - Width: "W:number" (fixed width), "W:number%" (percentage width)
+//     Note: If width is not specified, auto width is used by default
 //
 // Examples:
-//   - "Name" - Normal header, left-aligned column
-//   - "Price|HR" - Right-aligned header, left-aligned column
-//   - "Amount|HRR" - Right-aligned header, right-aligned column
-//   - "Price|HRRP:$" - Right-aligned header, right-aligned column with "$" prefix
-//   - "Percentage|HCS:%" - Center-aligned header, center-aligned column with "%" suffix
+//   - "Name" - Normal header, left-aligned column, auto width
+//   - "Price|HR,CR" - Right-aligned header, right-aligned column
+//   - "Price|HR,CR,P:$" - Right-aligned header, right-aligned column with "$" prefix
+//   - "Percentage|HC,CC,S:%" - Center-aligned header, center-aligned column with "%" suffix
+//   - "Name|HL,CL,W:30%" - Left-aligned header, left-aligned column with 30% of available width
+//   - "Age|HC,CR,W:20" - Center-aligned header, right-aligned column with fixed width of 20 units
 func (doc *Document) NewTable(headers ...string) *docTable {
 	table := &docTable{
 		doc:         doc,
@@ -88,37 +97,95 @@ func (doc *Document) NewTable(headers ...string) *docTable {
 	doc.SetFont(FontBold, "", doc.fontConfig.Header3.Size)
 	totalWidth := 0.0
 
+	// Track columns with fixed width and percentage width
+	fixedWidthTotal := 0.0
+	percentageWidthTotal := 0.0
+	hasPercentageWidths := false
+
+	// Available width for the table (accounting for margins)
+	maxWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
+
 	// First pass: Calculate minimum width for each column based on header text
 	for i, headerFormat := range headers {
 		// Parse the header format
 		options := parseHeaderFormat(headerFormat)
 
-		// Estimate width based on header text - MEJORADO para evitar cortes de texto
-		textWidthFactor := 0.85 // Usar un factor más generoso que el de measureTextWidthFactor
-		estWidth := float64(len(options.HeaderTitle)) * doc.fontConfig.Header3.Size * textWidthFactor
+		// Determine the width based on the format options or estimate from header text
+		var colWidth float64
 
-		// Add padding to ensure header fits comfortably
-		minWidth := estWidth + (table.cellPadding * 2)
+		// Check if a specific width was provided
+		if options.WidthType == "fixed" {
+			// Fixed width specified in units
+			colWidth = options.Width
+			fixedWidthTotal += colWidth
+		} else if options.WidthType == "percent" {
+			// Percentage of available width
+			hasPercentageWidths = true
+			percentageWidthTotal += options.Width
+			// Store the percentage for now, will calculate actual width later
+			colWidth = options.Width
+		} else {
+			// Auto width based on content (default behavior)
+			// Estimate width based on header text
+			textWidthFactor := 0.85
+			estWidth := float64(len(options.HeaderTitle)) * doc.fontConfig.Header3.Size * textWidthFactor
 
-		// Ensure minimum reasonable width
-		if minWidth < 40 {
-			minWidth = 40
+			// Add padding to ensure header fits comfortably
+			colWidth = estWidth + (table.cellPadding * 2)
+
+			// Ensure minimum reasonable width
+			if colWidth < 40 {
+				colWidth = 40
+			}
+
+			fixedWidthTotal += colWidth
 		}
 
 		columns[i] = tableColumn{
 			header:      options.HeaderTitle,
-			width:       minWidth,
+			width:       colWidth, // Will be adjusted in second pass for percentage widths
 			headerAlign: options.HeaderAlignment,
 			align:       options.ColumnAlignment,
 			prefix:      options.Prefix,
 			suffix:      options.Suffix,
 		}
+	}
 
-		totalWidth += minWidth
+	// Second pass: Adjust widths for columns with percentage specifications
+	if hasPercentageWidths {
+		// Calculate remaining width after fixed width columns
+		remainingWidth := maxWidth - fixedWidthTotal
+
+		// Ensure we have some width to distribute
+		if remainingWidth <= 0 {
+			remainingWidth = maxWidth * 0.5 // Fallback to 50% of max width
+			fixedWidthTotal = maxWidth * 0.5
+		}
+
+		// Normalize percentages if they exceed 100%
+		scaleFactor := 1.0
+		if percentageWidthTotal > 100 {
+			scaleFactor = 100 / percentageWidthTotal
+		}
+
+		// Apply percentage widths
+		for i := range columns {
+			options := parseHeaderFormat(headers[i])
+			if options.WidthType == "percent" {
+				// Calculate actual width based on percentage
+				adjustedPercentage := options.Width * scaleFactor
+				columns[i].width = (remainingWidth * adjustedPercentage) / 100.0
+			}
+		}
+	}
+
+	// Calculate total width after all adjustments
+	totalWidth = 0.0
+	for _, col := range columns {
+		totalWidth += col.width
 	}
 
 	// If total width exceeds document width, scale down proportionally
-	maxWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
 	if totalWidth > maxWidth {
 		scaleFactor := maxWidth / totalWidth
 		for i := range columns {

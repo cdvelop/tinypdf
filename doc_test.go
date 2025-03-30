@@ -75,10 +75,10 @@ func TestDocumentAPIUsage(t *testing.T) {
 	doc.AddText("This is an Example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
 
 	// Add example of table usage
-	doc.AddHeader2("Section 2: Table Example").Draw()
+	doc.AddHeader2("Section 2: Simple Table Example").Draw()
 	doc.AddText("Below is an example of a simple product table:").Draw()
 
-	// Create a new table with headers
+	// Create a new table with basic headers (no formatting options)
 	table := doc.NewTable("CODE", "DESCRIPTION", "QTY.", "PRICE", "TOTAL")
 
 	// Add regular rows
@@ -99,38 +99,69 @@ func TestDocumentAPIUsage(t *testing.T) {
 	rightTable.AddRow("Item 3", "$300.00")
 	rightTable.Draw()
 
-	// Add examples using the new enhanced header format
-	doc.AddHeader2("Section 3: Enhanced Table Format").Draw()
-	doc.AddText("The table below demonstrates the new header format with built-in alignment and prefix/suffix options:").Draw()
+	// Add examples using the new format with comma-separated options
+	doc.AddHeader2("Section 3: Table Format with Options").Draw()
+	doc.AddText("The table below demonstrates the header format with comma-separated options:").Draw()
 
-	// Create a table using the enhanced format
-	enhancedTable := doc.NewTable(
-		"Product|HL",     // Left-aligned header
-		"Description",    // Default (centered header, left-aligned column)
-		"Quantity|HRR",   // Right-aligned header and column
-		"Price|HRRP:$",   // Right-aligned header and column with $ prefix
-		"Discount|HCS:%", // Centered header, centered column with % suffix
+	// Create a table using the new format
+	formattedTable := doc.NewTable(
+		"Product|HL,CL",      // Left-aligned header, Left-aligned column
+		"Description|HC,CL",  // Centered header (default), Left-aligned column
+		"Quantity|HR,CR",     // Right-aligned header, Right-aligned column
+		"Price|HR,CR,P:$",    // Right-aligned header, Right-aligned column with $ prefix
+		"Discount|HC,CC,S:%", // Centered header, Centered column with % suffix
 	)
 
 	// Add rows (notice we don't need to add $ prefix or % suffix manually)
-	enhancedTable.AddRow("Laptop", "High-performance laptop", "2", "1200", "10")
-	enhancedTable.AddRow("Monitor", "27-inch 4K display", "1", "400", "5")
-	enhancedTable.AddRow("Keyboard", "Mechanical keyboard", "3", "80", "15")
-	enhancedTable.Draw()
+	formattedTable.AddRow("Laptop", "High-performance laptop", "2", "1200", "10")
+	formattedTable.AddRow("Monitor", "27-inch 4K display", "1", "400", "5")
+	formattedTable.AddRow("Keyboard", "Mechanical keyboard", "3", "80", "15")
+	formattedTable.Draw()
 
-	// Example with complex formatting
-	doc.AddText("Here's another example with more complex formatting:").Draw()
-	complexTable := doc.NewTable(
-		"Item|HL",                   // Left-aligned header
-		"Price (Before Tax)|HRRP:$", // Right-aligned with $ prefix
-		"Tax|HRRS:%",                // Right-aligned with % suffix
-		"Total Cost|HRRP:$",         // Right-aligned with $ prefix
+	// Example with width specifications
+	doc.AddHeader3("Tables with width specifications").Draw()
+	doc.AddText("This table demonstrates column width control:").Draw()
+
+	widthTable := doc.NewTable(
+		"Product|HL,CL,W:30%",     // Left-aligned header, 30% of available width
+		"SKU|HC,CC,W:10%",         // Centered header and column, 10% of width
+		"Description|HC,CL,W:40%", // Centered header, Left-aligned column, 40% of width
+		"Price|HR,CR,P:$,W:20%",   // Right-aligned, Right-aligned column with $ prefix, 20% of width
 	)
 
-	complexTable.AddRow("Product A", "100", "20", "120")
-	complexTable.AddRow("Product B", "200", "15", "230")
-	complexTable.AddRow("Product C", "50", "10", "55")
-	complexTable.Draw()
+	widthTable.AddRow("Laptop XPS 15", "LP-XPS15-01", "High-performance laptop with 16GB RAM and 512GB SSD", "1499.99")
+	widthTable.AddRow("Monitor U2720Q", "MN-U2720Q-01", "27-inch 4K UHD Monitor with USB-C connectivity", "549.99")
+	widthTable.AddRow("Wireless Keyboard", "KB-WL-01", "Mechanical wireless keyboard with RGB lighting", "129.99")
+	widthTable.Draw()
+
+	// Example with fixed widths
+	doc.AddText("Table with fixed column widths:").Draw()
+	fixedWidthTable := doc.NewTable(
+		"ID|HC,CC,W:40",          // Center-aligned, fixed 40 units width
+		"Full Name|HL,CL,W:120",  // Left-aligned, fixed 120 units width
+		"Department|HL,CL,W:100", // Left-aligned, fixed 100 units width
+		"Salary|HR,CR,P:$,W:80",  // Right-aligned with $ prefix, fixed 80 units width
+	)
+
+	fixedWidthTable.AddRow("001", "John Smith", "Engineering", "85000")
+	fixedWidthTable.AddRow("002", "Jane Doe", "Marketing", "75000")
+	fixedWidthTable.AddRow("003", "Robert Johnson", "Finance", "90000")
+	fixedWidthTable.Draw()
+
+	// Example with auto width and mixed specifications
+	doc.AddText("Table with mixed width specifications:").Draw()
+	mixedWidthTable := doc.NewTable(
+		"ID|HC,CC,W:10%",      // Center-aligned, 10% of width
+		"Name|HL,CL",          // Left-aligned, auto width (default)
+		"Email|HL,CL,W:40%",   // Left-aligned, 40% of width
+		"Status|HC,CC,W:20%",  // Center-aligned, 20% of width
+		"Actions|HC,CC,W:30%", // Center-aligned, 30% of width
+	)
+
+	mixedWidthTable.AddRow("1", "John Smith", "john.smith@example.com", "Active", "Edit | Delete")
+	mixedWidthTable.AddRow("2", "Jane Doe", "jane.doe@example.com", "Inactive", "Edit | Activate")
+	mixedWidthTable.AddRow("3", "Robert Johnson", "robert.johnson@example.com", "Pending", "Edit | Approve")
+	mixedWidthTable.Draw()
 
 	// Add a centered footer with page number
 	doc.AddPageFooter("Page").AlignCenter().WithPageNumber().Draw()

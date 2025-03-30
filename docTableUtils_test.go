@@ -19,6 +19,8 @@ func TestParseHeaderFormat(t *testing.T) {
 				ColumnAlignment: Left,
 				Prefix:          "",
 				Suffix:          "",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
@@ -30,6 +32,8 @@ func TestParseHeaderFormat(t *testing.T) {
 				ColumnAlignment: Left,
 				Prefix:          "",
 				Suffix:          "",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
@@ -41,72 +45,112 @@ func TestParseHeaderFormat(t *testing.T) {
 				ColumnAlignment: Left,
 				Prefix:          "",
 				Suffix:          "",
+				Width:           0,
+				WidthType:       "auto",
+			},
+		},
+		{
+			name:  "Header with column alignment",
+			input: "Amount|CR",
+			expectedResult: headerFormatOptions{
+				HeaderTitle:     "Amount",
+				HeaderAlignment: Center,
+				ColumnAlignment: Right,
+				Prefix:          "",
+				Suffix:          "",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
 			name:  "Header with right alignment and right column alignment",
-			input: "Price|HRR",
+			input: "Price|HR,CR",
 			expectedResult: headerFormatOptions{
 				HeaderTitle:     "Price",
 				HeaderAlignment: Right,
 				ColumnAlignment: Right,
 				Prefix:          "",
 				Suffix:          "",
-			},
-		},
-		{
-			name:  "Header with center alignment and column right alignment",
-			input: "Amount|HR",
-			expectedResult: headerFormatOptions{
-				HeaderTitle:     "Amount",
-				HeaderAlignment: Right,
-				ColumnAlignment: Left,
-				Prefix:          "",
-				Suffix:          "",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
 			name:  "Header with prefix",
-			input: "Price|HRRP:$",
+			input: "Price|HR,CR,P:$",
 			expectedResult: headerFormatOptions{
 				HeaderTitle:     "Price",
 				HeaderAlignment: Right,
 				ColumnAlignment: Right,
 				Prefix:          "$",
 				Suffix:          "",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
 			name:  "Header with suffix",
-			input: "Percentage|HCS:%",
+			input: "Percentage|HC,CC,S:%",
 			expectedResult: headerFormatOptions{
 				HeaderTitle:     "Percentage",
 				HeaderAlignment: Center,
 				ColumnAlignment: Center,
 				Prefix:          "",
 				Suffix:          "%",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
-			name:  "Header with both prefix and suffix",
-			input: "Balance|HRRP:$S:USD",
+			name:  "Header with prefix and suffix",
+			input: "Balance|HR,CR,P:$,S:USD",
 			expectedResult: headerFormatOptions{
 				HeaderTitle:     "Balance",
 				HeaderAlignment: Right,
 				ColumnAlignment: Right,
 				Prefix:          "$",
 				Suffix:          "USD",
+				Width:           0,
+				WidthType:       "auto",
 			},
 		},
 		{
-			name:  "Header with column center alignment",
-			input: "Title|HLC",
+			name:  "Header with fixed width",
+			input: "Name|HL,CL,W:120",
 			expectedResult: headerFormatOptions{
-				HeaderTitle:     "Title",
+				HeaderTitle:     "Name",
 				HeaderAlignment: Left,
-				ColumnAlignment: Center,
+				ColumnAlignment: Left,
 				Prefix:          "",
 				Suffix:          "",
+				Width:           120,
+				WidthType:       "fixed",
+			},
+		},
+		{
+			name:  "Header with percentage width",
+			input: "Name|HL,CL,W:30%",
+			expectedResult: headerFormatOptions{
+				HeaderTitle:     "Name",
+				HeaderAlignment: Left,
+				ColumnAlignment: Left,
+				Prefix:          "",
+				Suffix:          "",
+				Width:           30,
+				WidthType:       "percent",
+			},
+		},
+		{
+			name:  "Complete example with all options",
+			input: "Product|HL,CR,P:Item:,S:USD,W:40%",
+			expectedResult: headerFormatOptions{
+				HeaderTitle:     "Product",
+				HeaderAlignment: Left,
+				ColumnAlignment: Right,
+				Prefix:          "Item:",
+				Suffix:          "USD",
+				Width:           40,
+				WidthType:       "percent",
 			},
 		},
 	}
@@ -129,99 +173,11 @@ func TestParseHeaderFormat(t *testing.T) {
 			if result.Suffix != tc.expectedResult.Suffix {
 				t.Errorf("Expected Suffix to be %s, got %s", tc.expectedResult.Suffix, result.Suffix)
 			}
-		})
-	}
-}
-
-func TestParseHeaderAlignment(t *testing.T) {
-	testCases := []struct {
-		name           string
-		input          string
-		expectedResult int
-	}{
-		{"Header left", "HL", Left},
-		{"Header right", "HR", Right},
-		{"Header center", "H", Center},
-		{"Default when not specified", "CR", 0},
-		{"Multiple options including header left", "HLRP:$", Left},
-		{"Multiple options including header right", "HRRP:$", Right},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := parseHeaderAlignment(tc.input)
-			if result != tc.expectedResult {
-				t.Errorf("Expected %d, got %d", tc.expectedResult, result)
+			if result.Width != tc.expectedResult.Width {
+				t.Errorf("Expected Width to be %f, got %f", tc.expectedResult.Width, result.Width)
 			}
-		})
-	}
-}
-
-func TestParseColumnAlignment(t *testing.T) {
-	testCases := []struct {
-		name           string
-		input          string
-		expectedResult int
-	}{
-		{"Column left", "L", Left},
-		{"Column center", "C", Center},
-		{"Column right", "R", Right},
-		{"Default when not specified", "H", 0},
-		{"Multiple options including column center", "HLC", Center},
-		{"Multiple options including column right", "HRR", Right},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := parseColumnAlignment(tc.input)
-			if result != tc.expectedResult {
-				t.Errorf("Expected %d, got %d", tc.expectedResult, result)
-			}
-		})
-	}
-}
-
-func TestParsePrefix(t *testing.T) {
-	testCases := []struct {
-		name           string
-		input          string
-		expectedResult string
-	}{
-		{"Simple prefix", "P:$", "$"},
-		{"Prefix in multiple options", "HRRP:$", "$"},
-		{"Prefix followed by suffix", "P:$S:%", "$"},
-		{"No prefix", "HRR", ""},
-		{"Empty prefix", "P:", ""},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := parseTableHeaderPrefix(tc.input)
-			if result != tc.expectedResult {
-				t.Errorf("Expected '%s', got '%s'", tc.expectedResult, result)
-			}
-		})
-	}
-}
-
-func TestParseSuffix(t *testing.T) {
-	testCases := []struct {
-		name           string
-		input          string
-		expectedResult string
-	}{
-		{"Simple suffix", "S:%", "%"},
-		{"Suffix in multiple options", "HRRS:%", "%"},
-		{"Suffix after prefix", "P:$S:%", "%"},
-		{"No suffix", "HRR", ""},
-		{"Empty suffix", "S:", ""},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := parseTableHeaderSuffix(tc.input)
-			if result != tc.expectedResult {
-				t.Errorf("Expected '%s', got '%s'", tc.expectedResult, result)
+			if result.WidthType != tc.expectedResult.WidthType {
+				t.Errorf("Expected WidthType to be %s, got %s", tc.expectedResult.WidthType, result.WidthType)
 			}
 		})
 	}
