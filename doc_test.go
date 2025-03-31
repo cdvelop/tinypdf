@@ -95,10 +95,10 @@ func TestDocumentAPIUsage(t *testing.T) {
 		"Code|CC,W:10%",               // Centered header and centered content, 10% width
 		"Product|W:20%",               // Default left alignment, 20% width
 		"Description|W:30%",           // Default left alignment, 30% width
-		"Quantity|HR,CR,S: pcs,W:10%", // Right-aligned header and content with "pcs" suffix, 10% width
-		"Price|CR,P:$,W:15%",          // Centered content with "$" prefix, 15% width
-		"Discount|HR,CR,S:%,W:8%",     // Right-aligned header, centered content with "%" suffix, 8% width
-		"Total|CR,P:$,W:12%",          // Centered content with "$" prefix, 12% width
+		"Quantity|HR,CR,S: pcs,W:15%", // Right-aligned header and content with "pcs" suffix, 10% width
+		"Price|CR,P:$,W:15%",          // Right-aligned content with "$" prefix, 15% width
+		"Discount|HR,CR,S:%,W:15%",    // Right-aligned header, centered content with "%" suffix, 8% width
+		"Total|CR,P:$,W:15%",          // Centered content with "$" prefix, 12% width
 	)
 
 	// Customize header style

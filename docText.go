@@ -214,14 +214,22 @@ func (dt *docText) minimumWidthRequiredForText() {
 			charWidth := dt.style.Size * widthFactor
 
 			// Considerar longitud efectiva (algunos caracteres son más estrechos)
-			effectiveLength := float64(len(dt.text)) * 0.8 // Reducir un % por espacios y caracteres estrechos
-			// effectiveLength := float64(len(dt.text)) * 0.9 // Reducir un 10% por espacios y caracteres estrechos
+			// Aumentar el factor para evitar problemas con signos de puntuación
+			effectiveLength := float64(len(dt.text)) * 0.85 // Reducir solo 15% en lugar de 20%
+
+			// Add extra space for text ending with punctuation marks
+			if len(dt.text) > 0 {
+				lastChar := dt.text[len(dt.text)-1]
+				if lastChar == ':' || lastChar == '.' || lastChar == '!' || lastChar == '?' {
+					effectiveLength += 0.5 // Add extra space for punctuation marks
+				}
+			}
 
 			// Calcular ancho estimado
 			width := effectiveLength * charWidth
 
 			// Añadir un pequeño margen
-			width += dt.style.Size // Añadir un margen completo del tamaño de la fuente
+			width += dt.style.Size * 1.1 // Aumentar el margen un 10%
 
 			// Si el texto es largo usar el ancho de página
 			if width >= dt.doc.pageWidth {
