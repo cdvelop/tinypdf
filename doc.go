@@ -4,11 +4,14 @@ import "strconv"
 
 type Document struct {
 	*GoPdf
-	fontConfig      FontConfig
-	pageWidth       float64
-	inlineMode      bool    // Add this field to track inline element state
-	lastInlineWidth float64 // Track the width of the last inline element
-	log             func(a ...any)
+	fontConfig         FontConfig
+	pageWidth          float64
+	inlineMode         bool    // Add this field to track inline element state
+	lastInlineWidth    float64 // Track the width of the last inline element
+	log                func(a ...any)
+	header             *HeaderFooter // New field for document header
+	footer             *HeaderFooter // New field for document footer
+	inHeaderFooterDraw bool          // Flag to prevent recursion in header/footer drawing
 }
 
 // NewDocument creates a new PDF document with configurable settings
@@ -66,6 +69,9 @@ func NewDocument(logPrint func(a ...any), configs ...any) *Document {
 	}
 
 	doc.pageWidth = doc.config.PageSize.W - (doc.margins.Left + doc.margins.Right)
+
+	// Initialize header and footer
+	doc.initHeaderFooter()
 
 	doc.AddPage()
 	doc.setDefaultFont()

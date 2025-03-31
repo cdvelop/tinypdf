@@ -13,6 +13,19 @@ func TestDocumentAPIUsage(t *testing.T) {
 		t.Log(a...)
 	})
 
+	// Setup header and footer with the new API
+	doc.SetPageHeader().
+		SetLeftText("Header Left").
+		SetCenterText("Document Example").
+		SetRightText("Confidential").
+		SetFont(FontBold)
+
+	// Add footer with page numbers in format X/Y
+	doc.SetPageFooter().
+		SetLeftText("Created: 2023-10-01").
+		SetCenterText("Page").
+		WithPageTotal("center")
+
 	// add logo image
 	doc.AddImage("test/res/logo.png").Height(35).Inline().Draw()
 
@@ -150,9 +163,6 @@ func TestDocumentAPIUsage(t *testing.T) {
 		rightTable.AddRow(product["id"], product["name"], product["price"])
 	}
 	rightTable.Draw()
-
-	// Add a centered footer with page number
-	doc.AddPageFooter("Page").AlignCenter().WithPageNumber().Draw()
 
 	// Create output directory if it doesn't exist
 	outDir := "test/out"
