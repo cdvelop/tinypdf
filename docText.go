@@ -35,6 +35,7 @@ type docText struct {
 	fontName    string
 	fullWidth   bool            // Por defecto es false (solo usa el ancho necesario)
 	positioning elementPosition // "inline", "newline" (por defecto newline)
+	wordWrap    bool            // Whether to use word-wrap (true) or allow mid-word breaks (false)
 }
 
 // newTextBuilder creates a new docText with the given style
@@ -46,6 +47,7 @@ func (d *Document) newTextBuilder(text string, style TextStyle, fontName string)
 		fontName:    fontName,
 		fullWidth:   true,            // Por defecto usar ancho completo para mantener compatibilidad
 		positioning: newlinePosition, // Por defecto es newline
+		wordWrap:    true,            // Por defecto usar word wrap (no cortar palabras)
 		rect: &Rect{
 			W: 0, // se calcula en Draw()
 			H: 0,
@@ -256,6 +258,19 @@ func (dt *docText) Draw() error {
 
 	// Special handling for right-aligned inline text
 	isRightAligned := (dt.opts.Align == Right || dt.opts.Align == (Right|Top))
+
+	// Configure word wrap to prevent cutting words
+	if dt.wordWrap {
+		// Use BreakModeIndicatorSensitive with space as break indicator to avoid mid-word breaks
+		dt.opts.BreakOption = &BreakOption{
+			Mode:           BreakModeIndicatorSensitive,
+			BreakIndicator: ' ',
+			Separator:      "",
+		}
+	} else {
+		// Use default break option (which may allow mid-word breaks)
+		dt.opts.BreakOption = &DefaultBreakOption
+	}
 
 	// Handle positioning
 	if dt.positioning == inlinePosition {

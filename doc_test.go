@@ -37,16 +37,6 @@ func TestDocumentAPIUsage(t *testing.T) {
 	// Add right-aligned text (ensuring it's in regular style, not italic)
 	doc.AddText("This text is right-aligned.").Regular().AlignRight().Draw()
 
-	// Add justified text with multiple lines
-	doc.AddHeader3("Example of justified text").Draw()
-	doc.AddText("This is an example of justified text that extends across multiple lines. " +
-		"Justification distributes text uniformly between the left and right margins, " +
-		"which provides a more professional and organized look to the document. " +
-		"This is especially useful for formal documents such as reports, contracts, or books. " +
-		"As you can see, the spaces between words are automatically adjusted so that each line " +
-		"(except the last one in each paragraph) occupies the full available width. " +
-		"The last line is left-aligned by typographic convention.").Justify().Draw()
-
 	// bar chart image
 	doc.AddImage("test/res/barchart.png").Height(150).AlignCenter().Draw()
 	// Add a footnote (in italic by default)
@@ -63,17 +53,17 @@ func TestDocumentAPIUsage(t *testing.T) {
 	// Compare justified vs non-justified
 	doc.AddHeader1("Comparison: Normal Text vs Justified Text").Draw()
 
-	// Normal text (left-aligned)
 	doc.AddText("NORMAL TEXT (left-aligned):").Bold().Draw()
-	doc.AddText("This is a sample text that demonstrates normal text flow. The text continues across multiple lines to show how words wrap naturally at the margins. This creates a simple left-aligned paragraph that is easy to read. When text is not justified, it maintains consistent spacing between words while keeping a ragged right edge.").Draw()
-
-	// Space between examples
-	doc.SpaceBefore(3)
+	// Normal text (left-aligned)
+	const multilineText = "This is a sample text that demonstrates normal text flow. The text continues across multiple lines to show how words wrap naturally at the margins. This creates a simple left-aligned paragraph that is easy to read. When text is not justified, it maintains consistent spacing between words while keeping a ragged right edge."
+	doc.AddText(multilineText).Draw()
 
 	// Justified text
 	doc.AddText("JUSTIFIED TEXT:").Bold().Draw()
-	doc.AddText("This is an Example of a long paragraph of text that demonstrates justified text alignment. When text is justified, it is aligned evenly on both the left and right margins. This creates a clean, professional look that is commonly used in books, magazines, and formal documents. The spacing between words is automatically adjusted to ensure the text fills the entire width of the page from margin to margin.").Justify().Draw()
+	doc.AddText(multilineText).Justify().Draw()
 
+	// Space between examples
+	doc.SpaceBefore(2)
 	// Add example of table usage
 	doc.AddHeader2("Section 2: Table Examples").Draw()
 	doc.AddText("This section demonstrates different table configuration options:").Draw()
