@@ -1,5 +1,7 @@
 package tinypdf
 
+import "strconv"
+
 // docTable represents a table to be added to the document
 type docTable struct {
 	doc          *Document
@@ -286,11 +288,55 @@ func (t *docTable) CellStyle(style CellStyle) *docTable {
 	return t
 }
 
+// anyToString converts any value to a string without using fmt
+// Uses TinyGo-compatible approach to convert numbers to strings
+func anyToString(v any) string {
+	if v == nil {
+		return ""
+	}
+
+	switch val := v.(type) {
+	case string:
+		return val
+	case int:
+		return strconv.FormatInt(int64(val), 10)
+	case int8:
+		return strconv.FormatInt(int64(val), 10)
+	case int16:
+		return strconv.FormatInt(int64(val), 10)
+	case int32:
+		return strconv.FormatInt(int64(val), 10)
+	case int64:
+		return strconv.FormatInt(val, 10)
+	case uint:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint64:
+		return strconv.FormatUint(val, 10)
+	case float32:
+		return strconv.FormatFloat(float64(val), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(val, 'f', -1, 64)
+	case bool:
+		return strconv.FormatBool(val)
+	default:
+		// For any other type, return empty string
+		// In a full implementation, you might want to handle more types
+		return ""
+	}
+}
+
 // AddRow adds a row of data to the table
-func (t *docTable) AddRow(cells ...string) *docTable {
+// Accepts any value type which will be converted to strings
+func (t *docTable) AddRow(cells ...any) *docTable {
 	rowCells := make([]tableCell, len(cells))
 	for i, content := range cells {
-		formattedContent := content
+		formattedContent := anyToString(content)
 
 		// Apply prefix and suffix if column exists
 		if i < len(t.columns) {
