@@ -123,12 +123,15 @@ func (img *docImage) Draw() error {
 
 	// Check if the image has a fixed position
 	if !img.hasPos {
-		// HERE IS THE NEW PART: Check if the image fits on current page
-		newY, _ := img.doc.ensureElementFits(finalHeight)
+		// Skip page break check if we're in header/footer drawing mode
+		if !img.doc.inHeaderFooterDraw {
+			// Check if the image fits on current page
+			newY, _ := img.doc.ensureElementFits(finalHeight)
 
-		// Only update Y position if this is not an inline element
-		if !img.inline {
-			img.doc.SetY(newY)
+			// Only update Y position if this is not an inline element
+			if !img.inline {
+				img.doc.SetY(newY)
+			}
 		}
 	}
 
