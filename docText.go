@@ -53,8 +53,8 @@ func (d *Document) newTextBuilder(text string, style TextStyle, fontName string)
 			H: 0,
 		},
 		opts: CellOption{
-			Align:          style.Alignment,
-			Border:         AllBorders,
+			Align: style.Alignment,
+			// Border:         AllBorders,
 			Float:          Bottom,
 			CoefLineHeight: style.LineSpacing,
 		},
@@ -398,6 +398,24 @@ func (doc *Document) newLineBreakBasedOnDefaultFont(originY float64) {
 	// Reset font to regular for next text (prevents style bleed)
 	doc.setDefaultFont()
 
-	// Apply space after the paragraph
-	doc.SetY(originY + doc.fontConfig.Normal.Size + doc.fontConfig.Normal.SpaceAfter)
+	// Apply space after the paragraph based on the current active text style
+	// This ensures headers have their proper spacing
+	var spaceAfter float64
+
+	// Determine which style was used based on font size
+	fontSize := doc.curr.FontSize
+	if fontSize >= doc.fontConfig.Header1.Size {
+		spaceAfter = doc.fontConfig.Header1.SpaceAfter
+	} else if fontSize >= doc.fontConfig.Header2.Size {
+		spaceAfter = doc.fontConfig.Header2.SpaceAfter
+	} else if fontSize >= doc.fontConfig.Header3.Size {
+		spaceAfter = doc.fontConfig.Header3.SpaceAfter
+	} else if fontSize <= doc.fontConfig.Footnote.Size {
+		spaceAfter = doc.fontConfig.Footnote.SpaceAfter
+	} else {
+		spaceAfter = doc.fontConfig.Normal.SpaceAfter
+	}
+
+	// Apply the appropriate spacing
+	doc.SetY(originY + fontSize + spaceAfter)
 }
