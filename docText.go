@@ -52,7 +52,7 @@ func (d *Document) newTextBuilder(text string, style TextStyle, fontName string)
 		},
 		opts: CellOption{
 			Align:          style.Alignment,
-			Border:         0,
+			Border:         AllBorders,
 			Float:          Bottom,
 			CoefLineHeight: style.LineSpacing,
 		},
@@ -254,19 +254,64 @@ func (dt *docText) Draw() error {
 		dt.doc.SetY(dt.doc.GetY() + dt.style.SpaceBefore)
 	}
 
+	// Special handling for right-aligned inline text
+	isRightAligned := (dt.opts.Align == Right || dt.opts.Align == (Right|Top))
+
 	// Handle positioning
 	if dt.positioning == inlinePosition {
-		// Keep current X position for inline elements
+		// For right-aligned inline text, calculate position differently
+		if isRightAligned {
+			// First, calculate the width needed for the text
+			dt.minimumWidthRequiredForText()
+
+			// Save current Y position
+			currentY := dt.doc.GetY()
+
+			// Set X to maintain right alignment while considering page margins
+			textWidth := dt.rect.W
+			dt.doc.SetX(dt.doc.margins.Left + dt.doc.pageWidth - textWidth)
+
+			// Ensure we're at the same Y position
+			dt.doc.SetY(currentY)
+		} else {
+			// Keep current X position for regular inline elements
+			// If we're in inline mode, adjust available width
+			if dt.doc.inlineMode && dt.doc.lastInlineWidth > 0 {
+				// Calculate remaining width on the current line
+				currentX := dt.doc.GetX()
+				availableWidth := dt.doc.pageWidth - (currentX - dt.doc.margins.Left)
+
+				if !dt.fullWidth {
+					// For auto-width text, adjust rectangle width
+					dt.minimumWidthRequiredForText()
+					// Check if there's enough space
+					if dt.rect.W > availableWidth {
+						// Not enough space, force to next line
+						dt.doc.SetX(dt.doc.margins.Left)
+						dt.doc.inlineMode = false
+						dt.doc.lastInlineWidth = 0
+					}
+				} else {
+					// For full width text, adjust the width to available space
+					dt.rect.W = availableWidth
+				}
+			}
+		}
 	} else {
 		// Si no es inline, siempre restauramos la posición X al margen izquierdo
 		// independientemente de si el elemento anterior era inline o no
 		dt.doc.SetX(dt.doc.margins.Left)
 		dt.doc.inlineMode = false
+		dt.doc.lastInlineWidth = 0
 	}
 
-	dt.minimumWidthRequiredForText()
+	// If not inline or no previous inline width, and not right-aligned inline
+	if (dt.positioning != inlinePosition || dt.doc.lastInlineWidth == 0) &&
+		!(dt.positioning == inlinePosition && isRightAligned) {
+		dt.minimumWidthRequiredForText()
+	}
 
-	// Calculate how many lines the text will occupy
+	// Detect if this is a single line of text
 	textSplits, err := dt.doc.SplitTextWithOption(dt.text, dt.rect.W, dt.opts.BreakOption)
 	if err != nil {
 		return err
@@ -281,6 +326,9 @@ func (dt *docText) Draw() error {
 
 	dt.doc.PointsToUnitsVar(&lineHeight)
 
+	// Optimization for single-line text in inline mode - use Cell instead of MultiCell for better positioning
+	isSingleLine := len(textSplits) == 1
+
 	// Calculate total height needed for all lines
 	totalHeight := float64(len(textSplits)) * lineHeight
 
@@ -291,10 +339,33 @@ func (dt *docText) Draw() error {
 	newY, _ := dt.doc.ensureElementFits(totalHeight, dt.style.SpaceAfter)
 	dt.doc.SetY(newY)
 
-	// Draw the text with the properly sized rectangle
-	err = dt.doc.MultiCellWithOption(dt.rect, dt.text, dt.opts)
+	// Store current X position to calculate width after drawing
+	startX := dt.doc.GetX()
+
+	// Choose the appropriate drawing method based on text characteristics
+	if isSingleLine && dt.positioning == inlinePosition {
+		// For single-line text in inline mode, use Cell for better positioning
+		err = dt.doc.CellWithOption(dt.rect, dt.text, dt.opts)
+	} else {
+		// For multi-line text or non-inline text, use MultiCell
+		err = dt.doc.MultiCellWithOption(dt.rect, dt.text, dt.opts)
+	}
+
 	if err != nil {
 		return err
+	}
+
+	// Update the last inline width if in inline mode
+	if dt.positioning == inlinePosition {
+		// If not right-aligned, calculate actual width used
+		if !isRightAligned {
+			dt.doc.lastInlineWidth = dt.doc.GetX() - startX
+		} else {
+			// For right-aligned text, use the text width
+			dt.doc.lastInlineWidth = dt.rect.W
+		}
+	} else {
+		dt.doc.lastInlineWidth = 0
 	}
 
 	// Update inline mode based on current element's positioning

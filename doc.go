@@ -4,10 +4,11 @@ import "strconv"
 
 type Document struct {
 	*GoPdf
-	fontConfig FontConfig
-	pageWidth  float64
-	inlineMode bool // Add this field to track inline element state
-	log        func(a ...any)
+	fontConfig      FontConfig
+	pageWidth       float64
+	inlineMode      bool    // Add this field to track inline element state
+	lastInlineWidth float64 // Track the width of the last inline element
+	log             func(a ...any)
 }
 
 // NewDocument creates a new PDF document with configurable settings
@@ -23,8 +24,10 @@ func NewDocument(logPrint func(a ...any), configs ...any) *Document {
 		GoPdf: &GoPdf{
 			log: logPrint,
 		},
-		fontConfig: DefaultFontConfig(),
-		log:        logPrint,
+		fontConfig:      DefaultFontConfig(),
+		inlineMode:      false,
+		lastInlineWidth: 0,
+		log:             logPrint,
 	}
 
 	// Default margins: 1.5 cm left, 1 cm on other sides
