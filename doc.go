@@ -73,6 +73,7 @@ func NewDocument(logPrint func(a ...any), configs ...any) *Document {
 	// Initialize header and footer
 	doc.initHeaderFooter()
 
+	// Importante: Agregar la primera página después de inicializar el header y footer
 	doc.AddPage()
 	doc.setDefaultFont()
 
@@ -159,4 +160,32 @@ func (gp *GoPdf) SetPage(pageno int) error {
 	}
 
 	return newErr("invalid page number")
+}
+
+// AddPage añade una nueva página y actualiza el contador de páginas para el header y footer
+func (doc *Document) AddPage() {
+	// Llamar al método subyacente de GoPdf
+	doc.GoPdf.AddPage()
+
+	// Actualizar el contador de página actual para header y footer
+	if doc.header != nil {
+		doc.header.currentPage = doc.numOfPagesObj
+	}
+	if doc.footer != nil {
+		doc.footer.currentPage = doc.numOfPagesObj
+	}
+}
+
+// AddPageWithOption añade una nueva página con opciones y actualiza el contador de páginas para el header y footer
+func (doc *Document) AddPageWithOption(opt PageOption) {
+	// Llamar al método subyacente de GoPdf
+	doc.GoPdf.AddPageWithOption(opt)
+
+	// Actualizar el contador de página actual para header y footer
+	if doc.header != nil {
+		doc.header.currentPage = doc.numOfPagesObj
+	}
+	if doc.footer != nil {
+		doc.footer.currentPage = doc.numOfPagesObj
+	}
 }

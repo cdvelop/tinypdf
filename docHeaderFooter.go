@@ -24,6 +24,7 @@ type headerFooter struct {
 	FontName    string
 	isHeader    bool // true for header, false for footer
 	initialized bool
+	currentPage int // Número de página actual para mostrar en el footer
 }
 
 // AddHeader - add a header function, if present this will be automatically called by AddPage()
@@ -41,9 +42,10 @@ func (d *Document) initHeaderFooter() {
 	// Initialize header if not already done
 	if d.header == nil {
 		d.header = &headerFooter{
-			doc:      d,
-			FontName: FontRegular,
-			isHeader: true,
+			doc:         d,
+			FontName:    FontRegular,
+			isHeader:    true,
+			currentPage: 1, // Inicializar en 1 para la primera página
 		}
 
 		// Set up header callback function
@@ -55,9 +57,10 @@ func (d *Document) initHeaderFooter() {
 	// Initialize footer if not already done
 	if d.footer == nil {
 		d.footer = &headerFooter{
-			doc:      d,
-			FontName: FontRegular,
-			isHeader: false,
+			doc:         d,
+			FontName:    FontRegular,
+			isHeader:    false,
+			currentPage: 1, // Inicializar en 1 para la primera página
 		}
 
 		// Set up footer callback function
@@ -71,6 +74,13 @@ func (d *Document) initHeaderFooter() {
 func (hf *headerFooter) draw() {
 	if !hf.initialized {
 		return // Nothing to draw if not initialized
+	}
+
+	// Asegurar que siempre tengamos un número de página válido
+	// Sincronizar con el contador de páginas del documento
+	hf.currentPage = hf.doc.numOfPagesObj
+	if hf.currentPage <= 0 {
+		hf.currentPage = 1 // Garantizar que la página mínima sea 1
 	}
 
 	// Save current position and drawing settings
@@ -170,7 +180,8 @@ func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width flo
 
 		// Add page number if requested
 		if content.WithPage {
-			currentPage := doc.GetNumberOfPages()
+			// Para el encabezado usamos la pagina actual, para el pie de página incrementamos primero
+			currentPage := hf.currentPage
 			if text != "" {
 				text += " "
 			}
@@ -179,12 +190,14 @@ func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width flo
 
 		// Add total pages if requested
 		if content.WithTotalPages {
-			currentPage := doc.GetNumberOfPages()
+			// Para el encabezado usamos la pagina actual, para el pie de página incrementamos primero
+			currentPage := hf.currentPage
+			totalPages := doc.GetNumberOfPages()
 			if text != "" {
 				text += " "
 			}
-			// Usar formato simple X/Y donde Y se sustituirá al finalizar
-			text += strconv.Itoa(currentPage) + "/" + strconv.Itoa(hf.doc.numOfPagesObj)
+			// Mostrar en formato X/Y donde X es la página actual y Y es el total
+			text += strconv.Itoa(currentPage) + "/" + strconv.Itoa(totalPages)
 		}
 
 		// Create text builder
