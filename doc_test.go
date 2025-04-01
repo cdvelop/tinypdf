@@ -164,6 +164,9 @@ func TestDocumentAPIUsage(t *testing.T) {
 	}
 	rightTable.Draw()
 
+	// add page for checking page header and footer
+	doc.AddPage()
+
 	// Create output directory if it doesn't exist
 	outDir := "test/out"
 	err := os.MkdirAll(outDir, 0755)

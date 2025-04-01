@@ -9,8 +9,8 @@ type Document struct {
 	inlineMode         bool    // Add this field to track inline element state
 	lastInlineWidth    float64 // Track the width of the last inline element
 	log                func(a ...any)
-	header             *HeaderFooter // New field for document header
-	footer             *HeaderFooter // New field for document footer
+	header             *headerFooter // New field for document header
+	footer             *headerFooter // New field for document footer
 	inHeaderFooterDraw bool          // Flag to prevent recursion in header/footer drawing
 }
 

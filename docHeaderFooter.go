@@ -5,8 +5,8 @@ import (
 	"strconv"
 )
 
-// HeaderFooterContent represents content that can be placed in a header or footer
-type HeaderFooterContent struct {
+// headerFooterContent represents content that can be placed in a header or footer
+type headerFooterContent struct {
 	Text           string  // Text content
 	Image          string  // Image path (if it's an image)
 	Width          float64 // Image width if applicable
@@ -16,12 +16,12 @@ type HeaderFooterContent struct {
 	WithTotalPages bool    // Whether to append total pages in format "X/Y"
 }
 
-// HeaderFooter represents a document header or footer with left, center, and right sections
-type HeaderFooter struct {
+// headerFooter represents a document header or footer with left, center, and right sections
+type headerFooter struct {
 	doc         *Document
-	Left        HeaderFooterContent
-	Center      HeaderFooterContent
-	Right       HeaderFooterContent
+	Left        headerFooterContent
+	Center      headerFooterContent
+	Right       headerFooterContent
 	FontName    string
 	isHeader    bool // true for header, false for footer
 	initialized bool
@@ -41,7 +41,7 @@ func (gp *GoPdf) AddFooter(f func()) {
 func (d *Document) initHeaderFooter() {
 	// Initialize header if not already done
 	if d.header == nil {
-		d.header = &HeaderFooter{
+		d.header = &headerFooter{
 			doc:      d,
 			FontName: FontRegular,
 			isHeader: true,
@@ -55,7 +55,7 @@ func (d *Document) initHeaderFooter() {
 
 	// Initialize footer if not already done
 	if d.footer == nil {
-		d.footer = &HeaderFooter{
+		d.footer = &headerFooter{
 			doc:      d,
 			FontName: FontRegular,
 			isHeader: false,
@@ -69,7 +69,7 @@ func (d *Document) initHeaderFooter() {
 }
 
 // draw renders the header or footer on the current page
-func (hf *HeaderFooter) draw() {
+func (hf *headerFooter) draw() {
 	if !hf.initialized {
 		return // Nothing to draw if not initialized
 	}
@@ -138,7 +138,7 @@ func (hf *HeaderFooter) draw() {
 }
 
 // drawContent draws a single content item (text or image) in the header/footer
-func (hf *HeaderFooter) drawContent(content HeaderFooterContent, x, y, width float64, align int) {
+func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width float64, align int) {
 	doc := hf.doc
 
 	if content.IsImage {
@@ -185,7 +185,7 @@ func (hf *HeaderFooter) drawContent(content HeaderFooterContent, x, y, width flo
 				text += " "
 			}
 			// Usar formato simple X/Y donde Y se sustituirá al finalizar
-			text += fmt.Sprintf("%d/{TOTALPAGES}", currentPage)
+			text += strconv.Itoa(currentPage) + "/" + strconv.Itoa(hf.doc.numOfPagesObj)
 		}
 
 		// Create text builder
@@ -224,22 +224,22 @@ func (hf *HeaderFooter) drawContent(content HeaderFooterContent, x, y, width flo
 }
 
 // SetPageHeader sets the document header
-func (d *Document) SetPageHeader() *HeaderFooter {
+func (d *Document) SetPageHeader() *headerFooter {
 	d.initHeaderFooter()
 	d.header.initialized = true
 	return d.header
 }
 
 // SetPageFooter sets the document footer
-func (d *Document) SetPageFooter() *HeaderFooter {
+func (d *Document) SetPageFooter() *headerFooter {
 	d.initHeaderFooter()
 	d.footer.initialized = true
 	return d.footer
 }
 
 // SetLeftText sets the left-aligned text in the header/footer
-func (hf *HeaderFooter) SetLeftText(text string) *HeaderFooter {
-	hf.Left = HeaderFooterContent{
+func (hf *headerFooter) SetLeftText(text string) *headerFooter {
+	hf.Left = headerFooterContent{
 		Text:     text,
 		IsImage:  false,
 		WithPage: false,
@@ -248,8 +248,8 @@ func (hf *HeaderFooter) SetLeftText(text string) *HeaderFooter {
 }
 
 // SetCenterText sets the center-aligned text in the header/footer
-func (hf *HeaderFooter) SetCenterText(text string) *HeaderFooter {
-	hf.Center = HeaderFooterContent{
+func (hf *headerFooter) SetCenterText(text string) *headerFooter {
+	hf.Center = headerFooterContent{
 		Text:     text,
 		IsImage:  false,
 		WithPage: false,
@@ -258,8 +258,8 @@ func (hf *HeaderFooter) SetCenterText(text string) *HeaderFooter {
 }
 
 // SetRightText sets the right-aligned text in the header/footer
-func (hf *HeaderFooter) SetRightText(text string) *HeaderFooter {
-	hf.Right = HeaderFooterContent{
+func (hf *headerFooter) SetRightText(text string) *headerFooter {
+	hf.Right = headerFooterContent{
 		Text:     text,
 		IsImage:  false,
 		WithPage: false,
@@ -268,8 +268,8 @@ func (hf *HeaderFooter) SetRightText(text string) *HeaderFooter {
 }
 
 // SetLeftImage sets the left-aligned image in the header/footer
-func (hf *HeaderFooter) SetLeftImage(imagePath string, width, height float64) *HeaderFooter {
-	hf.Left = HeaderFooterContent{
+func (hf *headerFooter) SetLeftImage(imagePath string, width, height float64) *headerFooter {
+	hf.Left = headerFooterContent{
 		Image:   imagePath,
 		Width:   width,
 		Height:  height,
@@ -279,8 +279,8 @@ func (hf *HeaderFooter) SetLeftImage(imagePath string, width, height float64) *H
 }
 
 // SetCenterImage sets the center-aligned image in the header/footer
-func (hf *HeaderFooter) SetCenterImage(imagePath string, width, height float64) *HeaderFooter {
-	hf.Center = HeaderFooterContent{
+func (hf *headerFooter) SetCenterImage(imagePath string, width, height float64) *headerFooter {
+	hf.Center = headerFooterContent{
 		Image:   imagePath,
 		Width:   width,
 		Height:  height,
@@ -290,8 +290,8 @@ func (hf *HeaderFooter) SetCenterImage(imagePath string, width, height float64) 
 }
 
 // SetRightImage sets the right-aligned image in the header/footer
-func (hf *HeaderFooter) SetRightImage(imagePath string, width, height float64) *HeaderFooter {
-	hf.Right = HeaderFooterContent{
+func (hf *headerFooter) SetRightImage(imagePath string, width, height float64) *headerFooter {
+	hf.Right = headerFooterContent{
 		Image:   imagePath,
 		Width:   width,
 		Height:  height,
@@ -301,7 +301,7 @@ func (hf *HeaderFooter) SetRightImage(imagePath string, width, height float64) *
 }
 
 // WithPageNumber adds the page number to specific section text
-func (hf *HeaderFooter) WithPageNumber(position string) *HeaderFooter {
+func (hf *headerFooter) WithPageNumber(position string) *headerFooter {
 	switch position {
 	case "left":
 		hf.Left.WithPage = true
@@ -317,7 +317,7 @@ func (hf *HeaderFooter) WithPageNumber(position string) *HeaderFooter {
 }
 
 // WithPageTotal adds the page number in format "X/Y" to specific section text
-func (hf *HeaderFooter) WithPageTotal(position string) *HeaderFooter {
+func (hf *headerFooter) WithPageTotal(position string) *headerFooter {
 	switch position {
 	case "left":
 		hf.Left.WithTotalPages = true
@@ -337,7 +337,7 @@ func (hf *HeaderFooter) WithPageTotal(position string) *HeaderFooter {
 }
 
 // SetFont sets the font for the header/footer
-func (hf *HeaderFooter) SetFont(fontName string) *HeaderFooter {
+func (hf *headerFooter) SetFont(fontName string) *headerFooter {
 	hf.FontName = fontName
 	return hf
 }
