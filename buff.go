@@ -1,42 +1,42 @@
 package tinypdf
 
-// Buff for pdf content
-type Buff struct {
-	position int
-	datas    []byte
+// buff for pdf content
+type buff struct {
+	pos   int // Cambiado de position a int para evitar conflictos de tipo
+	datas []byte
 }
 
 // Write : write []byte to buffer
-func (b *Buff) Write(p []byte) (int, error) {
-	for len(b.datas) < b.position+len(p) {
+func (b *buff) Write(p []byte) (int, error) {
+	for len(b.datas) < b.pos+len(p) {
 		b.datas = append(b.datas, 0)
 	}
 	i := 0
 	max := len(p)
 	for i < max {
-		b.datas[i+b.position] = p[i]
+		b.datas[i+b.pos] = p[i]
 		i++
 	}
-	b.position += i
+	b.pos += i
 	return 0, nil
 }
 
 // Len : len of buffer
-func (b *Buff) Len() int {
+func (b *buff) Len() int {
 	return len(b.datas)
 }
 
 // Bytes : get bytes
-func (b *Buff) Bytes() []byte {
+func (b *buff) Bytes() []byte {
 	return b.datas
 }
 
-// Position : get current position
-func (b *Buff) Position() int {
-	return b.position
+// position : get current position
+func (b *buff) position() int {
+	return b.pos
 }
 
 // SetPosition : set current position
-func (b *Buff) SetPosition(pos int) {
-	b.position = pos
+func (b *buff) SetPosition(pos int) {
+	b.pos = pos
 }

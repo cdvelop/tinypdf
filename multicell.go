@@ -6,9 +6,9 @@ import (
 
 // CellOption cell option
 type CellOption struct {
-	Align                  int //Allows to align the text. Possible values are: Left,Center,Right,Top,Bottom,Middle
-	Border                 int //Indicates if borders must be drawn around the cell. Possible values are: Left, Top, Right, Bottom, ALL
-	Float                  int //Indicates where the current position should go after the call. Possible values are: Right, Bottom
+	Align                  position //Allows to align the text. Possible values are: Left,Center,Right,Top,Bottom,Middle
+	Border                 position //Indicates if borders must be drawn around the cell. Possible values are: Left, Top, Right, Bottom, ALL
+	Float                  position //Indicates where the current position should go after the call. Possible values are: Right, Bottom
 	Transparency           *Transparency
 	CoefUnderlinePosition  float64
 	CoefLineHeight         float64
@@ -118,7 +118,7 @@ func (gp *GoPdf) PlaceHolderText(placeHolderName string, placeHolderWidth float6
 // [experimental]
 // fill in text that created by function PlaceHolderText
 // align: Left,Right,Center
-func (gp *GoPdf) FillInPlaceHoldText(placeHolderName string, text string, align int) error {
+func (gp *GoPdf) FillInPlaceHoldText(placeHolderName string, text string, align position) error {
 
 	infos, ok := gp.placeHolderTexts[placeHolderName]
 	if !ok {

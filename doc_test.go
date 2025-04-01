@@ -24,7 +24,7 @@ func TestDocumentAPIUsage(t *testing.T) {
 	doc.SetPageFooter().
 		SetLeftText("Created: 2023-10-01").
 		SetCenterText("Page").
-		WithPageTotal("center").
+		WithPageTotal(Center).
 		ShowOnFirstPage()
 
 	// add logo image

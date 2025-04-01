@@ -97,10 +97,10 @@ func (hf *headerFooter) draw() {
 	// Determine Y position based on whether this is a header or footer
 	var y float64
 	if hf.isHeader {
-		// Position header in top margin area
+		// position header in top margin area
 		y = hf.doc.margins.Top / 2
 	} else {
-		// Position footer in bottom margin area
+		// position footer in bottom margin area
 		pageHeight := hf.doc.config.PageSize.H
 		y = pageHeight - (hf.doc.margins.Bottom / 2) - hf.doc.fontConfig.PageFooter.Size
 	}
@@ -155,7 +155,7 @@ func (hf *headerFooter) draw() {
 }
 
 // drawContent draws a single content item (text or image) in the header/footer
-func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width float64, align int) {
+func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width float64, align position) {
 	doc := hf.doc
 
 	if content.IsImage {
@@ -170,7 +170,7 @@ func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width flo
 				img.Height(content.Height)
 			}
 
-			// Position based on alignment
+			// position based on alignment
 			imgX := x
 			if align == Center {
 				imgX += width/2 - content.Width/2
@@ -321,13 +321,13 @@ func (hf *headerFooter) SetRightImage(imagePath string, width, height float64) *
 }
 
 // WithPageNumber adds the page number to specific section text
-func (hf *headerFooter) WithPageNumber(position string) *headerFooter {
+func (hf *headerFooter) WithPageNumber(position position) *headerFooter {
 	switch position {
-	case "left":
+	case Left:
 		hf.Left.WithPage = true
-	case "center":
+	case Center:
 		hf.Center.WithPage = true
-	case "right":
+	case Right:
 		hf.Right.WithPage = true
 	default:
 		// Default to center if position is invalid
@@ -337,15 +337,15 @@ func (hf *headerFooter) WithPageNumber(position string) *headerFooter {
 }
 
 // WithPageTotal adds the page number in format "X/Y" to specific section text
-func (hf *headerFooter) WithPageTotal(position string) *headerFooter {
+func (hf *headerFooter) WithPageTotal(position position) *headerFooter {
 	switch position {
-	case "left":
+	case Left:
 		hf.Left.WithTotalPages = true
 		hf.Left.WithPage = false // Disable simple page number if using total format
-	case "center":
+	case Center:
 		hf.Center.WithTotalPages = true
 		hf.Center.WithPage = false // Disable simple page number if using total format
-	case "right":
+	case Right:
 		hf.Right.WithTotalPages = true
 		hf.Right.WithPage = false // Disable simple page number if using total format
 	default:
@@ -403,14 +403,11 @@ func (dt *docText) WithPageNumber() *docText {
 		// Initialize header/footer if needed
 		dt.doc.initHeaderFooter()
 
-		// Try to determine which section this belongs to based on alignment
-		position := "center" // Default position
-
 		// Update the appropriate header/footer
 		if isHeader {
-			dt.doc.header.WithPageNumber(position)
+			dt.doc.header.WithPageNumber(Center)
 		} else {
-			dt.doc.footer.WithPageNumber(position)
+			dt.doc.footer.WithPageNumber(Center)
 		}
 	}
 

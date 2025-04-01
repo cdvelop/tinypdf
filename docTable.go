@@ -12,18 +12,18 @@ type docTable struct {
 	cellPadding  float64
 	headerStyle  CellStyle
 	cellStyle    CellStyle
-	alignment    int // Left, Center, or Right alignment
+	alignment    position // Left, Center, or Right alignment
 	currentWidth float64
 }
 
 // tableColumn represents a column in the table
 type tableColumn struct {
-	header      string  // Header text
-	width       float64 // Width of the column
-	headerAlign int     // Text alignment for header (Left, Center, Right)
-	align       int     // Text alignment within cells (Left, Center, Right)
-	prefix      string  // Prefix to add before each value in the column
-	suffix      string  // Suffix to add after each value in the column
+	header      string   // Header text
+	width       float64  // Width of the column
+	headerAlign position // Text alignment for header (Left, Center, Right)
+	align       position // Text alignment within cells (Left, Center, Right)
+	prefix      string   // Prefix to add before each value in the column
+	suffix      string   // Suffix to add after each value in the column
 }
 
 // tableCell represents a cell in the table
@@ -235,7 +235,7 @@ func (t *docTable) SetColumnWidth(columnIndex int, width float64) *docTable {
 }
 
 // SetHeaderAlignment sets the text alignment for a specific header
-func (t *docTable) SetHeaderAlignment(columnIndex int, alignment int) *docTable {
+func (t *docTable) SetHeaderAlignment(columnIndex int, alignment position) *docTable {
 	if columnIndex >= 0 && columnIndex < len(t.columns) {
 		t.columns[columnIndex].headerAlign = alignment
 	}
@@ -538,7 +538,7 @@ func (t *docTable) drawCellContent(
 	width float64,
 	height float64,
 	content string,
-	align int,
+	align position,
 	isHeader bool,
 	style CellStyle,
 ) {
@@ -616,7 +616,7 @@ func (t *docTable) drawCell(
 	width float64,
 	height float64,
 	content string,
-	align int,
+	align position,
 	isHeader bool,
 	style CellStyle,
 ) {

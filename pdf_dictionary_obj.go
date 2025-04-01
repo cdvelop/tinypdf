@@ -182,7 +182,7 @@ func (p *PdfDictionaryObj) getGlyphData(glyph int) []byte {
 }
 
 func (p *PdfDictionaryObj) makeFont() ([]byte, error) {
-	var buff Buff
+	var buff buff
 	ttfp := p.PtrToSubsetFontObj.GetTTFParser()
 	tables := make(map[string]core.TableDirectoryEntry)
 	tables["cvt "] = ttfp.GetTables()["cvt "] //มีช่องว่างด้วยนะ
@@ -260,7 +260,7 @@ func (p *PdfDictionaryObj) makeFont() ([]byte, error) {
 		} else {
 			WriteBytes(&buff, ttfp.FontData(), int(entry.Offset), entry.PaddedLength())
 		}
-		endPosition := buff.Position()
+		endPosition := buff.position()
 		tablePosition = endPosition
 
 		//write table

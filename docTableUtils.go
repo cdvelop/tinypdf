@@ -7,13 +7,13 @@ import (
 
 // headerFormatOptions represents the formatting options for a table header
 type headerFormatOptions struct {
-	HeaderTitle     string  // The displayed title text
-	HeaderAlignment int     // Alignment of the header text (Left, Center, Right)
-	ColumnAlignment int     // Alignment of the column values (Left, Center, Right)
-	Prefix          string  // Prefix to add before each value in the column
-	Suffix          string  // Suffix to add after each value in the column
-	Width           float64 // Width of the column (0 = auto)
-	WidthType       string  // Type of width: "fixed", "percent", or "auto"
+	HeaderTitle     string   // The displayed title text
+	HeaderAlignment position // Alignment of the header text (Left, Center, Right)
+	ColumnAlignment position // Alignment of the column values (Left, Center, Right)
+	Prefix          string   // Prefix to add before each value in the column
+	Suffix          string   // Suffix to add after each value in the column
+	Width           float64  // Width of the column (0 = auto)
+	WidthType       string   // Type of width: "fixed", "percent", or "auto"
 }
 
 // parseHeaderFormat parses a header string with format options

@@ -13,7 +13,7 @@ type docImage struct {
 	width     float64
 	height    float64
 	keepRatio bool
-	alignment int
+	alignment position
 	x, y      float64
 	hasPos    bool
 	inline    bool // New property to track inline status

@@ -1,21 +1,26 @@
 package tinypdf
 
-// Left left
-const Left = 8 //001000
-// Top top
-const Top = 4 //000100
-// Right right
-const Right = 2 //000010
-// Bottom bottom
-const Bottom = 1 //000001
-// Center center
-const Center = 16 //010000
-// Middle middle
-const Middle = 32 //100000
-// Justify justify text
-const Justify = 64 //1000000
-// AllBorders allborders
-const AllBorders = 15 //001111
+// position representa una posición o alineación en el documento
+type position int
+
+const (
+	// Left representa alineación a la izquierda
+	Left position = 8 //001000
+	// Top representa alineación superior
+	Top position = 4 //000100
+	// Right representa alineación a la derecha
+	Right position = 2 //000010
+	// Bottom representa alineación inferior
+	Bottom position = 1 //000001
+	// Center representa alineación al centro
+	Center position = 16 //010000
+	// Middle representa alineación al medio
+	Middle position = 32 //100000
+	// Justify representa texto justificado
+	Justify position = 64 //1000000
+	// AllBorders representa todos los bordes
+	AllBorders position = 15 //001111
+)
 
 // SetX : set current position X
 func (gp *GoPdf) SetX(x float64) {

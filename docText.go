@@ -20,9 +20,9 @@ type TextStyle struct {
 	Size        float64
 	Color       RGBColor
 	LineSpacing float64
-	Alignment   int     // Uses same alignment constants as CellOption (Left, Center, Right, etc)
-	SpaceBefore float64 // Space before paragraph (in points)
-	SpaceAfter  float64 // Space after paragraph (in points)
+	Alignment   position // Uses same alignment constants as CellOption (Left, Center, Right, etc)
+	SpaceBefore float64  // Space before paragraph (in points)
+	SpaceAfter  float64  // Space after paragraph (in points)
 }
 
 // docText is a helper struct to build text cells
