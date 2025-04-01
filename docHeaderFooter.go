@@ -13,6 +13,7 @@ type headerFooterContent struct {
 	IsImage        bool    // Whether this is an image
 	WithPage       bool    // Whether to append page number
 	WithTotalPages bool    // Whether to append total pages in format "X/Y"
+	PageSeparator  string  // Custom separator for page numbering (default: "/")
 }
 
 // headerFooter represents a document header or footer with left, center, and right sections
@@ -135,20 +136,20 @@ func (hf *headerFooter) draw() {
 		return
 	}
 
-	// Draw left content
-	if hf.Left.Text != "" || hf.Left.IsImage {
+	// Draw left content - también dibujar si tiene paginación configurada
+	if hf.Left.Text != "" || hf.Left.IsImage || hf.Left.WithPage || hf.Left.WithTotalPages {
 		x := hf.doc.margins.Left
 		hf.drawContent(hf.Left, x, y, sectionWidth, Left)
 	}
 
-	// Draw center content
-	if hf.Center.Text != "" || hf.Center.IsImage {
+	// Draw center content - también dibujar si tiene paginación configurada
+	if hf.Center.Text != "" || hf.Center.IsImage || hf.Center.WithPage || hf.Center.WithTotalPages {
 		x := hf.doc.margins.Left + sectionWidth
 		hf.drawContent(hf.Center, x, y, sectionWidth, Center)
 	}
 
-	// Draw right content
-	if hf.Right.Text != "" || hf.Right.IsImage {
+	// Draw right content - también dibujar si tiene paginación configurada
+	if hf.Right.Text != "" || hf.Right.IsImage || hf.Right.WithPage || hf.Right.WithTotalPages {
 		x := hf.doc.margins.Left + 2*sectionWidth
 		hf.drawContent(hf.Right, x, y, sectionWidth, Right)
 	}
@@ -198,14 +199,28 @@ func (hf *headerFooter) drawContent(content headerFooterContent, x, y, width flo
 
 		// Add total pages if requested
 		if content.WithTotalPages {
-			// Para el encabezado usamos la pagina actual, para el pie de página incrementamos primero
+			// Get current page and total pages
 			currentPage := hf.currentPage
 			totalPages := doc.GetNumberOfPages()
+
+			// Get separator (default to "/" if not specified)
+			separator := "/"
+			if content.PageSeparator != "" {
+				separator = content.PageSeparator
+			}
+
+			// Add space if there's existing text
 			if text != "" {
 				text += " "
 			}
-			// Mostrar en formato X/Y donde X es la página actual y Y es el total
-			text += strconv.Itoa(currentPage) + "/" + strconv.Itoa(totalPages)
+
+			// Format as "X/Y" or with custom separator
+			text += strconv.Itoa(currentPage) + separator + strconv.Itoa(totalPages)
+		}
+
+		// Skip if there's no content to display
+		if text == "" && !content.WithPage && !content.WithTotalPages {
+			return
 		}
 
 		// Create text builder
@@ -337,21 +352,35 @@ func (hf *headerFooter) WithPageNumber(position position) *headerFooter {
 }
 
 // WithPageTotal adds the page number in format "X/Y" to specific section text
-func (hf *headerFooter) WithPageTotal(position position) *headerFooter {
+// You can specify a custom separator (default is "/")
+// Example: WithPageTotal(Right, " de ") will display "1 de 3"
+func (hf *headerFooter) WithPageTotal(position position, separator ...string) *headerFooter {
+	// Set default separator to "/"
+	pageSeparator := "/"
+
+	// If custom separator provided, use it
+	if len(separator) > 0 {
+		pageSeparator = separator[0]
+	}
+
 	switch position {
 	case Left:
 		hf.Left.WithTotalPages = true
 		hf.Left.WithPage = false // Disable simple page number if using total format
+		hf.Left.PageSeparator = pageSeparator
 	case Center:
 		hf.Center.WithTotalPages = true
 		hf.Center.WithPage = false // Disable simple page number if using total format
+		hf.Center.PageSeparator = pageSeparator
 	case Right:
 		hf.Right.WithTotalPages = true
 		hf.Right.WithPage = false // Disable simple page number if using total format
+		hf.Right.PageSeparator = pageSeparator
 	default:
 		// Default to center if position is invalid
 		hf.Center.WithTotalPages = true
 		hf.Center.WithPage = false // Disable simple page number if using total format
+		hf.Center.PageSeparator = pageSeparator
 	}
 	return hf
 }
