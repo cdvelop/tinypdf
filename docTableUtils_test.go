@@ -8,12 +8,12 @@ func TestParseHeaderFormat(t *testing.T) {
 	testCases := []struct {
 		name           string
 		input          string
-		expectedResult headerFormatOptions
+		expectedResult tableHeaderFormat
 	}{
 		{
 			name:  "Simple header without options",
 			input: "Name",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Name",
 				HeaderAlignment: Center,
 				ColumnAlignment: Left,
@@ -26,7 +26,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with left alignment",
 			input: "Name|HL",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Name",
 				HeaderAlignment: Left,
 				ColumnAlignment: Left,
@@ -39,7 +39,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with right alignment",
 			input: "Price|HR",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Price",
 				HeaderAlignment: Right,
 				ColumnAlignment: Left,
@@ -52,7 +52,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with column alignment",
 			input: "Amount|CR",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Amount",
 				HeaderAlignment: Center,
 				ColumnAlignment: Right,
@@ -65,7 +65,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with right alignment and right column alignment",
 			input: "Price|HR,CR",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Price",
 				HeaderAlignment: Right,
 				ColumnAlignment: Right,
@@ -78,7 +78,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with prefix",
 			input: "Price|HR,CR,P:$",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Price",
 				HeaderAlignment: Right,
 				ColumnAlignment: Right,
@@ -91,7 +91,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with suffix",
 			input: "Percentage|HC,CC,S:%",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Percentage",
 				HeaderAlignment: Center,
 				ColumnAlignment: Center,
@@ -104,7 +104,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with prefix and suffix",
 			input: "Balance|HR,CR,P:$,S:USD",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Balance",
 				HeaderAlignment: Right,
 				ColumnAlignment: Right,
@@ -117,7 +117,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with fixed width",
 			input: "Name|HL,CL,W:120",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Name",
 				HeaderAlignment: Left,
 				ColumnAlignment: Left,
@@ -130,7 +130,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Header with percentage width",
 			input: "Name|HL,CL,W:30%",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Name",
 				HeaderAlignment: Left,
 				ColumnAlignment: Left,
@@ -143,7 +143,7 @@ func TestParseHeaderFormat(t *testing.T) {
 		{
 			name:  "Complete example with all options",
 			input: "Product|HL,CR,P:Item:,S:USD,W:40%",
-			expectedResult: headerFormatOptions{
+			expectedResult: tableHeaderFormat{
 				HeaderTitle:     "Product",
 				HeaderAlignment: Left,
 				ColumnAlignment: Right,

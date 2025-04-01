@@ -31,7 +31,7 @@ func TestDocumentAPIUsage(t *testing.T) {
 	doc.AddImage("test/res/logo.png").Height(35).Inline().Draw()
 
 	// add date and time aligned to the right
-	doc.AddText("date: 2023-10-01").AlignRight().Inline().Draw()
+	doc.AddText("date: 2024-10-01").AlignRight().Inline().Draw()
 
 	// Add a centered header
 	doc.AddHeader1("Example Document").AlignCenter().Draw()

@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// headerFormatOptions represents the formatting options for a table header
-type headerFormatOptions struct {
+// tableHeaderFormat represents the formatting options for a table header
+type tableHeaderFormat struct {
 	HeaderTitle     string   // The displayed title text
 	HeaderAlignment position // Alignment of the header text (Left, Center, Right)
 	ColumnAlignment position // Alignment of the column values (Left, Center, Right)
@@ -26,8 +26,8 @@ type headerFormatOptions struct {
 //	"Amount|HR,CR,P:$" -> {HeaderTitle: "Amount", HeaderAlignment: Right, ColumnAlignment: Right, Prefix: "$"}
 //	"Percent|HC,CC,S:%" -> {HeaderTitle: "Percent", HeaderAlignment: Center, ColumnAlignment: Center, Suffix: "%"}
 //	"Name|HL,CL,W:30%" -> {HeaderTitle: "Name", HeaderAlignment: Left, ColumnAlignment: Left, Width: 30, WidthType: "percent"}
-func parseHeaderFormat(headerStr string) headerFormatOptions {
-	result := headerFormatOptions{
+func parseHeaderFormat(headerStr string) tableHeaderFormat {
+	result := tableHeaderFormat{
 		HeaderAlignment: Center, // Default header alignment is center
 		ColumnAlignment: Left,   // Default column alignment is left
 		WidthType:       "auto", // Default width type is auto
