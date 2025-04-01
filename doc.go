@@ -189,3 +189,25 @@ func (doc *Document) AddPageWithOption(opt PageOption) {
 		doc.footer.currentPage = doc.numOfPagesObj
 	}
 }
+
+// RedrawHeaderFooter fuerza el redibujado del encabezado y pie de página en la página actual
+func (doc *Document) RedrawHeaderFooter() {
+	// Guardar la posición actual
+	prevX, prevY := doc.GetX(), doc.GetY()
+
+	// Si estamos en la primera página y se han modificado las opciones de visibilidad
+	if doc.numOfPagesObj == 1 {
+		// Forzar el redibujado del encabezado si está configurado
+		if doc.header != nil && doc.header.initialized {
+			doc.header.draw()
+		}
+
+		// Forzar el redibujado del pie de página si está configurado
+		if doc.footer != nil && doc.footer.initialized {
+			doc.footer.draw()
+		}
+	}
+
+	// Restaurar la posición
+	doc.SetXY(prevX, prevY)
+}

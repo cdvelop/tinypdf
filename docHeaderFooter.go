@@ -17,14 +17,15 @@ type headerFooterContent struct {
 
 // headerFooter represents a document header or footer with left, center, and right sections
 type headerFooter struct {
-	doc         *Document
-	Left        headerFooterContent
-	Center      headerFooterContent
-	Right       headerFooterContent
-	FontName    string
-	isHeader    bool // true for header, false for footer
-	initialized bool
-	currentPage int // Número de página actual para mostrar en el footer
+	doc             *Document
+	Left            headerFooterContent
+	Center          headerFooterContent
+	Right           headerFooterContent
+	FontName        string
+	isHeader        bool // true for header, false for footer
+	initialized     bool
+	currentPage     int  // Número de página actual para mostrar en el footer
+	hideOnFirstPage bool // Controla si se oculta en la primera página
 }
 
 // AddHeader - add a header function, if present this will be automatically called by AddPage()
@@ -42,10 +43,11 @@ func (d *Document) initHeaderFooter() {
 	// Initialize header if not already done
 	if d.header == nil {
 		d.header = &headerFooter{
-			doc:         d,
-			FontName:    FontRegular,
-			isHeader:    true,
-			currentPage: 1, // Inicializar en 1 para la primera página
+			doc:             d,
+			FontName:        FontRegular,
+			isHeader:        true,
+			currentPage:     1,    // Inicializar en 1 para la primera página
+			hideOnFirstPage: true, // El encabezado no se muestra por defecto en la primera página
 		}
 
 		// Set up header callback function
@@ -57,10 +59,11 @@ func (d *Document) initHeaderFooter() {
 	// Initialize footer if not already done
 	if d.footer == nil {
 		d.footer = &headerFooter{
-			doc:         d,
-			FontName:    FontRegular,
-			isHeader:    false,
-			currentPage: 1, // Inicializar en 1 para la primera página
+			doc:             d,
+			FontName:        FontRegular,
+			isHeader:        false,
+			currentPage:     1,     // Inicializar en 1 para la primera página
+			hideOnFirstPage: false, // El pie de página sí se muestra por defecto en la primera página
 		}
 
 		// Set up footer callback function
@@ -81,6 +84,11 @@ func (hf *headerFooter) draw() {
 	hf.currentPage = hf.doc.numOfPagesObj
 	if hf.currentPage <= 0 {
 		hf.currentPage = 1 // Garantizar que la página mínima sea 1
+	}
+
+	// Verificar si debemos omitir el dibujo en la primera página
+	if hf.hideOnFirstPage && hf.currentPage == 1 {
+		return // No dibujar en la primera página si está configurado para ocultarse
 	}
 
 	// Save current position and drawing settings
@@ -418,4 +426,24 @@ func (dt *docText) WithPageNumber() *docText {
 	dt.text = currentText
 
 	return dt
+}
+
+// ShowOnFirstPage hace que el encabezado/pie de página se muestre en la primera página
+func (hf *headerFooter) ShowOnFirstPage() *headerFooter {
+	hf.hideOnFirstPage = false
+	// Si estamos en la primera página, redibujamos para que el cambio tenga efecto inmediato
+	if hf.doc.numOfPagesObj == 1 {
+		hf.doc.RedrawHeaderFooter()
+	}
+	return hf
+}
+
+// HideOnFirstPage hace que el encabezado/pie de página se oculte en la primera página
+func (hf *headerFooter) HideOnFirstPage() *headerFooter {
+	hf.hideOnFirstPage = true
+	// Si estamos en la primera página, redibujamos para que el cambio tenga efecto inmediato
+	if hf.doc.numOfPagesObj == 1 {
+		hf.doc.RedrawHeaderFooter()
+	}
+	return hf
 }

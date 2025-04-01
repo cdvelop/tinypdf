@@ -4,23 +4,6 @@ import (
 	"strings"
 )
 
-// Left left
-const Left = 8 //001000
-// Top top
-const Top = 4 //000100
-// Right right
-const Right = 2 //000010
-// Bottom bottom
-const Bottom = 1 //000001
-// Center center
-const Center = 16 //010000
-// Middle middle
-const Middle = 32 //100000
-// Justify justify text
-const Justify = 64 //1000000
-// AllBorders allborders
-const AllBorders = 15 //001111
-
 // CellOption cell option
 type CellOption struct {
 	Align                  int //Allows to align the text. Possible values are: Left,Center,Right,Top,Bottom,Middle

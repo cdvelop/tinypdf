@@ -17,13 +17,15 @@ func TestDocumentAPIUsage(t *testing.T) {
 	doc.SetPageHeader().
 		SetLeftText("Header Left").
 		SetCenterText("Document Example").
-		SetRightText("Confidential")
+		SetRightText("Confidential").
+		ShowOnFirstPage()
 
 	// Add footer with page numbers in format X/Y
 	doc.SetPageFooter().
 		SetLeftText("Created: 2023-10-01").
 		SetCenterText("Page").
-		WithPageTotal("center")
+		WithPageTotal("center").
+		ShowOnFirstPage()
 
 	// add logo image
 	doc.AddImage("test/res/logo.png").Height(35).Inline().Draw()
