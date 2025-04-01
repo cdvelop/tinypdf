@@ -18,10 +18,10 @@ func TestDocumentAPIUsage(t *testing.T) {
 		SetLeftText("Header Left").
 		SetCenterText("Document Example").
 		SetRightText("Confidential").
-		SetFont(FontBold)
+		// SetFont(FontBold)
 
-	// // Add footer with page numbers in format X/Y
-	doc.SetPageFooter().
+		// // Add footer with page numbers in format X/Y
+		doc.SetPageFooter().
 		SetLeftText("Created: 2023-10-01").
 		SetCenterText("Page").
 		WithPageTotal("center")
