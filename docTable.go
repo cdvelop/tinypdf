@@ -53,6 +53,7 @@ type tableCell struct {
 //   - "Name|HL,CL,W:30%" - Left-aligned header, left-aligned column with 30% of available width
 //   - "Age|HC,CR,W:20" - Center-aligned header, right-aligned column with fixed width of 20 units
 func (doc *Document) NewTable(headers ...string) *docTable {
+	// Crear una nueva tabla con configuración predeterminada
 	table := &docTable{
 		doc:         doc,
 		rowHeight:   25, // Default row height
@@ -61,180 +62,45 @@ func (doc *Document) NewTable(headers ...string) *docTable {
 		width:       0, // Will be calculated based on headers or set to document width
 	}
 
-	// Set default styles based on document font configuration
-	table.headerStyle = CellStyle{
-		BorderStyle: BorderStyle{
-			Top:      true,
-			Left:     true,
-			Bottom:   true,
-			Right:    true,
-			Width:    1.0,
-			RGBColor: RGBColor{R: 100, G: 100, B: 100},
-		},
-		FillColor: RGBColor{R: 240, G: 240, B: 240},
-		TextColor: RGBColor{R: 0, G: 0, B: 0},
-		Font:      FontBold,
-		FontSize:  doc.fontConfig.Header3.Size,
-	}
+	// Crear los estilos predeterminados para la tabla
+	table.headerStyle, table.cellStyle = createDefaultTableStyles(doc)
 
-	table.cellStyle = CellStyle{
-		BorderStyle: BorderStyle{
-			Top:      true,
-			Left:     true,
-			Bottom:   true,
-			Right:    true,
-			Width:    0.5,
-			RGBColor: RGBColor{R: 200, G: 200, B: 200},
-		},
-		FillColor: RGBColor{R: 255, G: 255, B: 255},
-		TextColor: RGBColor{R: 0, G: 0, B: 0},
-		Font:      FontRegular,
-		FontSize:  doc.fontConfig.Normal.Size,
-	}
+	// Calcular el ancho máximo disponible para la tabla
+	maxWidth := doc.calculateAvailableTableWidth()
 
-	// Parse headers and estimate widths for columns
-	columns := make([]tableColumn, len(headers))
+	// Procesar los encabezados y calcular los anchos iniciales
+	columns, fixedWidthTotal, hasPercentageWidths :=
+		parseTableHeaders(doc, headers, table.cellPadding, maxWidth)
 
-	// Calculate total table width
-	doc.SetFont(FontBold, "", doc.fontConfig.Header3.Size)
+	// Ajustar los anchos para las columnas con especificaciones de porcentaje
+	totalWidth := adjustPercentageWidths(
+		columns,
+		headers,
+		hasPercentageWidths,
+		maxWidth,
+		fixedWidthTotal,
+	)
 
-	// Track columns with fixed width and percentage width
-	fixedWidthTotal := 0.0
-	percentageWidthTotal := 0.0
-	hasPercentageWidths := false
+	// Establecer las columnas y anchos calculados
+	table.columns = columns
+	table.width = totalWidth
+	table.currentWidth = totalWidth
 
+	return table
+}
+
+// calculateAvailableTableWidth calcula el ancho máximo disponible para una tabla
+// considerando los márgenes del documento y un margen de tabla adicional
+func (doc *Document) calculateAvailableTableWidth() float64 {
 	// Available width for the table (accounting for margins)
 	maxWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
 
 	// Apply a small margin to account for spacing between elements
 	// This ensures the table doesn't stretch all the way to the edges
-	tableMargin := 10.0 // Aumentamos el margen a cada lado para evitar que se acerque demasiado a los bordes
+	tableMargin := 6.0 // Margen a cada lado para evitar que se acerque demasiado a los bordes
 	maxWidth = maxWidth - (2 * tableMargin)
 
-	// First pass: Calculate minimum width for each column based on header text
-	for i, headerFormat := range headers {
-		// Parse the header format
-		options := parseHeaderFormat(headerFormat)
-
-		// Determine the width based on the format options or estimate from header text
-		var colWidth float64
-
-		// Check if a specific width was provided
-		if options.WidthType == "fixed" {
-			// Fixed width specified in units
-			colWidth = options.Width
-			fixedWidthTotal += colWidth
-		} else if options.WidthType == "percent" {
-			// Percentage of available width
-			hasPercentageWidths = true
-			percentageWidthTotal += options.Width
-			// Store the percentage for now, will calculate actual width later
-			colWidth = options.Width
-		} else {
-			// Auto width based on content (default behavior)
-			// Estimate width based on header text
-			textWidthFactor := 0.85
-			estWidth := float64(len(options.HeaderTitle)) * doc.fontConfig.Header3.Size * textWidthFactor
-
-			// Add padding to ensure header fits comfortably
-			colWidth = estWidth + (table.cellPadding * 2)
-
-			// Ensure minimum reasonable width
-			if colWidth < 40 {
-				colWidth = 40
-			}
-
-			fixedWidthTotal += colWidth
-		}
-
-		columns[i] = tableColumn{
-			header:      options.HeaderTitle,
-			width:       colWidth, // Will be adjusted in second pass for percentage widths
-			headerAlign: options.HeaderAlignment,
-			align:       options.ColumnAlignment,
-			prefix:      options.Prefix,
-			suffix:      options.Suffix,
-		}
-	}
-
-	// Second pass: Adjust widths for columns with percentage specifications
-	if hasPercentageWidths {
-		// Si hay anchos porcentuales, siempre usar el ancho máximo disponible
-		totalTableWidth := maxWidth
-
-		// Calcular el ancho mínimo requerido basado en los porcentajes especificados
-		minimumWidthRequired := 0.0
-		for i := range columns {
-			options := parseHeaderFormat(headers[i])
-			if options.WidthType == "percent" {
-				// Aplicar el porcentaje mínimo especificado
-				columns[i].width = (maxWidth * options.Width) / 100.0
-				minimumWidthRequired += columns[i].width
-			}
-		}
-
-		// Calcular el espacio restante después de considerar columnas de ancho fijo
-		nonPercentageWidth := fixedWidthTotal
-		remainingWidth := totalTableWidth - nonPercentageWidth - minimumWidthRequired
-
-		// Si hay espacio adicional disponible, distribuirlo uniformemente entre las columnas porcentuales
-		if remainingWidth > 0 {
-			// Contar columnas porcentuales para distribución uniforme del espacio restante
-			percentageColumnsCount := 0
-			for i := range columns {
-				options := parseHeaderFormat(headers[i])
-				if options.WidthType == "percent" {
-					percentageColumnsCount++
-				}
-			}
-
-			// Distribuir el espacio restante uniformemente
-			extraWidthPerColumn := remainingWidth / float64(percentageColumnsCount)
-			for i := range columns {
-				options := parseHeaderFormat(headers[i])
-				if options.WidthType == "percent" {
-					// Agregar el espacio extra a cada columna porcentual
-					columns[i].width += extraWidthPerColumn
-				}
-			}
-		} else if remainingWidth < 0 {
-			// Si no hay suficiente espacio, escalar las columnas fijas proporcionalmente
-			scaleFactor := (totalTableWidth - minimumWidthRequired) / nonPercentageWidth
-			if scaleFactor > 0 && scaleFactor < 1 {
-				for i := range columns {
-					options := parseHeaderFormat(headers[i])
-					if options.WidthType != "percent" {
-						columns[i].width *= scaleFactor
-					}
-				}
-			}
-		}
-
-		// Establecer el ancho total de la tabla al ancho máximo disponible
-		table.width = totalTableWidth
-	} else {
-		// Calculate total width after all adjustments
-		totalWidth := 0.0
-		for _, col := range columns {
-			totalWidth += col.width
-		}
-
-		// If total width exceeds document width, scale down proportionally
-		if totalWidth > maxWidth {
-			scaleFactor := maxWidth / totalWidth
-			for i := range columns {
-				columns[i].width *= scaleFactor
-			}
-			totalWidth = maxWidth
-		}
-
-		table.width = totalWidth
-	}
-
-	table.columns = columns
-	table.currentWidth = table.width
-
-	return table
+	return maxWidth
 }
 
 // Width sets the total width of the table
