@@ -97,7 +97,6 @@ func (doc *Document) NewTable(headers ...string) *docTable {
 
 	// Calculate total table width
 	doc.SetFont(FontBold, "", doc.fontConfig.Header3.Size)
-	totalWidth := 0.0
 
 	// Track columns with fixed width and percentage width
 	fixedWidthTotal := 0.0
@@ -106,6 +105,11 @@ func (doc *Document) NewTable(headers ...string) *docTable {
 
 	// Available width for the table (accounting for margins)
 	maxWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
+
+	// Apply a small margin to account for spacing between elements
+	// This ensures the table doesn't stretch all the way to the edges
+	tableMargin := 10.0 // Aumentamos el margen a cada lado para evitar que se acerque demasiado a los bordes
+	maxWidth = maxWidth - (2 * tableMargin)
 
 	// First pass: Calculate minimum width for each column based on header text
 	for i, headerFormat := range headers {
@@ -155,50 +159,80 @@ func (doc *Document) NewTable(headers ...string) *docTable {
 
 	// Second pass: Adjust widths for columns with percentage specifications
 	if hasPercentageWidths {
-		// Calculate remaining width after fixed width columns
-		remainingWidth := maxWidth - fixedWidthTotal
+		// Si hay anchos porcentuales, siempre usar el ancho máximo disponible
+		totalTableWidth := maxWidth
 
-		// Ensure we have some width to distribute
-		if remainingWidth <= 0 {
-			remainingWidth = maxWidth * 0.5 // Fallback to 50% of max width
-			fixedWidthTotal = maxWidth * 0.5
-		}
-
-		// Normalize percentages if they exceed 100%
-		scaleFactor := 1.0
-		if percentageWidthTotal > 100 {
-			scaleFactor = 100 / percentageWidthTotal
-		}
-
-		// Apply percentage widths
+		// Calcular el ancho mínimo requerido basado en los porcentajes especificados
+		minimumWidthRequired := 0.0
 		for i := range columns {
 			options := parseHeaderFormat(headers[i])
 			if options.WidthType == "percent" {
-				// Calculate actual width based on percentage
-				adjustedPercentage := options.Width * scaleFactor
-				columns[i].width = (remainingWidth * adjustedPercentage) / 100.0
+				// Aplicar el porcentaje mínimo especificado
+				columns[i].width = (maxWidth * options.Width) / 100.0
+				minimumWidthRequired += columns[i].width
 			}
 		}
-	}
 
-	// Calculate total width after all adjustments
-	totalWidth = 0.0
-	for _, col := range columns {
-		totalWidth += col.width
-	}
+		// Calcular el espacio restante después de considerar columnas de ancho fijo
+		nonPercentageWidth := fixedWidthTotal
+		remainingWidth := totalTableWidth - nonPercentageWidth - minimumWidthRequired
 
-	// If total width exceeds document width, scale down proportionally
-	if totalWidth > maxWidth {
-		scaleFactor := maxWidth / totalWidth
-		for i := range columns {
-			columns[i].width *= scaleFactor
+		// Si hay espacio adicional disponible, distribuirlo uniformemente entre las columnas porcentuales
+		if remainingWidth > 0 {
+			// Contar columnas porcentuales para distribución uniforme del espacio restante
+			percentageColumnsCount := 0
+			for i := range columns {
+				options := parseHeaderFormat(headers[i])
+				if options.WidthType == "percent" {
+					percentageColumnsCount++
+				}
+			}
+
+			// Distribuir el espacio restante uniformemente
+			extraWidthPerColumn := remainingWidth / float64(percentageColumnsCount)
+			for i := range columns {
+				options := parseHeaderFormat(headers[i])
+				if options.WidthType == "percent" {
+					// Agregar el espacio extra a cada columna porcentual
+					columns[i].width += extraWidthPerColumn
+				}
+			}
+		} else if remainingWidth < 0 {
+			// Si no hay suficiente espacio, escalar las columnas fijas proporcionalmente
+			scaleFactor := (totalTableWidth - minimumWidthRequired) / nonPercentageWidth
+			if scaleFactor > 0 && scaleFactor < 1 {
+				for i := range columns {
+					options := parseHeaderFormat(headers[i])
+					if options.WidthType != "percent" {
+						columns[i].width *= scaleFactor
+					}
+				}
+			}
 		}
-		totalWidth = maxWidth
+
+		// Establecer el ancho total de la tabla al ancho máximo disponible
+		table.width = totalTableWidth
+	} else {
+		// Calculate total width after all adjustments
+		totalWidth := 0.0
+		for _, col := range columns {
+			totalWidth += col.width
+		}
+
+		// If total width exceeds document width, scale down proportionally
+		if totalWidth > maxWidth {
+			scaleFactor := maxWidth / totalWidth
+			for i := range columns {
+				columns[i].width *= scaleFactor
+			}
+			totalWidth = maxWidth
+		}
+
+		table.width = totalWidth
 	}
 
 	table.columns = columns
-	table.width = totalWidth
-	table.currentWidth = totalWidth
+	table.currentWidth = table.width
 
 	return table
 }
@@ -405,14 +439,25 @@ func (t *docTable) Draw() error {
 	// Check if table fits on current page
 	y, _ := t.doc.ensureElementFits(totalHeight, t.doc.fontConfig.Normal.SpaceAfter)
 
-	// Calculate starting X position based on alignment
-	x := t.doc.margins.Left
-	switch t.alignment {
-	case Center:
-		x = t.doc.margins.Left + (t.doc.pageWidth-(t.doc.margins.Left+t.doc.margins.Right)-t.width)/2
-	case Right:
-		x = t.doc.margins.Left + (t.doc.pageWidth - (t.doc.margins.Left + t.doc.margins.Right) - t.width)
+	// Verificar que la tabla no exceda el ancho disponible
+	availableWidth := t.doc.pageWidth - (t.doc.margins.Left + t.doc.margins.Right)
+
+	// Aplicar un padding lateral para que la tabla no quede pegada a los márgenes
+	tablePadding := 10.0 // Padding a cada lado
+	availableWidth -= (2 * tablePadding)
+
+	// Si el ancho de la tabla excede el disponible, ajustar proporcionalmente
+	if t.width > availableWidth {
+		scaleFactor := availableWidth / t.width
+		for i := range t.columns {
+			t.columns[i].width *= scaleFactor
+		}
+		t.width = availableWidth
+		t.currentWidth = availableWidth
 	}
+
+	// Calculate starting X position using the new positioning method
+	x := t.calculatePosition()
 
 	// Colección para guardar información de los encabezados para dibujar sus bordes al final
 	type headerInfo struct {
@@ -625,4 +670,21 @@ func (t *docTable) drawCell(
 
 	// Luego dibujamos los bordes
 	t.drawCellBorder(x, y, width, height, style.BorderStyle)
+}
+
+// calculatePosition determina donde colocar la tabla
+func (t *docTable) calculatePosition() float64 {
+	x := t.doc.margins.Left
+
+	// Aplicar alineación de manera consistente con docImage.go
+	// Usar todo el ancho de página disponible para el cálculo
+	availableWidth := t.doc.pageWidth
+	switch t.alignment {
+	case Center:
+		x = t.doc.margins.Left + (availableWidth-t.width)/2
+	case Right:
+		x = t.doc.margins.Left + availableWidth - t.width
+	}
+
+	return x
 }

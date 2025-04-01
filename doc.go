@@ -211,3 +211,45 @@ func (doc *Document) RedrawHeaderFooter() {
 	// Restaurar la posición
 	doc.SetXY(prevX, prevY)
 }
+
+// calculateElementPosition determina la posición X de un elemento basado en su alineación y ancho
+func (doc *Document) calculateElementPosition(width float64, alignment position, withPadding bool) float64 {
+	// Ancho total disponible en la página (incluyendo márgenes)
+	// totalWidth := doc.pageWidth
+
+	// Ancho disponible para contenido
+	contentWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
+
+	// Padding solo si se requiere
+	padding := 0.0
+	if withPadding {
+		padding = 10.0
+		// No restamos padding del ancho disponible, solo lo aplicaremos al posicionar
+	}
+
+	// Calcular posición X basada en la alineación
+	var x float64
+	switch alignment {
+	case Center:
+		// Para centrado: margen izquierdo + mitad del espacio disponible - mitad del ancho
+		x = doc.margins.Left + (contentWidth / 2) - (width / 2)
+	case Right:
+		// Para alineado a la derecha: posición derecha - ancho
+		x = doc.pageWidth - doc.margins.Right - width
+	default: // Left
+		// Para alineado a la izquierda: simplemente el margen izquierdo
+		x = doc.margins.Left
+	}
+
+	// Aplicar padding solo a la posición, no al cálculo del ancho
+	if withPadding {
+		if alignment == Left {
+			x += padding
+		} else if alignment == Right {
+			x -= padding
+		}
+		// Para centrado, no aplicamos padding adicional
+	}
+
+	return x
+}

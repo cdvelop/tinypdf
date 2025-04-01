@@ -96,13 +96,13 @@ func TestDocumentAPIUsage(t *testing.T) {
 
 	// Create a table with extensive formatting options
 	comprehensiveTable := doc.NewTable(
-		"Code|CC,W:10%",               // Centered header and centered content, 10% width
-		"Product|W:20%",               // Default left alignment, 20% width
-		"Description|W:30%",           // Default left alignment, 30% width
-		"Quantity|HR,CR,S: pcs,W:15%", // Right-aligned header and content with "pcs" suffix, 10% width
-		"Price|CR,P:$,W:15%",          // Right-aligned content with "$" prefix, 15% width
-		"Discount|HR,CR,S:%,W:15%",    // Right-aligned header, centered content with "%" suffix, 8% width
-		"Total|CR,P:$,W:15%",          // Centered content with "$" prefix, 12% width
+		"Code|CC,W:8%",                // Centered header and centered content, 8% width
+		"Product|W:15%",               // Default left alignment, 15% width
+		"Description|W:25%",           // Default left alignment, 25% width
+		"Quantity|HR,CR,S: pcs,W:13%", // Right-aligned header and content with "pcs" suffix, 13% width
+		"Price|CR,P:$,W:13%",          // Right-aligned content with "$" prefix, 13% width
+		"Discount|HR,CR,S:%,W:13%",    // Right-aligned header with "%" suffix, 13% width
+		"Total|CR,P:$,W:13%",          // Right-aligned content with "$" prefix, 13% width
 	)
 
 	// Customize header style
@@ -164,6 +164,8 @@ func TestDocumentAPIUsage(t *testing.T) {
 		rightTable.AddRow(product["id"], product["name"], product["price"])
 	}
 	rightTable.Draw()
+
+	doc.AddText("This table is right-aligned.").AlignRight().Draw()
 
 	// add page for checking page header and footer
 	doc.AddPage()
