@@ -1,7 +1,6 @@
 package tinypdf
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -401,7 +400,6 @@ func (dt *docText) WithPageNumber() *docText {
 	if currentText != "" {
 		currentText += " "
 	}
-	currentText += fmt.Sprintf("{PAGE}")
 
 	// Update text in the builder
 	dt.text = currentText
