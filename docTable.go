@@ -324,7 +324,7 @@ func (t *docTable) CellStyle(style CellStyle) *docTable {
 
 // anyToString converts any value to a string without using fmt
 // Uses TinyGo-compatible approach to convert numbers to strings
-func anyToString(v any) string {
+func (t *docTable) anyToString(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -361,6 +361,7 @@ func anyToString(v any) string {
 	default:
 		// For any other type, return empty string
 		// In a full implementation, you might want to handle more types
+		t.doc.log("docTable anyToString error Unsupported type for conversion to string:", val)
 		return ""
 	}
 }
@@ -370,7 +371,7 @@ func anyToString(v any) string {
 func (t *docTable) AddRow(cells ...any) *docTable {
 	rowCells := make([]tableCell, len(cells))
 	for i, content := range cells {
-		formattedContent := anyToString(content)
+		formattedContent := t.anyToString(content)
 
 		// Apply prefix and suffix if column exists
 		if i < len(t.columns) {
