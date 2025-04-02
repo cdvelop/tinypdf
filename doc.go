@@ -5,13 +5,14 @@ import "strconv"
 type Document struct {
 	*GoPdf
 	fontConfig         FontConfig
-	pageWidth          float64
+	contentAreaWidth   float64 // Width of the content area (page width - margins)
 	inlineMode         bool    // Add this field to track inline element state
 	lastInlineWidth    float64 // Track the width of the last inline element
 	log                func(a ...any)
 	header             *headerFooter // New field for document header
 	footer             *headerFooter // New field for document footer
 	inHeaderFooterDraw bool          // Flag to prevent recursion in header/footer drawing
+	lastTableHeaders   []string      // Store the last table headers for width type verification
 }
 
 // NewDocument creates a new PDF document with configurable settings
@@ -68,7 +69,7 @@ func NewDocument(logPrint func(a ...any), configs ...any) *Document {
 		doc.log("Error loading fonts: ", err)
 	}
 
-	doc.pageWidth = doc.config.PageSize.W - (doc.margins.Left + doc.margins.Right)
+	doc.contentAreaWidth = doc.config.PageSize.W - (doc.margins.Left + doc.margins.Right)
 
 	// Initialize header and footer
 	doc.initHeaderFooter()
@@ -215,10 +216,10 @@ func (doc *Document) RedrawHeaderFooter() {
 // calculateElementPosition determina la posición X de un elemento basado en su alineación y ancho
 func (doc *Document) calculateElementPosition(width float64, alignment position, withPadding bool) float64 {
 	// Ancho total disponible en la página (incluyendo márgenes)
-	// totalWidth := doc.pageWidth
+	// totalWidth := doc.contentAreaWidth
 
 	// Ancho disponible para contenido
-	contentWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
+	contentWidth := doc.contentAreaWidth - (doc.margins.Left + doc.margins.Right)
 
 	// Padding solo si se requiere
 	padding := 0.0
@@ -235,7 +236,7 @@ func (doc *Document) calculateElementPosition(width float64, alignment position,
 		x = doc.margins.Left + (contentWidth / 2) - (width / 2)
 	case Right:
 		// Para alineado a la derecha: posición derecha - ancho
-		x = doc.pageWidth - doc.margins.Right - width
+		x = doc.contentAreaWidth - doc.margins.Right - width
 	default: // Left
 		// Para alineado a la izquierda: simplemente el margen izquierdo
 		x = doc.margins.Left

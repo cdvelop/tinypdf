@@ -172,7 +172,7 @@ func (dt *docText) FullWidth() *docText {
 // WidthPercent establece el ancho como porcentaje del ancho de página
 func (dt *docText) WidthPercent(percent float64) *docText {
 	if percent > 0 && percent <= 100 {
-		dt.rect.W = dt.doc.pageWidth * (percent / 100)
+		dt.rect.W = dt.doc.contentAreaWidth * (percent / 100)
 	}
 	return dt
 }
@@ -205,7 +205,7 @@ func (dt *docText) minimumWidthRequiredForText() {
 	// o si se solicitó ancho completo
 	if dt.fullWidth {
 		// Usar ancho completo de la página
-		dt.rect.W = dt.doc.pageWidth
+		dt.rect.W = dt.doc.contentAreaWidth
 	} else {
 		// Si no se especificó un ancho, calcular el ancho mínimo necesario
 		if dt.rect.W <= 0 {
@@ -234,8 +234,8 @@ func (dt *docText) minimumWidthRequiredForText() {
 			width += dt.style.Size * 1.1 // Aumentar el margen un 10%
 
 			// Si el texto es largo usar el ancho de página
-			if width >= dt.doc.pageWidth {
-				width = dt.doc.pageWidth
+			if width >= dt.doc.contentAreaWidth {
+				width = dt.doc.contentAreaWidth
 			}
 
 			// Asegurar un ancho mínimo razonable
@@ -284,7 +284,7 @@ func (dt *docText) Draw() error {
 
 			// Set X to maintain right alignment while considering page margins
 			textWidth := dt.rect.W
-			dt.doc.SetX(dt.doc.margins.Left + dt.doc.pageWidth - textWidth)
+			dt.doc.SetX(dt.doc.margins.Left + dt.doc.contentAreaWidth - textWidth)
 
 			// Ensure we're at the same Y position
 			dt.doc.SetY(currentY)
@@ -294,7 +294,7 @@ func (dt *docText) Draw() error {
 			if dt.doc.inlineMode && dt.doc.lastInlineWidth > 0 {
 				// Calculate remaining width on the current line
 				currentX := dt.doc.GetX()
-				availableWidth := dt.doc.pageWidth - (currentX - dt.doc.margins.Left)
+				availableWidth := dt.doc.contentAreaWidth - (currentX - dt.doc.margins.Left)
 
 				if !dt.fullWidth {
 					// For auto-width text, adjust rectangle width

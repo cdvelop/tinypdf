@@ -2,6 +2,15 @@ package tinypdf
 
 import "strconv"
 
+// tableWidthMode defines the table width calculation mode: automatic, fixed or percentage
+type tableWidthMode int
+
+const (
+	widthModeAuto    tableWidthMode = iota // Automatic width based on content
+	widthModeFixed                         // Fixed specified widths
+	widthModePercent                       // Widths as percentage of available space
+)
+
 // docTable represents a table to be added to the document
 type docTable struct {
 	doc          *Document
@@ -53,54 +62,96 @@ type tableCell struct {
 //   - "Name|HL,CL,W:30%" - Left-aligned header, left-aligned column with 30% of available width
 //   - "Age|HC,CR,W:20" - Center-aligned header, right-aligned column with fixed width of 20 units
 func (doc *Document) NewTable(headers ...string) *docTable {
+	// Almacenar los encabezados para verificación posterior
+	doc.lastTableHeaders = headers
+
 	// Crear una nueva tabla con configuración predeterminada
 	table := &docTable{
 		doc:         doc,
 		rowHeight:   25, // Default row height
 		cellPadding: 5,  // Default padding
 		alignment:   Center,
-		width:       0, // Will be calculated based on headers or set to document width
 	}
 
 	// Crear los estilos predeterminados para la tabla
 	table.headerStyle, table.cellStyle = createDefaultTableStyles(doc)
 
-	// Calcular el ancho máximo disponible para la tabla
-	maxWidth := doc.calculateAvailableTableWidth()
+	// Detectar el modo de ancho basado en los encabezados
+	widthMode := detectWidthModeFromHeaders(headers)
 
-	// Procesar los encabezados y calcular los anchos iniciales
-	columns, fixedWidthTotal, hasPercentageWidths :=
-		parseTableHeaders(doc, headers, table.cellPadding, maxWidth)
+	// Procesar los encabezados y calcular los anchos iniciales según su tipo
+	var columns []tableColumn
 
-	// Ajustar los anchos para las columnas con especificaciones de porcentaje
-	totalWidth := adjustPercentageWidths(
-		columns,
-		headers,
-		hasPercentageWidths,
-		maxWidth,
-		fixedWidthTotal,
-	)
+	switch widthMode {
+	case widthModePercent:
+		// Si hay porcentajes, todas las columnas son tratadas como porcentaje
+		// Y la tabla debe ocupar exactamente el ancho disponible
+		columns = initializePercentageColumns(doc, headers, doc.contentAreaWidth, table.cellPadding)
+		table.width = doc.contentAreaWidth
 
-	// Establecer las columnas y anchos calculados
+	case widthModeFixed:
+		// Si todas son anchos fijos, respetamos esos anchos exactamente
+		columns = initializeFixedWidthColumns(doc, headers, table.cellPadding)
+		// Calcular el ancho total sumando los anchos de las columnas
+		totalWidth := 0.0
+		for _, col := range columns {
+			totalWidth += col.width
+		}
+		table.width = totalWidth
+
+	default: // widthModeAuto
+		// Calculamos los anchos automáticamente basados en el contenido
+		columns = initializeAutoWidthColumns(doc, headers, table.cellPadding)
+		// Calcular el ancho total sumando los anchos de las columnas
+		totalWidth := 0.0
+		for _, col := range columns {
+			totalWidth += col.width
+		}
+
+		// Si el ancho total excede el disponible, escalar proporcionalmente
+		if totalWidth > doc.contentAreaWidth {
+			scaleFactor := doc.contentAreaWidth / totalWidth
+			for i := range columns {
+				columns[i].width *= scaleFactor
+			}
+			table.width = doc.contentAreaWidth
+		} else {
+			table.width = totalWidth
+		}
+	}
+
+	// Establecer las columnas
 	table.columns = columns
-	table.width = totalWidth
-	table.currentWidth = totalWidth
 
 	return table
 }
 
-// calculateAvailableTableWidth calcula el ancho máximo disponible para una tabla
-// considerando los márgenes del documento y un margen de tabla adicional
-func (doc *Document) calculateAvailableTableWidth() float64 {
-	// Available width for the table (accounting for margins)
-	maxWidth := doc.pageWidth - (doc.margins.Left + doc.margins.Right)
+// detectWidthModeFromHeaders analiza los encabezados para determinar el modo de ancho
+func detectWidthModeFromHeaders(headers []string) tableWidthMode {
+	// Si algún encabezado usa porcentaje, usamos modo porcentaje
+	for _, headerStr := range headers {
+		options := parseHeaderFormat(headerStr)
+		if options.WidthMode == widthModePercent {
+			return widthModePercent
+		}
+	}
 
-	// Apply a small margin to account for spacing between elements
-	// This ensures the table doesn't stretch all the way to the edges
-	tableMargin := 6.0 // Margen a cada lado para evitar que se acerque demasiado a los bordes
-	maxWidth = maxWidth - (2 * tableMargin)
+	// Si todos los encabezados usan ancho fijo, usamos modo fijo
+	allFixed := true
+	for _, headerStr := range headers {
+		options := parseHeaderFormat(headerStr)
+		if options.WidthMode != widthModeFixed {
+			allFixed = false
+			break
+		}
+	}
 
-	return maxWidth
+	if allFixed {
+		return widthModeFixed
+	}
+
+	// Por defecto, usamos modo automático
+	return widthModeAuto
 }
 
 // Width sets the total width of the table
@@ -306,24 +357,7 @@ func (t *docTable) Draw() error {
 	// Check if table fits on current page
 	y, _ := t.doc.ensureElementFits(totalHeight, t.doc.fontConfig.Normal.SpaceAfter)
 
-	// Verificar que la tabla no exceda el ancho disponible
-	availableWidth := t.doc.pageWidth - (t.doc.margins.Left + t.doc.margins.Right)
-
-	// Aplicar un padding lateral para que la tabla no quede pegada a los márgenes
-	tablePadding := 10.0 // Padding a cada lado
-	availableWidth -= (2 * tablePadding)
-
-	// Si el ancho de la tabla excede el disponible, ajustar proporcionalmente
-	if t.width > availableWidth {
-		scaleFactor := availableWidth / t.width
-		for i := range t.columns {
-			t.columns[i].width *= scaleFactor
-		}
-		t.width = availableWidth
-		t.currentWidth = availableWidth
-	}
-
-	// Calculate starting X position using the new positioning method
+	// Calculate starting X position - no recalculation of widths
 	x := t.calculatePosition()
 
 	// Colección para guardar información de los encabezados para dibujar sus bordes al final
@@ -353,7 +387,6 @@ func (t *docTable) Draw() error {
 			t.rowHeight,
 			col.header,
 			col.headerAlign, // Use header-specific alignment
-			true,            // isHeader
 			t.headerStyle,
 		)
 		currentX += col.width
@@ -393,7 +426,6 @@ func (t *docTable) Draw() error {
 					t.rowHeight,
 					col.header,
 					col.headerAlign, // Use header-specific alignment
-					true,            // isHeader
 					t.headerStyle,
 				)
 				headerX += col.width
@@ -423,7 +455,6 @@ func (t *docTable) Draw() error {
 					t.rowHeight,
 					cell.content,
 					cellAlign,
-					false, // not header
 					style,
 				)
 
@@ -451,7 +482,6 @@ func (t *docTable) drawCellContent(
 	height float64,
 	content string,
 	align position,
-	isHeader bool,
 	style CellStyle,
 ) {
 	// Fill the cell background if a fill color is specified
@@ -529,11 +559,10 @@ func (t *docTable) drawCell(
 	height float64,
 	content string,
 	align position,
-	isHeader bool,
 	style CellStyle,
 ) {
 	// Primero dibujamos el contenido y el fondo
-	t.drawCellContent(x, y, width, height, content, align, isHeader, style)
+	t.drawCellContent(x, y, width, height, content, align, style)
 
 	// Luego dibujamos los bordes
 	t.drawCellBorder(x, y, width, height, style.BorderStyle)
@@ -541,16 +570,23 @@ func (t *docTable) drawCell(
 
 // calculatePosition determina donde colocar la tabla
 func (t *docTable) calculatePosition() float64 {
+	// Calcular el ancho disponible entre los márgenes
+	availableWidth := t.doc.contentAreaWidth - (t.doc.margins.Left + t.doc.margins.Right)
+
+	// Posición X inicial (margen izquierdo)
 	x := t.doc.margins.Left
 
-	// Aplicar alineación de manera consistente con docImage.go
-	// Usar todo el ancho de página disponible para el cálculo
-	availableWidth := t.doc.pageWidth
+	// Aplicar alineación
 	switch t.alignment {
 	case Center:
+		// Centrar la tabla: margen izquierdo + (espacio disponible - ancho tabla) / 2
 		x = t.doc.margins.Left + (availableWidth-t.width)/2
 	case Right:
+		// Alinear a la derecha: margen izquierdo + espacio disponible - ancho tabla
 		x = t.doc.margins.Left + availableWidth - t.width
+	case Left:
+		// Alinear a la izquierda: simplemente el margen izquierdo
+		x = t.doc.margins.Left
 	}
 
 	return x

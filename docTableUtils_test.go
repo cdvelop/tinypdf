@@ -20,7 +20,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -59,7 +59,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "$",
 				Suffix:          "",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -98,7 +98,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "%",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -111,7 +111,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "$",
 				Suffix:          "USD",
 				Width:           0,
-				WidthType:       "auto",
+				WidthMode:       widthModeAuto,
 			},
 		},
 		{
@@ -124,7 +124,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           120,
-				WidthType:       "fixed",
+				WidthMode:       widthModeFixed,
 			},
 		},
 		{
@@ -137,7 +137,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "",
 				Suffix:          "",
 				Width:           30,
-				WidthType:       "percent",
+				WidthMode:       widthModePercent,
 			},
 		},
 		{
@@ -150,7 +150,7 @@ func TestParseHeaderFormat(t *testing.T) {
 				Prefix:          "Item:",
 				Suffix:          "USD",
 				Width:           40,
-				WidthType:       "percent",
+				WidthMode:       widthModePercent,
 			},
 		},
 	}
@@ -176,8 +176,8 @@ func TestParseHeaderFormat(t *testing.T) {
 			if result.Width != tc.expectedResult.Width {
 				t.Errorf("Expected Width to be %f, got %f", tc.expectedResult.Width, result.Width)
 			}
-			if result.WidthType != tc.expectedResult.WidthType {
-				t.Errorf("Expected WidthType to be %s, got %s", tc.expectedResult.WidthType, result.WidthType)
+			if result.WidthMode != tc.expectedResult.WidthMode {
+				t.Errorf("Expected WidthMode to be %v, got %v", tc.expectedResult.WidthMode, result.WidthMode)
 			}
 		})
 	}

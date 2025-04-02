@@ -107,7 +107,7 @@ func (hf *headerFooter) draw() {
 	}
 
 	// Calculate column widths (3 equal sections)
-	sectionWidth := hf.doc.pageWidth / 3
+	sectionWidth := hf.doc.contentAreaWidth / 3
 
 	// Set font for header/footer
 	var fontStyle TextStyle

@@ -213,10 +213,10 @@ func (img *docImage) calculateDimensions(imgWidth, imgHeight float64) (float64, 
 	finalHeight := imgHeight
 
 	// Scale down if original image is too large
-	pageWidth := img.doc.pageWidth - img.doc.margins.Left - img.doc.margins.Right
-	if finalWidth > pageWidth {
-		ratio := pageWidth / finalWidth
-		finalWidth = pageWidth
+	contentAreaWidth := img.doc.contentAreaWidth - img.doc.margins.Left - img.doc.margins.Right
+	if finalWidth > contentAreaWidth {
+		ratio := contentAreaWidth / finalWidth
+		finalWidth = contentAreaWidth
 		finalHeight = finalHeight * ratio
 	}
 
@@ -250,7 +250,7 @@ func (img *docImage) calculatePosition(width float64) (float64, float64) {
 	y := img.doc.GetY()
 
 	// Apply alignment
-	availableWidth := img.doc.pageWidth
+	availableWidth := img.doc.contentAreaWidth
 	switch img.alignment {
 	case Center:
 		x = img.doc.margins.Left + (availableWidth-width)/2
