@@ -570,9 +570,6 @@ func (t *docTable) drawCell(
 
 // calculatePosition determina donde colocar la tabla
 func (t *docTable) calculatePosition() float64 {
-	// Calcular el ancho disponible entre los márgenes
-	availableWidth := t.doc.contentAreaWidth - (t.doc.margins.Left + t.doc.margins.Right)
-
 	// Posición X inicial (margen izquierdo)
 	x := t.doc.margins.Left
 
@@ -580,10 +577,10 @@ func (t *docTable) calculatePosition() float64 {
 	switch t.alignment {
 	case Center:
 		// Centrar la tabla: margen izquierdo + (espacio disponible - ancho tabla) / 2
-		x = t.doc.margins.Left + (availableWidth-t.width)/2
+		x = t.doc.margins.Left + (t.doc.contentAreaWidth-t.width)/2
 	case Right:
 		// Alinear a la derecha: margen izquierdo + espacio disponible - ancho tabla
-		x = t.doc.margins.Left + availableWidth - t.width
+		x = t.doc.margins.Left + t.doc.contentAreaWidth - t.width
 	case Left:
 		// Alinear a la izquierda: simplemente el margen izquierdo
 		x = t.doc.margins.Left
