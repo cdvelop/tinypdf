@@ -1,7 +1,6 @@
 package tinypdf
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 )
@@ -9,10 +8,6 @@ import (
 func TestTableColumnWidths(t *testing.T) {
 	// Create output directory if it doesn't exist
 	outDir := "test/out"
-	err := os.MkdirAll(outDir, 0755)
-	if err != nil {
-		t.Fatalf("Error creating output directory: %v", err)
-	}
 
 	// Test cases for different width configurations
 	testCases := []struct {
@@ -89,7 +84,7 @@ func TestTableColumnWidths(t *testing.T) {
 			// Create a PDF for visual inspection
 			outFilePath := filepath.Join(outDir, "table_"+tc.name+".pdf")
 			table.Draw()
-			err = doc.WritePdf(outFilePath)
+			err := doc.WritePdf(outFilePath)
 			if err != nil {
 				t.Fatalf("Error writing PDF: %v", err)
 			}
@@ -130,7 +125,7 @@ func TestTableColumnWidths(t *testing.T) {
 		// Create a PDF for visual inspection
 		outFilePath := filepath.Join(outDir, "table_mixed_widths.pdf")
 		table.Draw()
-		err = doc.WritePdf(outFilePath)
+		err := doc.WritePdf(outFilePath)
 		if err != nil {
 			t.Fatalf("Error writing PDF: %v", err)
 		}
