@@ -355,7 +355,7 @@ func (t *docTable) Draw() error {
 	totalHeight := t.rowHeight * float64(len(t.rows)+1) // +1 for header row
 
 	// Check if table fits on current page
-	y, _ := t.doc.ensureElementFits(totalHeight, t.doc.fontConfig.Normal.SpaceAfter)
+	y := t.doc.ensureElementFits(totalHeight, t.doc.fontConfig.Normal.SpaceAfter)
 
 	// Calculate starting X position - no recalculation of widths
 	x := t.calculatePosition()

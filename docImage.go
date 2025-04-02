@@ -126,7 +126,7 @@ func (img *docImage) Draw() error {
 		// Skip page break check if we're in header/footer drawing mode
 		if !img.doc.inHeaderFooterDraw {
 			// Check if the image fits on current page
-			newY, _ := img.doc.ensureElementFits(finalHeight)
+			newY := img.doc.ensureElementFits(finalHeight)
 
 			// Only update Y position if this is not an inline element
 			if !img.inline {
@@ -250,12 +250,11 @@ func (img *docImage) calculatePosition(width float64) (float64, float64) {
 	y := img.doc.GetY()
 
 	// Apply alignment
-	availableWidth := img.doc.contentAreaWidth
 	switch img.alignment {
 	case Center:
-		x = img.doc.margins.Left + (availableWidth-width)/2
+		x = img.doc.margins.Left + (img.doc.contentAreaWidth-width)/2
 	case Right:
-		x = img.doc.margins.Left + availableWidth - width
+		x = img.doc.margins.Left + img.doc.contentAreaWidth - width
 	}
 
 	return x, y

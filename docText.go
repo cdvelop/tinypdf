@@ -353,7 +353,7 @@ func (dt *docText) Draw() error {
 	// Skip page break check if we're in header/footer drawing mode
 	if !dt.doc.inHeaderFooterDraw {
 		// Check if the text fits on current page
-		newY, _ := dt.doc.ensureElementFits(totalHeight, dt.style.SpaceAfter)
+		newY := dt.doc.ensureElementFits(totalHeight, dt.style.SpaceAfter)
 		dt.doc.SetY(newY)
 	}
 

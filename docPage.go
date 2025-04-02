@@ -8,7 +8,7 @@ package tinypdf
 // Returns:
 //   - positionY: the Y position where the element should be drawn
 //   - newPageAdded: true if a new page was added
-func (doc *Document) ensureElementFits(height float64, minBottomMargin ...float64) (float64, bool) {
+func (doc *Document) ensureElementFits(height float64, minBottomMargin ...float64) float64 {
 	// Convert height to points (internal PDF unit)
 	doc.UnitsToPointsVar(&height)
 
@@ -28,9 +28,9 @@ func (doc *Document) ensureElementFits(height float64, minBottomMargin ...float6
 	// Check if we need to add a page
 	if height > availableSpace {
 		doc.AddPage()
-		return doc.curr.Y, true // Return the top margin position of the new page
+		return doc.curr.Y // Return the top margin position of the new page
 	}
 
 	// The element fits on the current page
-	return currentY, false
+	return currentY
 }
