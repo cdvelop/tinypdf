@@ -45,9 +45,9 @@ func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType,
 	// check for options
 	for _, opt := range options {
 		switch v := opt.(type) {
-		case env.Logger:
+		case Logger:
 			f.logger = v
-		case env.FileWriter:
+		case FileWriter:
 			f.fileWriter = v
 		}
 	}

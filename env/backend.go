@@ -16,11 +16,14 @@ func SetupDefaultLogger() func(a ...any) {
 	}
 }
 
+// FileWrite writes data to a file in backend environments
+func FileWrite(filename string, data []byte) error {
+	return os.WriteFile(filename, data, 0644)
+}
+
 // SetupDefaultFileWriter configures the default file writer for backend environments
 func SetupDefaultFileWriter() func(filename string, data []byte) error {
-	return func(filename string, data []byte) error {
-		return os.WriteFile(filename, data, 0644)
-	}
+	return FileWrite
 }
 
 // FileExists checks if a file exists and returns its contents.

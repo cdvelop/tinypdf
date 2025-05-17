@@ -20,11 +20,15 @@ func SetupDefaultLogger() func(a ...any) {
 	}
 }
 
+// FileWrite writes data to a file in frontend environments
+// In browser context, this operation is not supported
+func FileWrite(filename string, data []byte) error {
+	return fmt.Errorf("file writing not implemented in frontend")
+}
+
 // SetupDefaultFileWriter configures the default file writer for frontend environments
 func SetupDefaultFileWriter() func(filename string, data []byte) error {
-	return func(filename string, data []byte) error {
-		return fmt.Errorf("file writing not implemented in frontend")
-	}
+	return FileWrite
 }
 
 // isURL checks if a string is a valid URL

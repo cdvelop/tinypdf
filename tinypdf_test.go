@@ -117,7 +117,7 @@ func TestIssue0193(t *testing.T) {
 	var err error
 	var rdr *bytes.Reader
 
-	png, err = env.TestFileHelper(example.ImageFile("sweden.png"))
+	png, err = env.FileExists(example.ImageFile("sweden.png"))
 	if err == nil {
 		rdr = bytes.NewReader(png)
 		pdf = tinypdf.New("P", "mm", "A4", "")
@@ -238,7 +238,7 @@ type fontResourceType struct {
 
 func (f fontResourceType) Open(name string) (rdr io.Reader, err error) {
 	var buf []byte
-	buf, err = env.TestFileHelper(example.FontFile(name))
+	buf, err = env.FileExists(example.FontFile(name))
 	if err == nil {
 		rdr = bytes.NewReader(buf)
 		fmt.Printf("Generalized font loader reading %s\n", name)
@@ -374,7 +374,7 @@ func ExampleFpdf_MultiCell() {
 	}
 	chapterBody := func(fileStr string) {
 		// Read text file
-		txtStr, err := env.TestFileHelper(fileStr)
+		txtStr, err := env.FileExists(fileStr)
 		if err != nil {
 			pdf.SetError(err)
 		}
@@ -433,7 +433,7 @@ func ExampleFpdf_SetLeftMargin() {
 	}
 	chapterBody := func(fileStr string) {
 		// Read text file
-		txtStr, err := env.TestFileHelper(fileStr)
+		txtStr, err := env.FileExists(fileStr)
 		if err != nil {
 			pdf.SetError(err)
 		}
@@ -599,7 +599,7 @@ func ExampleFpdf_CellFormat_tables() {
 	header := []string{"Country", "Capital", "Area (sq km)", "Pop. (thousands)"}
 
 	loadData := func(fileStr string) {
-		content, err := env.TestFileHelper(fileStr)
+		content, err := env.FileExists(fileStr)
 		if err == nil {
 			scanner := bufio.NewScanner(bytes.NewReader(content))
 			var c countryType
@@ -617,7 +617,6 @@ func ExampleFpdf_CellFormat_tables() {
 					err = fmt.Errorf("error tokenizing %s", lineStr)
 				}
 			}
-			fl.Close()
 			if len(countryList) == 0 {
 				err = fmt.Errorf("error loading data from %s", fileStr)
 			}
@@ -860,7 +859,7 @@ func ExampleFpdf_RegisterImageOptionsReader() {
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 11)
 
-	content, err := env.TestFileHelper(example.ImageFile("logo.png"))
+	content, err := env.FileExists(example.ImageFile("logo.png"))
 	if err == nil {
 		opt.ImageType = "png"
 		opt.AllowNegativePosition = true
@@ -2602,7 +2601,7 @@ func ExampleFpdf_AddUTF8Font() {
 	pdf.AddUTF8Font("dejavu", "BI", example.FontFile("DejaVuSansCondensed-BoldOblique.ttf"))
 
 	fileStr = example.Filename("Fpdf_AddUTF8Font")
-	txtStr, err = env.TestFileHelper(example.TextFile("utf-8test.txt"))
+	txtStr, err = env.FileExists(example.TextFile("utf-8test.txt"))
 	if err == nil {
 
 		pdf.SetFont("dejavu", "B", 17)
@@ -2611,7 +2610,7 @@ func ExampleFpdf_AddUTF8Font() {
 		pdf.MultiCell(100, 5, string(txtStr), "", "C", false)
 		pdf.Ln(15)
 
-		txtStr, err = env.TestFileHelper(example.TextFile("utf-8test2.txt"))
+		txtStr, err = env.FileExists(example.TextFile("utf-8test2.txt"))
 		if err == nil {
 
 			pdf.SetFont("dejavu", "BI", 17)
@@ -2635,11 +2634,11 @@ func ExampleUTF8CutFont() {
 
 	pdfFileStr = example.Filename("Fpdf_UTF8CutFont")
 	fullFontFileStr = example.FontFile("calligra.ttf")
-	fullFont, err = env.TestFileHelper(fullFontFileStr)
+	fullFont, err = env.FileExists(fullFontFileStr)
 	if err == nil {
 		subFontFileStr = "calligra_abcde.ttf"
 		subFont = tinypdf.UTF8CutFont(fullFont, "abcde")
-		err = env.DefaultFileWriter(subFontFileStr, subFont)
+		err = env.FileWrite(subFontFileStr, subFont)
 		if err == nil {
 			y := 24.0
 			pdf := tinypdf.New("P", "mm", "A4", "")
@@ -2808,7 +2807,7 @@ func ExampleFpdf_SetTextRenderingMode() {
 func TestIssue0316(t *testing.T) {
 	pdf := tinypdf.New(tinypdf.OrientationPortrait, "mm", "A4", "")
 	pdf.AddPage()
-	fontBytes, _ := env.TestFileHelper(example.FontFile("DejaVuSansCondensed.ttf"))
+	fontBytes, _ := env.FileExists(example.FontFile("DejaVuSansCondensed.ttf"))
 	ofontBytes := append([]byte{}, fontBytes...)
 	pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
 	pdf.SetFont("dejavu", "", 16)
@@ -2825,7 +2824,7 @@ func TestIssue0316(t *testing.T) {
 func TestMultiCellUnsupportedChar(t *testing.T) {
 	pdf := tinypdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
-	fontBytes, _ := env.TestFileHelper(example.FontFile("DejaVuSansCondensed.ttf"))
+	fontBytes, _ := env.FileExists(example.FontFile("DejaVuSansCondensed.ttf"))
 	pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
 	pdf.SetFont("dejavu", "", 16)
 
@@ -2847,12 +2846,12 @@ func ExampleFpdf_SetAttachments() {
 	pdf := tinypdf.New("P", "mm", "A4", "")
 
 	// Global attachments
-	file, err := env.TestFileHelper("grid.go")
+	file, err := env.FileExists("grid.go")
 	if err != nil {
 		pdf.SetError(err)
 	}
 	a1 := tinypdf.Attachment{Content: file, Filename: "grid.go"}
-	file, err = env.TestFileHelper("LICENSE")
+	file, err = env.FileExists("LICENSE")
 	if err != nil {
 		pdf.SetError(err)
 	}
@@ -2871,7 +2870,7 @@ func ExampleFpdf_AddAttachmentAnnotation() {
 	pdf.SetFont("Arial", "", 12)
 	pdf.AddPage()
 	// Per page attachment
-	file, err := env.TestFileHelper("grid.go")
+	file, err := env.FileExists("grid.go")
 	if err != nil {
 		pdf.SetError(err)
 	}

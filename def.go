@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"io"
 	"time"
-
-	"github.com/cdvelop/tinypdf/env"
 )
 
 // Version of FPDF from which this package is derived
@@ -482,6 +480,12 @@ type PageBox struct {
 	PointType
 }
 
+// FileWriter defines a function type for writing files
+type FileWriter func(filename string, data []byte) error
+
+// Logger defines a function type for logging
+type Logger func(a ...any)
+
 // Fpdf is the principal structure for creating a single PDF document
 type Fpdf struct {
 	isCurrentUTF8    bool                       // is current font used in utf-8 mode
@@ -590,8 +594,8 @@ type Fpdf struct {
 	// A custom user underline thickness multiplier.
 	userUnderlineThickness float64
 
-	logger     env.Logger
-	fileWriter env.FileWriter
+	logger     Logger
+	fileWriter FileWriter
 }
 
 type encType struct {
