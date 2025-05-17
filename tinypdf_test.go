@@ -917,7 +917,7 @@ func ExampleFpdf_SetAcceptPageBreakFunc() {
 	pdf.SetFont("Times", "", 12)
 	for j := 0; j < 20; j++ {
 		if j == 1 {
-			pdf.Image(example.ImageFile("fpdf.png"), -1, 0, colWd, 0, true, "", 0, "")
+			pdf.Image(example.ImageFile("tinypdf.png"), -1, 0, colWd, 0, true, "", 0, "")
 		} else if j == 5 {
 			pdf.Image(example.ImageFile("golang-gopher.png"),
 				-1, 0, colWd, 0, true, "", 0, "")
@@ -1760,7 +1760,7 @@ func ExampleFpdf_RegisterImageReader() {
 		wd       = 210
 		ht       = 297
 		fontSize = 15
-		urlStr   = "https://github.com/cdvelop/tinypdf/blob/master/image/tinypdf.png?raw=true"
+		urlStr   = "https://github.com/cdvelop/tinypdf/blob/main/image/tinypdf.png?raw=true"
 		msgStr   = `Images from the web can be easily embedded when a PDF document is generated.`
 	)
 
