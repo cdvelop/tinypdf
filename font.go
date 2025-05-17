@@ -49,8 +49,7 @@ func baseNoExt(fileStr string) string {
 func loadMap(encodingFileStr string) (encList encListType, err error) {
 	// printf("Encoding file string [%s]\n", encodingFileStr)
 	var f *os.File
-	// f, err = os.Open(encodingFilepath(encodingFileStr))
-	f, err = os.Open(encodingFileStr)
+	// f, err = os.Open(encodingFilepath(encodingFileStr))	f, err = env.FileOpen(encodingFileStr)
 	if err == nil {
 		defer f.Close()
 		for j := range encList {
@@ -94,7 +93,7 @@ func getInfoFromTrueType(fileStr string, msgWriter io.Writer, embed bool, encLis
 			err = fmt.Errorf("font license does not allow embedding")
 			return
 		}
-		info.Data, err = ioutil.ReadFile(fileStr)
+		info.Data, err = os.ReadFile(fileStr)
 		if err != nil {
 			return
 		}

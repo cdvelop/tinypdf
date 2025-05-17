@@ -11,14 +11,14 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"math"
-	"os"
 	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/cdvelop/tinypdf/env"
 )
 
 var gl struct {
@@ -36,8 +36,22 @@ func (b *fmtBuffer) printf(fmtStr string, args ...interface{}) {
 	b.Buffer.WriteString(fmt.Sprintf(fmtStr, args...))
 }
 
-func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType) (f *Fpdf) {
+func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType, options ...any) (f *Fpdf) {
 	f = new(Fpdf)
+
+	f.logger = env.SetupDefaultLogger()
+	f.fileWriter = env.SetupDefaultFileWriter()
+
+	// check for options
+	for _, opt := range options {
+		switch v := opt.(type) {
+		case env.Logger:
+			f.logger = v
+		case env.FileWriter:
+			f.fileWriter = v
+		}
+	}
+
 	if orientationStr == "" {
 		orientationStr = "p"
 	} else {
@@ -194,8 +208,8 @@ func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType)
 // subsequently called to produce a single PDF document. NewCustom() is an
 // alternative to New() that provides additional customization. The PageSize()
 // example demonstrates this method.
-func NewCustom(init *InitType) (f *Fpdf) {
-	return fpdfNew(init.OrientationStr, init.UnitStr, init.SizeStr, init.FontDirStr, init.Size)
+func NewCustom(init *InitType, options ...any) (f *Fpdf) {
+	return fpdfNew(init.OrientationStr, init.UnitStr, init.SizeStr, init.FontDirStr, init.Size, options...)
 }
 
 // New returns a pointer to a new Fpdf instance. Its methods are subsequently
@@ -218,8 +232,8 @@ func NewCustom(init *InitType) (f *Fpdf) {
 // reference an actual directory if a font other than one of the core
 // fonts is used. The core fonts are "courier", "helvetica" (also called
 // "arial"), "times", and "zapfdingbats" (also called "symbol").
-func New(orientationStr, unitStr, sizeStr, fontDirStr string) (f *Fpdf) {
-	return fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr, SizeType{0, 0})
+func New(orientationStr, unitStr, sizeStr, fontDirStr string, options ...any) (f *Fpdf) {
+	return fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr, SizeType{0, 0}, options...)
 }
 
 // Ok returns true if no processing errors have occurred.
@@ -1661,18 +1675,17 @@ func (f *Fpdf) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 		if ok {
 			return
 		}
-		var ttfStat os.FileInfo
 		var err error
 		fileStr = path.Join(f.fontpath, fileStr)
-		ttfStat, err = os.Stat(fileStr)
+		fileSize, err := env.GetSize(fileStr)
 		if err != nil {
 			f.SetError(err)
 			return
 		}
-		originalSize := ttfStat.Size()
+		originalSize := fileSize
 		Type := "UTF8"
 		var utf8Bytes []byte
-		utf8Bytes, err = ioutil.ReadFile(fileStr)
+		utf8Bytes, err = env.FileExists(fileStr)
 		if err != nil {
 			f.SetError(err)
 			return
@@ -1735,7 +1748,7 @@ func (f *Fpdf) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 		}
 
 		fileStr = path.Join(f.fontpath, fileStr)
-		file, err := os.Open(fileStr)
+		file, err := env.FileOpen(fileStr)
 		if err != nil {
 			f.err = err
 			return
@@ -3206,7 +3219,7 @@ func (f *Fpdf) RegisterImageOptions(fileStr string, options ImageOptions) (info 
 		return
 	}
 
-	file, err := os.Open(fileStr)
+	file, err := env.FileOpen(fileStr)
 	if err != nil {
 		f.err = err
 		return
@@ -3424,11 +3437,13 @@ func (f *Fpdf) OutputAndClose(w io.WriteCloser) error {
 // Most examples demonstrate the use of this method.
 func (f *Fpdf) OutputFileAndClose(fileStr string) error {
 	if f.err == nil {
-		pdfFile, err := os.Create(fileStr)
-		if err == nil {
-			f.Output(pdfFile)
-			pdfFile.Close()
-		} else {
+		// Create PDF content in memory first
+		var buf bytes.Buffer
+		f.Output(&buf)
+
+		// Use env.DefaultFileWriter to write the file
+		err := f.fileWriter(fileStr, buf.Bytes())
+		if err != nil {
 			f.err = err
 		}
 	}
@@ -4309,14 +4324,14 @@ func (f *Fpdf) loadFontFile(name string) ([]byte, error) {
 	if f.fontLoader != nil {
 		reader, err := f.fontLoader.Open(name)
 		if err == nil {
-			data, err := ioutil.ReadAll(reader)
+			data, err := env.ReadAll(reader)
 			if closer, ok := reader.(io.Closer); ok {
 				closer.Close()
 			}
 			return data, err
 		}
 	}
-	return ioutil.ReadFile(path.Join(f.fontpath, name))
+	return env.FileExists(path.Join(f.fontpath, name))
 }
 
 func (f *Fpdf) putimages() {

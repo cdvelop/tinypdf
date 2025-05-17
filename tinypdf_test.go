@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cdvelop/tinypdf"
+	"github.com/cdvelop/tinypdf/env"
 	"github.com/cdvelop/tinypdf/internal/example"
 	"github.com/cdvelop/tinypdf/internal/files"
 )
@@ -28,11 +28,14 @@ func init() {
 func cleanup() {
 	filepath.Walk(example.PdfDir(),
 		func(path string, info os.FileInfo, err error) (reterr error) {
+			// In tests, we still need to use os.FileInfo since filepath.Walk is using it
+			// This doesn't affect the main library code which now uses the env package
 			if info.Mode().IsRegular() {
 				dir, _ := filepath.Split(path)
 				if "reference" != filepath.Base(dir) {
 					if len(path) > 3 {
 						if path[len(path)-4:] == ".pdf" {
+							// Still using os.Remove in tests
 							os.Remove(path)
 						}
 					}
@@ -114,7 +117,7 @@ func TestIssue0193(t *testing.T) {
 	var err error
 	var rdr *bytes.Reader
 
-	png, err = ioutil.ReadFile(example.ImageFile("sweden.png"))
+	png, err = env.TestFileHelper(example.ImageFile("sweden.png"))
 	if err == nil {
 		rdr = bytes.NewReader(png)
 		pdf = tinypdf.New("P", "mm", "A4", "")
@@ -235,7 +238,7 @@ type fontResourceType struct {
 
 func (f fontResourceType) Open(name string) (rdr io.Reader, err error) {
 	var buf []byte
-	buf, err = ioutil.ReadFile(example.FontFile(name))
+	buf, err = env.TestFileHelper(example.FontFile(name))
 	if err == nil {
 		rdr = bytes.NewReader(buf)
 		fmt.Printf("Generalized font loader reading %s\n", name)
@@ -371,7 +374,7 @@ func ExampleFpdf_MultiCell() {
 	}
 	chapterBody := func(fileStr string) {
 		// Read text file
-		txtStr, err := ioutil.ReadFile(fileStr)
+		txtStr, err := env.TestFileHelper(fileStr)
 		if err != nil {
 			pdf.SetError(err)
 		}
@@ -430,7 +433,7 @@ func ExampleFpdf_SetLeftMargin() {
 	}
 	chapterBody := func(fileStr string) {
 		// Read text file
-		txtStr, err := ioutil.ReadFile(fileStr)
+		txtStr, err := env.TestFileHelper(fileStr)
 		if err != nil {
 			pdf.SetError(err)
 		}
@@ -594,10 +597,11 @@ func ExampleFpdf_CellFormat_tables() {
 	}
 	countryList := make([]countryType, 0, 8)
 	header := []string{"Country", "Capital", "Area (sq km)", "Pop. (thousands)"}
+
 	loadData := func(fileStr string) {
-		fl, err := os.Open(fileStr)
+		content, err := env.TestFileHelper(fileStr)
 		if err == nil {
-			scanner := bufio.NewScanner(fl)
+			scanner := bufio.NewScanner(bytes.NewReader(content))
 			var c countryType
 			for scanner.Scan() {
 				// Austria;Vienna;83859;8075
@@ -848,7 +852,6 @@ func ExampleFpdf_RegisterImageOptionsReader() {
 	var (
 		opt    tinypdf.ImageOptions
 		pdfStr string
-		fl     *os.File
 		err    error
 	)
 
@@ -856,12 +859,14 @@ func ExampleFpdf_RegisterImageOptionsReader() {
 	pdf := tinypdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 11)
-	fl, err = os.Open(example.ImageFile("logo.png"))
+
+	content, err := env.TestFileHelper(example.ImageFile("logo.png"))
 	if err == nil {
 		opt.ImageType = "png"
 		opt.AllowNegativePosition = true
-		_ = pdf.RegisterImageOptionsReader("logo", opt, fl)
-		fl.Close()
+		reader := bytes.NewReader(content)
+		_ = pdf.RegisterImageOptionsReader("logo", opt, reader)
+		// No need to close a bytes.Reader
 		for x := -20.0; x <= 40.0; x += 5 {
 			pdf.ImageOptions("logo", x, x+30, 0, 0, false, opt, 0, "")
 		}
@@ -1595,7 +1600,7 @@ func ExampleFpdf_CellFormat_codepageescape() {
 	html.Write(ht, htmlStr)
 	pdf.Ln(2 * ht)
 	write("Voix ambigu\xeb d'un c\x9cur qui au z\xe9phyr pr\xe9f\xe8re les jattes de kiwi.")
-	write("Falsches \xdcben von Xylophonmusik qu\xe4lt jeden gr\xf6\xdferen Zwerg.")
+	write("Falsches \xdcben von Xylophonmusik qu\xe4lt jeden gr\xf6\xdceren Zwerg.")
 	write("Heiz\xf6lr\xfccksto\xdfabd\xe4mpfung")
 	write("For\xe5rsj\xe6vnd\xf8gn / Efter\xe5rsj\xe6vnd\xf8gn")
 	fileStr := example.Filename("Fpdf_CellFormat_codepageescape")
@@ -1881,7 +1886,6 @@ func ExampleFpdf_Beziergon() {
 	example.Summary(err, fileStr)
 	// Output:
 	// Successfully generated pdf/Fpdf_Beziergon.pdf
-
 }
 
 // ExampleFpdf_SetFontLoader demonstrates loading a non-standard font using a generalized
@@ -2149,6 +2153,7 @@ func ExampleFpdf_ClipRect() {
 		}
 		pdf.Ln(-1)
 	}
+
 	fileStr := example.Filename("Fpdf_ClippedTableCells")
 	err := pdf.OutputFileAndClose(fileStr)
 	example.Summary(err, fileStr)
@@ -2597,7 +2602,7 @@ func ExampleFpdf_AddUTF8Font() {
 	pdf.AddUTF8Font("dejavu", "BI", example.FontFile("DejaVuSansCondensed-BoldOblique.ttf"))
 
 	fileStr = example.Filename("Fpdf_AddUTF8Font")
-	txtStr, err = ioutil.ReadFile(example.TextFile("utf-8test.txt"))
+	txtStr, err = env.TestFileHelper(example.TextFile("utf-8test.txt"))
 	if err == nil {
 
 		pdf.SetFont("dejavu", "B", 17)
@@ -2606,7 +2611,7 @@ func ExampleFpdf_AddUTF8Font() {
 		pdf.MultiCell(100, 5, string(txtStr), "", "C", false)
 		pdf.Ln(15)
 
-		txtStr, err = ioutil.ReadFile(example.TextFile("utf-8test2.txt"))
+		txtStr, err = env.TestFileHelper(example.TextFile("utf-8test2.txt"))
 		if err == nil {
 
 			pdf.SetFont("dejavu", "BI", 17)
@@ -2630,11 +2635,11 @@ func ExampleUTF8CutFont() {
 
 	pdfFileStr = example.Filename("Fpdf_UTF8CutFont")
 	fullFontFileStr = example.FontFile("calligra.ttf")
-	fullFont, err = ioutil.ReadFile(fullFontFileStr)
+	fullFont, err = env.TestFileHelper(fullFontFileStr)
 	if err == nil {
 		subFontFileStr = "calligra_abcde.ttf"
 		subFont = tinypdf.UTF8CutFont(fullFont, "abcde")
-		err = ioutil.WriteFile(subFontFileStr, subFont, 0600)
+		err = env.DefaultFileWriter(subFontFileStr, subFont)
 		if err == nil {
 			y := 24.0
 			pdf := tinypdf.New("P", "mm", "A4", "")
@@ -2646,11 +2651,9 @@ func ExampleUTF8CutFont() {
 				y += lineHt
 			}
 			writeSize := func(fileStr string) {
-				var info os.FileInfo
-				var err error
-				info, err = os.Stat(fileStr)
+				size, err := env.GetSize(fileStr)
 				if err == nil {
-					write("%6d: size of %s", info.Size(), fileStr)
+					write("%6d: size of %s", size, fileStr)
 				}
 			}
 			pdf.AddPage()
@@ -2662,6 +2665,7 @@ func ExampleUTF8CutFont() {
 			writeSize(fullFontFileStr)
 			writeSize(subFontFileStr)
 			err = pdf.OutputFileAndClose(pdfFileStr)
+			// Keep using os.Remove for test cleanup as this doesn't affect library functionality
 			os.Remove(subFontFileStr)
 		}
 	}
@@ -2725,7 +2729,7 @@ func ExampleFpdf_RoundedRect() {
 // ExampleFpdf_SetUnderlineThickness demonstrates how to adjust the text
 // underline thickness.
 func ExampleFpdf_SetUnderlineThickness() {
-	pdf := tinypdf.New("P", "mm", "A4", "") // 210mm x 297mm
+	pdf := tinypdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "U", 12)
 
@@ -2804,7 +2808,7 @@ func ExampleFpdf_SetTextRenderingMode() {
 func TestIssue0316(t *testing.T) {
 	pdf := tinypdf.New(tinypdf.OrientationPortrait, "mm", "A4", "")
 	pdf.AddPage()
-	fontBytes, _ := ioutil.ReadFile(example.FontFile("DejaVuSansCondensed.ttf"))
+	fontBytes, _ := env.TestFileHelper(example.FontFile("DejaVuSansCondensed.ttf"))
 	ofontBytes := append([]byte{}, fontBytes...)
 	pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
 	pdf.SetFont("dejavu", "", 16)
@@ -2821,7 +2825,7 @@ func TestIssue0316(t *testing.T) {
 func TestMultiCellUnsupportedChar(t *testing.T) {
 	pdf := tinypdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
-	fontBytes, _ := ioutil.ReadFile(example.FontFile("DejaVuSansCondensed.ttf"))
+	fontBytes, _ := env.TestFileHelper(example.FontFile("DejaVuSansCondensed.ttf"))
 	pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
 	pdf.SetFont("dejavu", "", 16)
 
@@ -2843,12 +2847,12 @@ func ExampleFpdf_SetAttachments() {
 	pdf := tinypdf.New("P", "mm", "A4", "")
 
 	// Global attachments
-	file, err := ioutil.ReadFile("grid.go")
+	file, err := env.TestFileHelper("grid.go")
 	if err != nil {
 		pdf.SetError(err)
 	}
 	a1 := tinypdf.Attachment{Content: file, Filename: "grid.go"}
-	file, err = ioutil.ReadFile("LICENSE")
+	file, err = env.TestFileHelper("LICENSE")
 	if err != nil {
 		pdf.SetError(err)
 	}
@@ -2866,9 +2870,8 @@ func ExampleFpdf_AddAttachmentAnnotation() {
 	pdf := tinypdf.New("P", "mm", "A4", "")
 	pdf.SetFont("Arial", "", 12)
 	pdf.AddPage()
-
 	// Per page attachment
-	file, err := ioutil.ReadFile("grid.go")
+	file, err := env.TestFileHelper("grid.go")
 	if err != nil {
 		pdf.SetError(err)
 	}

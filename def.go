@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/cdvelop/tinypdf/env"
 )
 
 // Version of FPDF from which this package is derived
@@ -584,8 +586,12 @@ type Fpdf struct {
 		// Composite values of colors
 		draw, fill, text colorType
 	}
-	spotColorMap           map[string]spotColorType // Map of named ink-based colors
-	userUnderlineThickness float64                  // A custom user underline thickness multiplier.
+	spotColorMap map[string]spotColorType // Map of named ink-based colors
+	// A custom user underline thickness multiplier.
+	userUnderlineThickness float64
+
+	logger     env.Logger
+	fileWriter env.FileWriter
 }
 
 type encType struct {

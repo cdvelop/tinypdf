@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cdvelop/tinypdf/env"
 )
 
 func round(f float64) int {
@@ -41,23 +42,15 @@ func sprintf(fmtStr string, args ...interface{}) string {
 
 // fileExist returns true if the specified normal file exists
 func fileExist(filename string) (ok bool) {
-	info, err := os.Stat(filename)
-	if err == nil {
-		if ^os.ModePerm&info.Mode() == 0 {
-			ok = true
-		}
-	}
-	return ok
+	_, err := env.FileExists(filename)
+	return err == nil
 }
 
 // fileSize returns the size of the specified file; ok will be false
 // if the file does not exist or is not an ordinary file
 func fileSize(filename string) (size int64, ok bool) {
-	info, err := os.Stat(filename)
+	size, err := env.GetSize(filename)
 	ok = err == nil
-	if ok {
-		size = info.Size()
-	}
 	return
 }
 
@@ -244,11 +237,11 @@ func UnicodeTranslator(r io.Reader) (f func(string) string, err error) {
 // If an error occurs reading the file, the returned function is valid but does
 // not perform any rune translation.
 func UnicodeTranslatorFromFile(fileStr string) (f func(string) string, err error) {
-	var fl *os.File
-	fl, err = os.Open(fileStr)
+	var reader env.ReadSeekCloser
+	reader, err = env.FileOpen(fileStr)
 	if err == nil {
-		f, err = UnicodeTranslator(fl)
-		fl.Close()
+		f, err = UnicodeTranslator(reader)
+		reader.Close()
 	} else {
 		f = doNothing
 	}
