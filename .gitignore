@@ -6,6 +6,9 @@ font/Ubuntu-*
 internal/files/bin/bin
 look
 makefont/makefont
+makefont/makefont.exe
+
+
 open
 **/*.out
 pdf/*.pdf
