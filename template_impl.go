@@ -31,7 +31,7 @@ import (
 )
 
 // newTpl creates a template, copying graphics settings from a template if one is given
-func newTpl(corner PointType, size SizeType, orientationStr, unitStr, fontDirStr string, fn func(*Tpl), copyFrom *Fpdf) Template {
+func newTpl(corner PointType, size SizeType, orientationStr, unitStr, fontDirStr string, fn func(*Tpl), copyFrom *DocPDF) Template {
 	sizeStr := ""
 
 	docpdf := fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr, size)
@@ -39,22 +39,22 @@ func newTpl(corner PointType, size SizeType, orientationStr, unitStr, fontDirStr
 	if copyFrom != nil {
 		tpl.loadParamsFromFpdf(copyFrom)
 	}
-	tpl.Fpdf.AddPage()
+	tpl.DocPDF.AddPage()
 	fn(&tpl)
 
-	bytes := make([][]byte, len(tpl.Fpdf.pages))
+	bytes := make([][]byte, len(tpl.DocPDF.pages))
 	// skip the first page as it will always be empty
 	for x := 1; x < len(bytes); x++ {
-		bytes[x] = tpl.Fpdf.pages[x].Bytes()
+		bytes[x] = tpl.DocPDF.pages[x].Bytes()
 	}
 
-	templates := make([]Template, 0, len(tpl.Fpdf.templates))
-	for _, key := range templateKeyList(tpl.Fpdf.templates, true) {
-		templates = append(templates, tpl.Fpdf.templates[key])
+	templates := make([]Template, 0, len(tpl.DocPDF.templates))
+	for _, key := range templateKeyList(tpl.DocPDF.templates, true) {
+		templates = append(templates, tpl.DocPDF.templates[key])
 	}
-	images := tpl.Fpdf.images
+	images := tpl.DocPDF.images
 
-	template := FpdfTpl{corner, size, bytes, images, templates, tpl.Fpdf.page}
+	template := FpdfTpl{corner, size, bytes, images, templates, tpl.DocPDF.page}
 	return &template
 }
 
@@ -273,36 +273,36 @@ func (t *FpdfTpl) GobDecode(buf []byte) error {
 	return err
 }
 
-// Tpl is an Fpdf used for writing a template. It has most of the facilities of
-// an Fpdf, but cannot add more pages. Tpl is used directly only during the
+// Tpl is an DocPDF used for writing a template. It has most of the facilities of
+// an DocPDF, but cannot add more pages. Tpl is used directly only during the
 // limited time a template is writable.
 type Tpl struct {
-	Fpdf
+	DocPDF
 }
 
-func (t *Tpl) loadParamsFromFpdf(f *Fpdf) {
-	t.Fpdf.compress = false
+func (t *Tpl) loadParamsFromFpdf(f *DocPDF) {
+	t.DocPDF.compress = false
 
-	t.Fpdf.k = f.k
-	t.Fpdf.x = f.x
-	t.Fpdf.y = f.y
-	t.Fpdf.lineWidth = f.lineWidth
-	t.Fpdf.capStyle = f.capStyle
-	t.Fpdf.joinStyle = f.joinStyle
+	t.DocPDF.k = f.k
+	t.DocPDF.x = f.x
+	t.DocPDF.y = f.y
+	t.DocPDF.lineWidth = f.lineWidth
+	t.DocPDF.capStyle = f.capStyle
+	t.DocPDF.joinStyle = f.joinStyle
 
-	t.Fpdf.color.draw = f.color.draw
-	t.Fpdf.color.fill = f.color.fill
-	t.Fpdf.color.text = f.color.text
+	t.DocPDF.color.draw = f.color.draw
+	t.DocPDF.color.fill = f.color.fill
+	t.DocPDF.color.text = f.color.text
 
-	t.Fpdf.fonts = f.fonts
-	t.Fpdf.currentFont = f.currentFont
-	t.Fpdf.fontFamily = f.fontFamily
-	t.Fpdf.fontSize = f.fontSize
-	t.Fpdf.fontSizePt = f.fontSizePt
-	t.Fpdf.fontStyle = f.fontStyle
-	t.Fpdf.ws = f.ws
+	t.DocPDF.fonts = f.fonts
+	t.DocPDF.currentFont = f.currentFont
+	t.DocPDF.fontFamily = f.fontFamily
+	t.DocPDF.fontSize = f.fontSize
+	t.DocPDF.fontSizePt = f.fontSizePt
+	t.DocPDF.fontStyle = f.fontStyle
+	t.DocPDF.ws = f.ws
 
 	for key, value := range f.images {
-		t.Fpdf.images[key] = value
+		t.DocPDF.images[key] = value
 	}
 }

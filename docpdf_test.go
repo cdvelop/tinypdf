@@ -1387,7 +1387,7 @@ func Test_CellFormat_align(t *testing.T) {
 		{"AC", "baseline center"},
 		{"AR", "baseline right"},
 	}
-	var formatRect = func(pdf *docpdf.Fpdf, recList []recType) {
+	var formatRect = func(pdf *docpdf.DocPDF, recList []recType) {
 		linkStr := ""
 		for pageJ := 0; pageJ < 2; pageJ++ {
 			pdf.AddPage()

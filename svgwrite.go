@@ -28,7 +28,7 @@ package docpdf
 // (as set with SetLineCapStyle()), line width (as set with SetLineWidth()),
 // and draw color (as set with SetDrawColor()) are used in drawing the image
 // paths.
-func (f *Fpdf) SVGBasicWrite(sb *SVGBasicType, scale float64) {
+func (f *DocPDF) SVGBasicWrite(sb *SVGBasicType, scale float64) {
 	originX, originY := f.GetXY()
 	var x, y, newX, newY float64
 	var cx0, cy0, cx1, cy1 float64
@@ -99,7 +99,7 @@ func (f *Fpdf) SVGBasicWrite(sb *SVGBasicType, scale float64) {
 // "FD" for outlined and filled. An empty string will be replaced with
 // "D". Drawing uses the current draw color and line width centered on
 // the ellipse's perimeter. Filling uses the current fill color.
-func (f *Fpdf) SVGBasicDraw(sb *SVGBasicType, scale float64, styleStr string) {
+func (f *DocPDF) SVGBasicDraw(sb *SVGBasicType, scale float64, styleStr string) {
 	originX, originY := f.GetXY()
 	var newX, newY float64
 	var cx0, cy0, cx1, cy1 float64

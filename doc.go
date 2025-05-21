@@ -82,16 +82,16 @@ documentation) for more advanced PDF examples.
 
 # Errors
 
-If an error occurs in an Fpdf method, an internal error field is set.
-After this occurs, Fpdf method calls typically return without performing
+If an error occurs in an DocPDF method, an internal error field is set.
+After this occurs, DocPDF method calls typically return without performing
 any operations and the error state is retained. This error management
 scheme facilitates PDF generation since individual method calls do not
 need to be examined for failure; it is generally sufficient to wait
 until after Output() is called. For the same reason, if an error occurs
 in the calling application during PDF generation, it may be desirable
-for the application to transfer the error to the Fpdf instance by
+for the application to transfer the error to the DocPDF instance by
 calling the SetError() method or the SetErrorf() method. At any time
-during the life cycle of the Fpdf instance, the error state can be
+during the life cycle of the DocPDF instance, the error state can be
 determined with a call to Ok() or Err(). The error itself can be
 retrieved with a call to Error().
 

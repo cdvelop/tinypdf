@@ -27,12 +27,12 @@ import (
 )
 
 // CreateTemplate defines a new template using the current page size.
-func (f *Fpdf) CreateTemplate(fn func(*Tpl)) Template {
+func (f *DocPDF) CreateTemplate(fn func(*Tpl)) Template {
 	return newTpl(PointType{0, 0}, f.curPageSize, f.defOrientation, f.unitStr, f.fontDirStr, fn, f)
 }
 
 // CreateTemplateCustom starts a template, using the given bounds.
-func (f *Fpdf) CreateTemplateCustom(corner PointType, size SizeType, fn func(*Tpl)) Template {
+func (f *DocPDF) CreateTemplateCustom(corner PointType, size SizeType, fn func(*Tpl)) Template {
 	return newTpl(corner, size, f.defOrientation, f.unitStr, f.fontDirStr, fn, f)
 }
 
@@ -59,7 +59,7 @@ func CreateTpl(corner PointType, size SizeType, orientationStr, unitStr, fontDir
 
 // UseTemplate adds a template to the current page or another template,
 // using the size and position at which it was originally written.
-func (f *Fpdf) UseTemplate(t Template) {
+func (f *DocPDF) UseTemplate(t Template) {
 	if t == nil {
 		f.SetErrorf("template is nil")
 		return
@@ -70,7 +70,7 @@ func (f *Fpdf) UseTemplate(t Template) {
 
 // UseTemplateScaled adds a template to the current page or another template,
 // using the given page coordinates.
-func (f *Fpdf) UseTemplateScaled(t Template, corner PointType, size SizeType) {
+func (f *DocPDF) UseTemplateScaled(t Template, corner PointType, size SizeType) {
 	if t == nil {
 		f.SetErrorf("template is nil")
 		return
@@ -130,7 +130,7 @@ type Template interface {
 	gob.GobEncoder
 }
 
-func (f *Fpdf) templateFontCatalog() {
+func (f *DocPDF) templateFontCatalog() {
 	var keyList []string
 	var font fontDefType
 	var key string
@@ -149,7 +149,7 @@ func (f *Fpdf) templateFontCatalog() {
 }
 
 // putTemplates writes the templates to the PDF
-func (f *Fpdf) putTemplates() {
+func (f *DocPDF) putTemplates() {
 	filter := ""
 	if f.compress {
 		filter = "/Filter /FlateDecode "

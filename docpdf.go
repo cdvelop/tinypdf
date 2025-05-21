@@ -34,8 +34,8 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 	b.Buffer.WriteString(fmt.Sprintf(fmtStr, args...))
 }
 
-func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType) (f *Fpdf) {
-	f = new(Fpdf)
+func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType) (f *DocPDF) {
+	f = new(DocPDF)
 	if orientationStr == "" {
 		orientationStr = "p"
 	} else {
@@ -194,15 +194,15 @@ func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType)
 	return
 }
 
-// NewCustom returns a pointer to a new Fpdf instance. Its methods are
+// NewCustom returns a pointer to a new DocPDF instance. Its methods are
 // subsequently called to produce a single PDF document. NewCustom() is an
 // alternative to New() that provides additional customization. The PageSize()
 // example demonstrates this method.
-func NewCustom(init *InitType) (f *Fpdf) {
+func NewCustom(init *InitType) (f *DocPDF) {
 	return fpdfNew(init.OrientationStr, init.UnitStr, init.SizeStr, init.FontDirStr, init.Size)
 }
 
-// New returns a pointer to a new Fpdf instance. Its methods are subsequently
+// New returns a pointer to a new DocPDF instance. Its methods are subsequently
 // called to produce a single PDF document.
 //
 // orientationStr specifies the default page orientation. For portrait mode,
@@ -222,63 +222,63 @@ func NewCustom(init *InitType) (f *Fpdf) {
 // reference an actual directory if a font other than one of the core
 // fonts is used. The core fonts are "courier", "helvetica" (also called
 // "arial"), "times", and "zapfdingbats" (also called "symbol").
-func New(orientationStr, unitStr, sizeStr, fontDirStr string) (f *Fpdf) {
+func New(orientationStr, unitStr, sizeStr, fontDirStr string) (f *DocPDF) {
 	return fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr, SizeType{0, 0})
 }
 
 // Ok returns true if no processing errors have occurred.
-func (f *Fpdf) Ok() bool {
+func (f *DocPDF) Ok() bool {
 	return f.err == nil
 }
 
 // Err returns true if a processing error has occurred.
-func (f *Fpdf) Err() bool {
+func (f *DocPDF) Err() bool {
 	return f.err != nil
 }
 
-// ClearError unsets the internal Fpdf error. This method should be used with
+// ClearError unsets the internal DocPDF error. This method should be used with
 // care, as an internal error condition usually indicates an unrecoverable
 // problem with the generation of a document. It is intended to deal with cases
 // in which an error is used to select an alternate form of the document.
-func (f *Fpdf) ClearError() {
+func (f *DocPDF) ClearError() {
 	f.err = nil
 }
 
-// SetErrorf sets the internal Fpdf error with formatted text to halt PDF
+// SetErrorf sets the internal DocPDF error with formatted text to halt PDF
 // generation; this may facilitate error handling by application. If an error
 // condition is already set, this call is ignored.
 //
 // See the documentation for printing in the standard fmt package for details
 // about fmtStr and args.
-func (f *Fpdf) SetErrorf(fmtStr string, args ...interface{}) {
+func (f *DocPDF) SetErrorf(fmtStr string, args ...interface{}) {
 	if f.err == nil {
 		f.err = fmt.Errorf(fmtStr, args...)
 	}
 }
 
-// String satisfies the fmt.Stringer interface and summarizes the Fpdf
+// String satisfies the fmt.Stringer interface and summarizes the DocPDF
 // instance.
-func (f *Fpdf) String() string {
-	return "Fpdf " + cnFpdfVersion
+func (f *DocPDF) String() string {
+	return "DocPDF " + cnFpdfVersion
 }
 
 // SetError sets an error to halt PDF generation. This may facilitate error
 // handling by application. See also Ok(), Err() and Error().
-func (f *Fpdf) SetError(err error) {
+func (f *DocPDF) SetError(err error) {
 	if f.err == nil && err != nil {
 		f.err = err
 	}
 }
 
-// Error returns the internal Fpdf error; this will be nil if no error has occurred.
-func (f *Fpdf) Error() error {
+// Error returns the internal DocPDF error; this will be nil if no error has occurred.
+func (f *DocPDF) Error() error {
 	return f.err
 }
 
 // GetPageSize returns the current page's width and height. This is the paper's
 // size. To compute the size of the area being used, subtract the margins (see
 // GetMargins()).
-func (f *Fpdf) GetPageSize() (width, height float64) {
+func (f *DocPDF) GetPageSize() (width, height float64) {
 	width = f.w
 	height = f.h
 	return
@@ -287,7 +287,7 @@ func (f *Fpdf) GetPageSize() (width, height float64) {
 // GetMargins returns the left, top, right, and bottom margins. The first three
 // are set with the SetMargins() method. The bottom margin is set with the
 // SetAutoPageBreak() method.
-func (f *Fpdf) GetMargins() (left, top, right, bottom float64) {
+func (f *DocPDF) GetMargins() (left, top, right, bottom float64) {
 	left = f.lMargin
 	top = f.tMargin
 	right = f.rMargin
@@ -298,7 +298,7 @@ func (f *Fpdf) GetMargins() (left, top, right, bottom float64) {
 // SetMargins defines the left, top and right margins. By default, they equal 1
 // cm. Call this method to change them. If the value of the right margin is
 // less than zero, it is set to the same as the left margin.
-func (f *Fpdf) SetMargins(left, top, right float64) {
+func (f *DocPDF) SetMargins(left, top, right float64) {
 	f.lMargin = left
 	f.tMargin = top
 	if right < 0 {
@@ -310,7 +310,7 @@ func (f *Fpdf) SetMargins(left, top, right float64) {
 // SetLeftMargin defines the left margin. The method can be called before
 // creating the first page. If the current abscissa gets out of page, it is
 // brought back to the margin.
-func (f *Fpdf) SetLeftMargin(margin float64) {
+func (f *DocPDF) SetLeftMargin(margin float64) {
 	f.lMargin = margin
 	if f.page > 0 && f.x < margin {
 		f.x = margin
@@ -320,14 +320,14 @@ func (f *Fpdf) SetLeftMargin(margin float64) {
 // GetCellMargin returns the cell margin. This is the amount of space before
 // and after the text within a cell that's left blank, and is in units passed
 // to New(). It defaults to 1mm.
-func (f *Fpdf) GetCellMargin() float64 {
+func (f *DocPDF) GetCellMargin() float64 {
 	return f.cMargin
 }
 
 // SetCellMargin sets the cell margin. This is the amount of space before and
 // after the text within a cell that's left blank, and is in units passed to
 // New().
-func (f *Fpdf) SetCellMargin(margin float64) {
+func (f *DocPDF) SetCellMargin(margin float64) {
 	f.cMargin = margin
 }
 
@@ -335,7 +335,7 @@ func (f *Fpdf) SetCellMargin(margin float64) {
 // pages. Allowable types are trim, trimbox, crop, cropbox, bleed, bleedbox,
 // art and artbox box types are case insensitive. See SetPageBox() for a method
 // that specifies the coordinates and extent of the page box individually.
-func (f *Fpdf) SetPageBoxRec(t string, pb PageBox) {
+func (f *DocPDF) SetPageBoxRec(t string, pb PageBox) {
 	switch strings.ToLower(t) {
 	case "trim":
 		fallthrough
@@ -374,13 +374,13 @@ func (f *Fpdf) SetPageBoxRec(t string, pb PageBox) {
 // SetPageBox sets the page box for the current page, and any following pages.
 // Allowable types are trim, trimbox, crop, cropbox, bleed, bleedbox, art and
 // artbox box types are case insensitive.
-func (f *Fpdf) SetPageBox(t string, x, y, wd, ht float64) {
+func (f *DocPDF) SetPageBox(t string, x, y, wd, ht float64) {
 	f.SetPageBoxRec(t, PageBox{SizeType{Wd: wd, Ht: ht}, PointType{X: x, Y: y}})
 }
 
 // SetPage sets the current page to that of a valid page in the PDF document.
 // pageNum is one-based. The SetPage() example demonstrates this method.
-func (f *Fpdf) SetPage(pageNum int) {
+func (f *DocPDF) SetPage(pageNum int) {
 	if (pageNum > 0) && (pageNum < len(f.pages)) {
 		f.page = pageNum
 	}
@@ -389,25 +389,25 @@ func (f *Fpdf) SetPage(pageNum int) {
 // PageCount returns the number of pages currently in the document. Since page
 // numbers in gofpdf are one-based, the page count is the same as the page
 // number of the current last page.
-func (f *Fpdf) PageCount() int {
+func (f *DocPDF) PageCount() int {
 	return len(f.pages) - 1
 }
 
 // GetFontLocation returns the location in the file system of the font and font
 // definition files.
-func (f *Fpdf) GetFontLocation() string {
+func (f *DocPDF) GetFontLocation() string {
 	return f.fontpath
 }
 
 // SetFontLocation sets the location in the file system of the font and font
 // definition files.
-func (f *Fpdf) SetFontLocation(fontDirStr string) {
+func (f *DocPDF) SetFontLocation(fontDirStr string) {
 	f.fontpath = fontDirStr
 }
 
 // GetFontLoader returns the loader used to read font files (.json and .z) from
 // an arbitrary source.
-func (f *Fpdf) GetFontLoader() FontLoader {
+func (f *DocPDF) GetFontLoader() FontLoader {
 	return f.fontLoader
 }
 
@@ -416,7 +416,7 @@ func (f *Fpdf) GetFontLoader() FontLoader {
 // the named font resources when AddFont() is called. If this operation fails,
 // an attempt is made to load the resources from the configured font directory
 // (see SetFontLocation()).
-func (f *Fpdf) SetFontLoader(loader FontLoader) {
+func (f *DocPDF) SetFontLoader(loader FontLoader) {
 	f.fontLoader = loader
 }
 
@@ -424,16 +424,16 @@ func (f *Fpdf) SetFontLoader(loader FontLoader) {
 // page header. See SetHeaderFunc() for more details. The value for homeMode
 // should be set to true to have the current position set to the left and top
 // margin after the header function is called.
-func (f *Fpdf) SetHeaderFuncMode(fnc func(), homeMode bool) {
+func (f *DocPDF) SetHeaderFuncMode(fnc func(), homeMode bool) {
 	f.headerFnc = fnc
 	f.headerHomeMode = homeMode
 }
 
 // SetHeaderFunc sets the function that lets the application render the page
 // header. The specified function is automatically called by AddPage() and
-// should not be called directly by the application. The implementation in Fpdf
+// should not be called directly by the application. The implementation in DocPDF
 // is empty, so you have to provide an appropriate function if you want page
-// headers. fnc will typically be a closure that has access to the Fpdf
+// headers. fnc will typically be a closure that has access to the DocPDF
 // instance and other document generation variables.
 //
 // A header is a convenient place to put background content that repeats on
@@ -442,20 +442,20 @@ func (f *Fpdf) SetHeaderFuncMode(fnc func(), homeMode bool) {
 // watermark on each page is demonstrated in the example for TransformRotate.
 //
 // This method is demonstrated in the example for AddPage().
-func (f *Fpdf) SetHeaderFunc(fnc func()) {
+func (f *DocPDF) SetHeaderFunc(fnc func()) {
 	f.headerFnc = fnc
 }
 
 // SetFooterFunc sets the function that lets the application render the page
 // footer. The specified function is automatically called by AddPage() and
 // Close() and should not be called directly by the application. The
-// implementation in Fpdf is empty, so you have to provide an appropriate
+// implementation in DocPDF is empty, so you have to provide an appropriate
 // function if you want page footers. fnc will typically be a closure that has
-// access to the Fpdf instance and other document generation variables. See
+// access to the DocPDF instance and other document generation variables. See
 // SetFooterFuncLpi for a similar function that passes a last page indicator.
 //
 // This method is demonstrated in the example for AddPage().
-func (f *Fpdf) SetFooterFunc(fnc func()) {
+func (f *DocPDF) SetFooterFunc(fnc func()) {
 	f.footerFnc = fnc
 	f.footerFncLpi = nil
 }
@@ -464,30 +464,30 @@ func (f *Fpdf) SetFooterFunc(fnc func()) {
 // footer. The specified function is automatically called by AddPage() and
 // Close() and should not be called directly by the application. It is passed a
 // boolean that is true if the last page of the document is being rendered. The
-// implementation in Fpdf is empty, so you have to provide an appropriate
+// implementation in DocPDF is empty, so you have to provide an appropriate
 // function if you want page footers. fnc will typically be a closure that has
-// access to the Fpdf instance and other document generation variables.
-func (f *Fpdf) SetFooterFuncLpi(fnc func(lastPage bool)) {
+// access to the DocPDF instance and other document generation variables.
+func (f *DocPDF) SetFooterFuncLpi(fnc func(lastPage bool)) {
 	f.footerFncLpi = fnc
 	f.footerFnc = nil
 }
 
 // SetTopMargin defines the top margin. The method can be called before
 // creating the first page.
-func (f *Fpdf) SetTopMargin(margin float64) {
+func (f *DocPDF) SetTopMargin(margin float64) {
 	f.tMargin = margin
 }
 
 // SetRightMargin defines the right margin. The method can be called before
 // creating the first page.
-func (f *Fpdf) SetRightMargin(margin float64) {
+func (f *DocPDF) SetRightMargin(margin float64) {
 	f.rMargin = margin
 }
 
 // GetAutoPageBreak returns true if automatic pages breaks are enabled, false
 // otherwise. This is followed by the triggering limit from the bottom of the
 // page. This value applies only if automatic page breaks are enabled.
-func (f *Fpdf) GetAutoPageBreak() (auto bool, margin float64) {
+func (f *DocPDF) GetAutoPageBreak() (auto bool, margin float64) {
 	auto = f.autoPageBreak
 	margin = f.bMargin
 	return
@@ -497,14 +497,14 @@ func (f *Fpdf) GetAutoPageBreak() (auto bool, margin float64) {
 // enabling, the second parameter is the distance from the bottom of the page
 // that defines the triggering limit. By default, the mode is on and the margin
 // is 2 cm.
-func (f *Fpdf) SetAutoPageBreak(auto bool, margin float64) {
+func (f *DocPDF) SetAutoPageBreak(auto bool, margin float64) {
 	f.autoPageBreak = auto
 	f.bMargin = margin
 	f.pageBreakTrigger = f.h - margin
 }
 
 // GetDisplayMode returns the current display mode. See SetDisplayMode() for details.
-func (f *Fpdf) GetDisplayMode() (zoomStr, layoutStr string) {
+func (f *DocPDF) GetDisplayMode() (zoomStr, layoutStr string) {
 	return f.zoomMode, f.layoutMode
 }
 
@@ -527,7 +527,7 @@ func (f *Fpdf) GetDisplayMode() (zoomStr, layoutStr string) {
 // time with odd-numbered pages on the left, or "TwoPageRight" to display pages
 // two at a time with odd-numbered pages on the right, or "default" to use
 // viewer default mode.
-func (f *Fpdf) SetDisplayMode(zoomStr, layoutStr string) {
+func (f *DocPDF) SetDisplayMode(zoomStr, layoutStr string) {
 	if f.err != nil {
 		return
 	}
@@ -559,7 +559,7 @@ func SetDefaultCompression(compress bool) {
 }
 
 // GetCompression returns whether page compression is enabled.
-func (f *Fpdf) GetCompression() bool {
+func (f *DocPDF) GetCompression() bool {
 	return f.compress
 }
 
@@ -567,18 +567,18 @@ func (f *Fpdf) GetCompression() bool {
 // activated, the internal representation of each page is compressed, which
 // leads to a compression ratio of about 2 for the resulting document.
 // Compression is on by default.
-func (f *Fpdf) SetCompression(compress bool) {
+func (f *DocPDF) SetCompression(compress bool) {
 	f.compress = compress
 }
 
 // GetProducer returns the producer of the document as ISO-8859-1 or UTF-16BE.
-func (f *Fpdf) GetProducer() string {
+func (f *DocPDF) GetProducer() string {
 	return f.producer
 }
 
 // SetProducer defines the producer of the document. isUTF8 indicates if the string
 // is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *Fpdf) SetProducer(producerStr string, isUTF8 bool) {
+func (f *DocPDF) SetProducer(producerStr string, isUTF8 bool) {
 	if isUTF8 {
 		producerStr = utf8toutf16(producerStr)
 	}
@@ -586,13 +586,13 @@ func (f *Fpdf) SetProducer(producerStr string, isUTF8 bool) {
 }
 
 // GetTitle returns the title of the document as ISO-8859-1 or UTF-16BE.
-func (f *Fpdf) GetTitle() string {
+func (f *DocPDF) GetTitle() string {
 	return f.title
 }
 
 // SetTitle defines the title of the document. isUTF8 indicates if the string
 // is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *Fpdf) SetTitle(titleStr string, isUTF8 bool) {
+func (f *DocPDF) SetTitle(titleStr string, isUTF8 bool) {
 	if isUTF8 {
 		titleStr = utf8toutf16(titleStr)
 	}
@@ -600,13 +600,13 @@ func (f *Fpdf) SetTitle(titleStr string, isUTF8 bool) {
 }
 
 // GetSubject returns the subject of the document as ISO-8859-1 or UTF-16BE.
-func (f *Fpdf) GetSubject() string {
+func (f *DocPDF) GetSubject() string {
 	return f.subject
 }
 
 // SetSubject defines the subject of the document. isUTF8 indicates if the
 // string is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *Fpdf) SetSubject(subjectStr string, isUTF8 bool) {
+func (f *DocPDF) SetSubject(subjectStr string, isUTF8 bool) {
 	if isUTF8 {
 		subjectStr = utf8toutf16(subjectStr)
 	}
@@ -614,13 +614,13 @@ func (f *Fpdf) SetSubject(subjectStr string, isUTF8 bool) {
 }
 
 // GetAuthor returns the author of the document as ISO-8859-1 or UTF-16BE.
-func (f *Fpdf) GetAuthor() string {
+func (f *DocPDF) GetAuthor() string {
 	return f.author
 }
 
 // SetAuthor defines the author of the document. isUTF8 indicates if the string
 // is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *Fpdf) SetAuthor(authorStr string, isUTF8 bool) {
+func (f *DocPDF) SetAuthor(authorStr string, isUTF8 bool) {
 	if isUTF8 {
 		authorStr = utf8toutf16(authorStr)
 	}
@@ -628,24 +628,24 @@ func (f *Fpdf) SetAuthor(authorStr string, isUTF8 bool) {
 }
 
 // GetLang returns the natural language of the document (e.g. "de-CH").
-func (f *Fpdf) GetLang() string {
+func (f *DocPDF) GetLang() string {
 	return f.lang
 }
 
 // SetLang defines the natural language of the document (e.g. "de-CH").
-func (f *Fpdf) SetLang(lang string) {
+func (f *DocPDF) SetLang(lang string) {
 	f.lang = lang
 }
 
 // GetKeywords returns the keywords of the document as ISO-8859-1 or UTF-16BE.
-func (f *Fpdf) GetKeywords() string {
+func (f *DocPDF) GetKeywords() string {
 	return f.keywords
 }
 
 // SetKeywords defines the keywords of the document. keywordStr is a
 // space-delimited string, for example "invoice August". isUTF8 indicates if
 // the string is encoded
-func (f *Fpdf) SetKeywords(keywordsStr string, isUTF8 bool) {
+func (f *DocPDF) SetKeywords(keywordsStr string, isUTF8 bool) {
 	if isUTF8 {
 		keywordsStr = utf8toutf16(keywordsStr)
 	}
@@ -653,13 +653,13 @@ func (f *Fpdf) SetKeywords(keywordsStr string, isUTF8 bool) {
 }
 
 // GetCreator returns the creator of the document as ISO-8859-1 or UTF-16BE.
-func (f *Fpdf) GetCreator() string {
+func (f *DocPDF) GetCreator() string {
 	return f.creator
 }
 
 // SetCreator defines the creator of the document. isUTF8 indicates if the
 // string is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *Fpdf) SetCreator(creatorStr string, isUTF8 bool) {
+func (f *DocPDF) SetCreator(creatorStr string, isUTF8 bool) {
 	if isUTF8 {
 		creatorStr = utf8toutf16(creatorStr)
 	}
@@ -667,17 +667,17 @@ func (f *Fpdf) SetCreator(creatorStr string, isUTF8 bool) {
 }
 
 // GetXmpMetadata returns the XMP metadata that will be embedded with the document.
-func (f *Fpdf) GetXmpMetadata() []byte {
+func (f *DocPDF) GetXmpMetadata() []byte {
 	return []byte(string(f.xmp))
 }
 
 // SetXmpMetadata defines XMP metadata that will be embedded with the document.
-func (f *Fpdf) SetXmpMetadata(xmpStream []byte) {
+func (f *DocPDF) SetXmpMetadata(xmpStream []byte) {
 	f.xmp = xmpStream
 }
 
 // AddOutputIntent adds an output intent with ICC color profile
-func (f *Fpdf) AddOutputIntent(outputIntent OutputIntentType) {
+func (f *DocPDF) AddOutputIntent(outputIntent OutputIntentType) {
 	f.outputIntents = append(f.outputIntents, outputIntent)
 	if f.pdfVersion < pdfVers1_4 {
 		f.pdfVersion = pdfVers1_4
@@ -689,7 +689,7 @@ func (f *Fpdf) AddOutputIntent(outputIntent OutputIntentType) {
 // string "{nb}".
 //
 // See the example for AddPage() for a demonstration of this method.
-func (f *Fpdf) AliasNbPages(aliasStr string) {
+func (f *DocPDF) AliasNbPages(aliasStr string) {
 	if aliasStr == "" {
 		aliasStr = "{nb}"
 	}
@@ -697,17 +697,17 @@ func (f *Fpdf) AliasNbPages(aliasStr string) {
 }
 
 // RTL enables right-to-left mode
-func (f *Fpdf) RTL() {
+func (f *DocPDF) RTL() {
 	f.isRTL = true
 }
 
 // LTR disables right-to-left mode
-func (f *Fpdf) LTR() {
+func (f *DocPDF) LTR() {
 	f.isRTL = false
 }
 
 // open begins a document
-func (f *Fpdf) open() {
+func (f *DocPDF) open() {
 	f.state = 1
 }
 
@@ -715,7 +715,7 @@ func (f *Fpdf) open() {
 // explicitly because Output(), OutputAndClose() and OutputFileAndClose() do it
 // automatically. If the document contains no page, AddPage() is called to
 // prevent the generation of an invalid document.
-func (f *Fpdf) Close() {
+func (f *DocPDF) Close() {
 	if f.err == nil {
 		if f.clipNest > 0 {
 			f.err = fmt.Errorf("clip procedure must be explicitly ended")
@@ -755,7 +755,7 @@ func (f *Fpdf) Close() {
 // measure itself. If pageNum is zero or otherwise out of bounds, it returns
 // the default page size, that is, the size of the page that would be added by
 // AddPage().
-func (f *Fpdf) PageSize(pageNum int) (wd, ht float64, unitStr string) {
+func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 	sz, ok := f.pageSizes[pageNum]
 	if ok {
 		sz.Wd, sz.Ht = sz.Wd/f.k, sz.Ht/f.k
@@ -773,7 +773,7 @@ func (f *Fpdf) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 // size specifies the size of the new page in the units established in New().
 //
 // The PageSize() example demonstrates this method.
-func (f *Fpdf) AddPageFormat(orientationStr string, size SizeType) {
+func (f *DocPDF) AddPageFormat(orientationStr string, size SizeType) {
 	if f.err != nil {
 		return
 	}
@@ -891,7 +891,7 @@ func (f *Fpdf) AddPageFormat(orientationStr string, size SizeType) {
 //
 // See AddPageFormat() for a version of this method that allows the page size
 // and orientation to be different than the default.
-func (f *Fpdf) AddPage() {
+func (f *DocPDF) AddPage() {
 	if f.err != nil {
 		return
 	}
@@ -902,7 +902,7 @@ func (f *Fpdf) AddPage() {
 // PageNo returns the current page number.
 //
 // See the example for AddPage() for a demonstration of this method.
-func (f *Fpdf) PageNo() int {
+func (f *DocPDF) PageNo() int {
 	return f.page
 }
 
@@ -915,7 +915,7 @@ func colorComp(v int) (int, float64) {
 	return v, float64(v) / 255.0
 }
 
-func (f *Fpdf) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr colorType) {
+func (f *DocPDF) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr colorType) {
 	clr.ir, clr.r = colorComp(r)
 	clr.ig, clr.g = colorComp(g)
 	clr.ib, clr.b = colorComp(b)
@@ -959,11 +959,11 @@ func (f *Fpdf) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr colorTyp
 // rectangles and cell borders). It is expressed in RGB components (0 - 255).
 // The method can be called before the first page is created. The value is
 // retained from page to page.
-func (f *Fpdf) SetDrawColor(r, g, b int) {
+func (f *DocPDF) SetDrawColor(r, g, b int) {
 	f.setDrawColor(r, g, b)
 }
 
-func (f *Fpdf) setDrawColor(r, g, b int) {
+func (f *DocPDF) setDrawColor(r, g, b int) {
 	f.color.draw = f.rgbColorValue(r, g, b, "G", "RG")
 	if f.page > 0 {
 		f.out(f.color.draw.str)
@@ -973,7 +973,7 @@ func (f *Fpdf) setDrawColor(r, g, b int) {
 // GetDrawColor returns the most recently set draw color as RGB components (0 -
 // 255). This will not be the current value if a draw color of some other type
 // (for example, spot) has been more recently set.
-func (f *Fpdf) GetDrawColor() (int, int, int) {
+func (f *DocPDF) GetDrawColor() (int, int, int) {
 	return f.color.draw.ir, f.color.draw.ig, f.color.draw.ib
 }
 
@@ -981,11 +981,11 @@ func (f *Fpdf) GetDrawColor() (int, int, int) {
 // rectangles and cell backgrounds). It is expressed in RGB components (0
 // -255). The method can be called before the first page is created and the
 // value is retained from page to page.
-func (f *Fpdf) SetFillColor(r, g, b int) {
+func (f *DocPDF) SetFillColor(r, g, b int) {
 	f.setFillColor(r, g, b)
 }
 
-func (f *Fpdf) setFillColor(r, g, b int) {
+func (f *DocPDF) setFillColor(r, g, b int) {
 	f.color.fill = f.rgbColorValue(r, g, b, "g", "rg")
 	f.colorFlag = f.color.fill.str != f.color.text.str
 	if f.page > 0 {
@@ -996,18 +996,18 @@ func (f *Fpdf) setFillColor(r, g, b int) {
 // GetFillColor returns the most recently set fill color as RGB components (0 -
 // 255). This will not be the current value if a fill color of some other type
 // (for example, spot) has been more recently set.
-func (f *Fpdf) GetFillColor() (int, int, int) {
+func (f *DocPDF) GetFillColor() (int, int, int) {
 	return f.color.fill.ir, f.color.fill.ig, f.color.fill.ib
 }
 
 // SetTextColor defines the color used for text. It is expressed in RGB
 // components (0 - 255). The method can be called before the first page is
 // created. The value is retained from page to page.
-func (f *Fpdf) SetTextColor(r, g, b int) {
+func (f *DocPDF) SetTextColor(r, g, b int) {
 	f.setTextColor(r, g, b)
 }
 
-func (f *Fpdf) setTextColor(r, g, b int) {
+func (f *DocPDF) setTextColor(r, g, b int) {
 	f.color.text = f.rgbColorValue(r, g, b, "g", "rg")
 	f.colorFlag = f.color.fill.str != f.color.text.str
 }
@@ -1015,13 +1015,13 @@ func (f *Fpdf) setTextColor(r, g, b int) {
 // GetTextColor returns the most recently set text color as RGB components (0 -
 // 255). This will not be the current value if a text color of some other type
 // (for example, spot) has been more recently set.
-func (f *Fpdf) GetTextColor() (int, int, int) {
+func (f *DocPDF) GetTextColor() (int, int, int) {
 	return f.color.text.ir, f.color.text.ig, f.color.text.ib
 }
 
 // GetStringWidth returns the length of a string in user units. A font must be
 // currently selected.
-func (f *Fpdf) GetStringWidth(s string) float64 {
+func (f *DocPDF) GetStringWidth(s string) float64 {
 	if f.err != nil {
 		return 0
 	}
@@ -1031,7 +1031,7 @@ func (f *Fpdf) GetStringWidth(s string) float64 {
 
 // GetStringSymbolWidth returns the length of a string in glyf units. A font must be
 // currently selected.
-func (f *Fpdf) GetStringSymbolWidth(s string) int {
+func (f *DocPDF) GetStringSymbolWidth(s string) int {
 	if f.err != nil {
 		return 0
 	}
@@ -1063,11 +1063,11 @@ func (f *Fpdf) GetStringSymbolWidth(s string) int {
 // SetLineWidth defines the line width. By default, the value equals 0.2 mm.
 // The method can be called before the first page is created. The value is
 // retained from page to page.
-func (f *Fpdf) SetLineWidth(width float64) {
+func (f *DocPDF) SetLineWidth(width float64) {
 	f.setLineWidth(width)
 }
 
-func (f *Fpdf) setLineWidth(width float64) {
+func (f *DocPDF) setLineWidth(width float64) {
 	f.lineWidth = width
 	if f.page > 0 {
 		f.out(f.fmtF64(width*f.k, 2) + " w")
@@ -1075,12 +1075,12 @@ func (f *Fpdf) setLineWidth(width float64) {
 }
 
 // GetLineWidth returns the current line thickness.
-func (f *Fpdf) GetLineWidth() float64 {
+func (f *DocPDF) GetLineWidth() float64 {
 	return f.lineWidth
 }
 
 // GetLineCapStyle returns the current line cap style.
-func (f *Fpdf) GetLineCapStyle() string {
+func (f *DocPDF) GetLineCapStyle() string {
 	switch f.capStyle {
 	case 1:
 		return "round"
@@ -1095,7 +1095,7 @@ func (f *Fpdf) GetLineCapStyle() string {
 // "round" or "square". A square style projects from the end of the line. The
 // method can be called before the first page is created. The value is
 // retained from page to page.
-func (f *Fpdf) SetLineCapStyle(styleStr string) {
+func (f *DocPDF) SetLineCapStyle(styleStr string) {
 	var capStyle int
 	switch styleStr {
 	case "round":
@@ -1112,7 +1112,7 @@ func (f *Fpdf) SetLineCapStyle(styleStr string) {
 }
 
 // GetLineJoinStyle returns the current line join style.
-func (f *Fpdf) GetLineJoinStyle() string {
+func (f *DocPDF) GetLineJoinStyle() string {
 	switch f.joinStyle {
 	case 1:
 		return "round"
@@ -1126,7 +1126,7 @@ func (f *Fpdf) GetLineJoinStyle() string {
 // SetLineJoinStyle defines the line cap style. styleStr should be "miter",
 // "round" or "bevel". The method can be called before the first page
 // is created. The value is retained from page to page.
-func (f *Fpdf) SetLineJoinStyle(styleStr string) {
+func (f *DocPDF) SetLineJoinStyle(styleStr string) {
 	var joinStyle int
 	switch styleStr {
 	case "round":
@@ -1150,7 +1150,7 @@ func (f *Fpdf) SetLineJoinStyle(styleStr string) {
 // array to restore solid line drawing.
 //
 // The Beziergon() example demonstrates this method.
-func (f *Fpdf) SetDashPattern(dashArray []float64, dashPhase float64) {
+func (f *DocPDF) SetDashPattern(dashArray []float64, dashPhase float64) {
 	scaled := make([]float64, len(dashArray))
 	for i, value := range dashArray {
 		scaled[i] = value * f.k
@@ -1165,7 +1165,7 @@ func (f *Fpdf) SetDashPattern(dashArray []float64, dashPhase float64) {
 
 }
 
-func (f *Fpdf) outputDashPattern() {
+func (f *DocPDF) outputDashPattern() {
 	var buf bytes.Buffer
 	buf.WriteByte('[')
 	for i, value := range f.dashArray {
@@ -1182,7 +1182,7 @@ func (f *Fpdf) outputDashPattern() {
 
 // Line draws a line between points (x1, y1) and (x2, y2) using the current
 // draw color, line width and cap style.
-func (f *Fpdf) Line(x1, y1, x2, y2 float64) {
+func (f *DocPDF) Line(x1, y1, x2, y2 float64) {
 	// f.outf("%.2f %.2f m %.2f %.2f l S", x1*f.k, (f.h-y1)*f.k, x2*f.k, (f.h-y2)*f.k)
 	const prec = 2
 	f.putF64(x1*f.k, prec)
@@ -1227,7 +1227,7 @@ func fillDrawOp(styleStr string) (opStr string) {
 // filled. An empty string will be replaced with "D". Drawing uses the current
 // draw color and line width centered on the rectangle's perimeter. Filling
 // uses the current fill color.
-func (f *Fpdf) Rect(x, y, w, h float64, styleStr string) {
+func (f *DocPDF) Rect(x, y, w, h float64, styleStr string) {
 	// f.outf("%.2f %.2f %.2f %.2f re %s", x*f.k, (f.h-y)*f.k, w*f.k, -h*f.k, fillDrawOp(styleStr))
 	const prec = 2
 	f.putF64(x*f.k, prec)
@@ -1250,7 +1250,7 @@ func (f *Fpdf) Rect(x, y, w, h float64, styleStr string) {
 // string that includes "1" to round the upper left corner, "2" to round the
 // upper right corner, "3" to round the lower right corner, and "4" to round
 // the lower left corner. The RoundedRect example demonstrates this method.
-func (f *Fpdf) RoundedRect(x, y, w, h, r float64, corners string, stylestr string) {
+func (f *DocPDF) RoundedRect(x, y, w, h, r float64, corners string, stylestr string) {
 	// This routine was adapted by Brigham Thompson from a script by Christophe Prugnaud
 	var rTL, rTR, rBR, rBL float64 // zero means no rounded corner
 	if strings.Contains(corners, "1") {
@@ -1272,7 +1272,7 @@ func (f *Fpdf) RoundedRect(x, y, w, h, r float64, corners string, stylestr strin
 // radius for each corner. A zero radius means squared corner. See
 // RoundedRect() for more details. This method is demonstrated in the
 // RoundedRect() example.
-func (f *Fpdf) RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, stylestr string) {
+func (f *DocPDF) RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, stylestr string) {
 	f.roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL)
 	f.out(fillDrawOp(stylestr))
 	f.out("Q")
@@ -1284,7 +1284,7 @@ func (f *Fpdf) RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, stylestr s
 // outlined and filled. An empty string will be replaced with "D". Drawing uses
 // the current draw color and line width centered on the circle's perimeter.
 // Filling uses the current fill color.
-func (f *Fpdf) Circle(x, y, r float64, styleStr string) {
+func (f *DocPDF) Circle(x, y, r float64, styleStr string) {
 	f.Ellipse(x, y, r, r, 0, styleStr)
 }
 
@@ -1300,7 +1300,7 @@ func (f *Fpdf) Circle(x, y, r float64, styleStr string) {
 // Filling uses the current fill color.
 //
 // The Circle() example demonstrates this method.
-func (f *Fpdf) Ellipse(x, y, rx, ry, degRotate float64, styleStr string) {
+func (f *DocPDF) Ellipse(x, y, rx, ry, degRotate float64, styleStr string) {
 	f.arc(x, y, rx, ry, degRotate, 0, 360, styleStr, false)
 }
 
@@ -1313,7 +1313,7 @@ func (f *Fpdf) Ellipse(x, y, rx, ry, degRotate float64, styleStr string) {
 // outlined and filled. An empty string will be replaced with "D". Drawing uses
 // the current draw color and line width centered on the ellipse's perimeter.
 // Filling uses the current fill color.
-func (f *Fpdf) Polygon(points []PointType, styleStr string) {
+func (f *DocPDF) Polygon(points []PointType, styleStr string) {
 	if len(points) > 2 {
 		const prec = 5
 		for j, pt := range points {
@@ -1347,7 +1347,7 @@ func (f *Fpdf) Polygon(points []PointType, styleStr string) {
 // outlined and filled. An empty string will be replaced with "D". Drawing uses
 // the current draw color and line width centered on the ellipse's perimeter.
 // Filling uses the current fill color.
-func (f *Fpdf) Beziergon(points []PointType, styleStr string) {
+func (f *DocPDF) Beziergon(points []PointType, styleStr string) {
 
 	// Thanks, Robert Lillack, for contributing this function.
 
@@ -1369,7 +1369,7 @@ func (f *Fpdf) Beziergon(points []PointType, styleStr string) {
 }
 
 // point outputs current point
-func (f *Fpdf) point(x, y float64) {
+func (f *DocPDF) point(x, y float64) {
 	// f.outf("%.2f %.2f m", x*f.k, (f.h-y)*f.k)
 	f.putF64(x*f.k, 2)
 	f.put(" ")
@@ -1378,7 +1378,7 @@ func (f *Fpdf) point(x, y float64) {
 }
 
 // curve outputs a single cubic Bézier curve segment from current point
-func (f *Fpdf) curve(cx0, cy0, cx1, cy1, x, y float64) {
+func (f *DocPDF) curve(cx0, cy0, cx1, cy1, x, y float64) {
 	// Thanks, Robert Lillack, for straightening this out
 	// f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c", cx0*f.k, (f.h-cy0)*f.k, cx1*f.k,
 	// 	(f.h-cy1)*f.k, x*f.k, (f.h-y)*f.k)
@@ -1410,7 +1410,7 @@ func (f *Fpdf) curve(cx0, cy0, cx1, cy1, x, y float64) {
 // path. Filling uses the current fill color.
 //
 // The Circle() example demonstrates this method.
-func (f *Fpdf) Curve(x0, y0, cx, cy, x1, y1 float64, styleStr string) {
+func (f *DocPDF) Curve(x0, y0, cx, cy, x1, y1 float64, styleStr string) {
 	f.point(x0, y0)
 	// f.outf("%.5f %.5f %.5f %.5f v %s", cx*f.k, (f.h-cy)*f.k, x1*f.k, (f.h-y1)*f.k,
 	// 	fillDrawOp(styleStr))
@@ -1428,7 +1428,7 @@ func (f *Fpdf) Curve(x0, y0, cx, cy, x1, y1 float64, styleStr string) {
 // CurveCubic draws a single-segment cubic Bézier curve. This routine performs
 // the same function as CurveBezierCubic() but has a nonstandard argument order.
 // It is retained to preserve backward compatibility.
-func (f *Fpdf) CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr string) {
+func (f *DocPDF) CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr string) {
 	// f.point(x0, y0)
 	// f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c %s", cx0*f.k, (f.h-cy0)*f.k,
 	// cx1*f.k, (f.h-cy1)*f.k, x1*f.k, (f.h-y1)*f.k, fillDrawOp(styleStr))
@@ -1451,7 +1451,7 @@ func (f *Fpdf) CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr s
 // argument order.
 //
 // The Circle() example demonstrates this method.
-func (f *Fpdf) CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, styleStr string) {
+func (f *DocPDF) CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, styleStr string) {
 	f.point(x0, y0)
 	//	f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c %s", cx0*f.k, (f.h-cy0)*f.k,
 	//		cx1*f.k, (f.h-cy1)*f.k, x1*f.k, (f.h-y1)*f.k, fillDrawOp(styleStr))
@@ -1484,14 +1484,14 @@ func (f *Fpdf) CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, styl
 // path. Filling uses the current fill color.
 //
 // The Circle() example demonstrates this method.
-func (f *Fpdf) Arc(x, y, rx, ry, degRotate, degStart, degEnd float64, styleStr string) {
+func (f *DocPDF) Arc(x, y, rx, ry, degRotate, degStart, degEnd float64, styleStr string) {
 	f.arc(x, y, rx, ry, degRotate, degStart, degEnd, styleStr, false)
 }
 
 // GetAlpha returns the alpha blending channel, which consists of the
 // alpha transparency value and the blend mode. See SetAlpha for more
 // details.
-func (f *Fpdf) GetAlpha() (alpha float64, blendModeStr string) {
+func (f *DocPDF) GetAlpha() (alpha float64, blendModeStr string) {
 	return f.alpha, f.blendMode
 }
 
@@ -1508,7 +1508,7 @@ func (f *Fpdf) GetAlpha() (alpha float64, blendModeStr string) {
 //
 // To reset normal rendering after applying a blending mode, call this method
 // with alpha set to 1.0 and blendModeStr set to "Normal".
-func (f *Fpdf) SetAlpha(alpha float64, blendModeStr string) {
+func (f *DocPDF) SetAlpha(alpha float64, blendModeStr string) {
 	if f.err != nil {
 		return
 	}
@@ -1544,7 +1544,7 @@ func (f *Fpdf) SetAlpha(alpha float64, blendModeStr string) {
 	f.outf("/GS%d gs", pos)
 }
 
-func (f *Fpdf) gradientClipStart(x, y, w, h float64) {
+func (f *DocPDF) gradientClipStart(x, y, w, h float64) {
 	{
 		const prec = 2
 		// Save current graphic state and set clipping area
@@ -1574,12 +1574,12 @@ func (f *Fpdf) gradientClipStart(x, y, w, h float64) {
 	}
 }
 
-func (f *Fpdf) gradientClipEnd() {
+func (f *DocPDF) gradientClipEnd() {
 	// Restore previous graphic state
 	f.out("Q")
 }
 
-func (f *Fpdf) gradient(tp, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
+func (f *DocPDF) gradient(tp, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
 	pos := len(f.gradientList)
 	clr1 := f.rgbColorValue(r1, g1, b1, "", "")
 	clr2 := f.rgbColorValue(r2, g2, b2, "", "")
@@ -1604,7 +1604,7 @@ func (f *Fpdf) gradient(tp, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float6
 // anchored on the rectangle edge. Color 1 is used up to the origin of the
 // vector and color 2 is used beyond the vector's end point. Between the points
 // the colors are gradually blended.
-func (f *Fpdf) LinearGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2 float64) {
+func (f *DocPDF) LinearGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2 float64) {
 	f.gradientClipStart(x, y, w, h)
 	f.gradient(2, r1, g1, b1, r2, g2, b2, x1, y1, x2, y2, 0)
 	f.gradientClipEnd()
@@ -1628,7 +1628,7 @@ func (f *Fpdf) LinearGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1
 // the circle to avoid rendering problems.
 //
 // The LinearGradient() example demonstrates this method.
-func (f *Fpdf) RadialGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
+func (f *DocPDF) RadialGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
 	f.gradientClipStart(x, y, w, h)
 	f.gradient(3, r1, g1, b1, r2, g2, b2, x1, y1, x2, y2, r)
 	f.gradientClipEnd()
@@ -1643,7 +1643,7 @@ func (f *Fpdf) RadialGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1
 // Call ClipEnd() to restore unclipped operations.
 //
 // This ClipText() example demonstrates this method.
-func (f *Fpdf) ClipRect(x, y, w, h float64, outline bool) {
+func (f *DocPDF) ClipRect(x, y, w, h float64, outline bool) {
 	f.clipNest++
 	// f.outf("q %.2f %.2f %.2f %.2f re W %s", x*f.k, (f.h-y)*f.k, w*f.k, -h*f.k, strIf(outline, "S", "n"))
 	const prec = 2
@@ -1666,7 +1666,7 @@ func (f *Fpdf) ClipRect(x, y, w, h float64, outline bool) {
 // will be shown. After calling this method, all rendering operations (for
 // example, Image(), LinearGradient(), etc) will be clipped. Call ClipEnd() to
 // restore unclipped operations.
-func (f *Fpdf) ClipText(x, y float64, txtStr string, outline bool) {
+func (f *DocPDF) ClipText(x, y float64, txtStr string, outline bool) {
 	f.clipNest++
 	// f.outf("q BT %.5f %.5f Td %d Tr (%s) Tj ET", x*f.k, (f.h-y)*f.k, intIf(outline, 5, 7), f.escape(txtStr))
 	const prec = 5
@@ -1681,7 +1681,7 @@ func (f *Fpdf) ClipText(x, y float64, txtStr string, outline bool) {
 	f.put(") Tj ET\n")
 }
 
-func (f *Fpdf) clipArc(x1, y1, x2, y2, x3, y3 float64) {
+func (f *DocPDF) clipArc(x1, y1, x2, y2, x3, y3 float64) {
 	h := f.h
 	// f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c ", x1*f.k, (h-y1)*f.k,
 	// 	x2*f.k, (h-y2)*f.k, x3*f.k, (h-y3)*f.k)
@@ -1710,7 +1710,7 @@ func (f *Fpdf) clipArc(x1, y1, x2, y2, x3, y3 float64) {
 // ClipEnd() to restore unclipped operations.
 //
 // This ClipText() example demonstrates this method.
-func (f *Fpdf) ClipRoundedRect(x, y, w, h, r float64, outline bool) {
+func (f *DocPDF) ClipRoundedRect(x, y, w, h, r float64, outline bool) {
 	f.ClipRoundedRectExt(x, y, w, h, r, r, r, r, outline)
 }
 
@@ -1718,7 +1718,7 @@ func (f *Fpdf) ClipRoundedRect(x, y, w, h, r float64, outline bool) {
 // different radius for each corner, given by rTL (top-left), rTR (top-right)
 // rBR (bottom-right), rBL (bottom-left). See ClipRoundedRect() for more
 // details. This method is demonstrated in the ClipText() example.
-func (f *Fpdf) ClipRoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, outline bool) {
+func (f *DocPDF) ClipRoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, outline bool) {
 	f.clipNest++
 	f.roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL)
 	f.outf(" W %s", strIf(outline, "S", "n"))
@@ -1727,7 +1727,7 @@ func (f *Fpdf) ClipRoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, outlin
 // add a rectangle path with rounded corners.
 // routine shared by RoundedRect() and ClipRoundedRect(), which add the
 // drawing operation
-func (f *Fpdf) roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL float64) {
+func (f *DocPDF) roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL float64) {
 	k := f.k
 	hp := f.h
 	myArc := (4.0 / 3.0) * (math.Sqrt2 - 1.0)
@@ -1789,7 +1789,7 @@ func (f *Fpdf) roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL float64) {
 // Call ClipEnd() to restore unclipped operations.
 //
 // This ClipText() example demonstrates this method.
-func (f *Fpdf) ClipEllipse(x, y, rx, ry float64, outline bool) {
+func (f *DocPDF) ClipEllipse(x, y, rx, ry float64, outline bool) {
 	f.clipNest++
 	lx := (4.0 / 3.0) * rx * (math.Sqrt2 - 1)
 	ly := (4.0 / 3.0) * ry * (math.Sqrt2 - 1)
@@ -1880,7 +1880,7 @@ func (f *Fpdf) ClipEllipse(x, y, rx, ry float64, outline bool) {
 // the specified circle. Call ClipEnd() to restore unclipped operations.
 //
 // The ClipText() example demonstrates this method.
-func (f *Fpdf) ClipCircle(x, y, r float64, outline bool) {
+func (f *DocPDF) ClipCircle(x, y, r float64, outline bool) {
 	f.ClipEllipse(x, y, r, r, outline)
 }
 
@@ -1895,7 +1895,7 @@ func (f *Fpdf) ClipCircle(x, y, r float64, outline bool) {
 // ClipEnd() to restore unclipped operations.
 //
 // The ClipText() example demonstrates this method.
-func (f *Fpdf) ClipPolygon(points []PointType, outline bool) {
+func (f *DocPDF) ClipPolygon(points []PointType, outline bool) {
 	f.clipNest++
 	var s fmtBuffer
 	h := f.h
@@ -1914,7 +1914,7 @@ func (f *Fpdf) ClipPolygon(points []PointType, outline bool) {
 // successfully output while a clipping operation is active.
 //
 // The ClipText() example demonstrates this method.
-func (f *Fpdf) ClipEnd() {
+func (f *DocPDF) ClipEnd() {
 	if f.err == nil {
 		if f.clipNest > 0 {
 			f.clipNest--
@@ -1945,7 +1945,7 @@ func (f *Fpdf) ClipEnd() {
 // fileStr specifies the base name with ".json" extension of the font
 // definition file to be added. The file will be loaded from the font directory
 // specified in the call to New() or SetFontLocation().
-func (f *Fpdf) AddFont(familyStr, styleStr, fileStr string) {
+func (f *DocPDF) AddFont(familyStr, styleStr, fileStr string) {
 	f.addFont(fontFamilyEscape(familyStr), styleStr, fileStr, false)
 }
 
@@ -1969,11 +1969,11 @@ func (f *Fpdf) AddFont(familyStr, styleStr, fileStr string) {
 // fileStr specifies the base name with ".json" extension of the font
 // definition file to be added. The file will be loaded from the font directory
 // specified in the call to New() or SetFontLocation().
-func (f *Fpdf) AddUTF8Font(familyStr, styleStr, fileStr string) {
+func (f *DocPDF) AddUTF8Font(familyStr, styleStr, fileStr string) {
 	f.addFont(fontFamilyEscape(familyStr), styleStr, fileStr, true)
 }
 
-func (f *Fpdf) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
+func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 	if fileStr == "" {
 		if isUTF8 {
 			fileStr = strings.Replace(familyStr, " ", "", -1) + strings.ToLower(styleStr) + ".ttf"
@@ -2095,7 +2095,7 @@ func makeSubsetRange(end int) map[int]int {
 // jsonFileBytes contain all bytes of JSON file.
 //
 // zFileBytes contain all bytes of Z file.
-func (f *Fpdf) AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes []byte) {
+func (f *DocPDF) AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes []byte) {
 	f.addFontFromBytes(fontFamilyEscape(familyStr), styleStr, jsonFileBytes, zFileBytes, nil)
 }
 
@@ -2114,11 +2114,11 @@ func (f *Fpdf) AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFile
 // jsonFileBytes contain all bytes of JSON file.
 //
 // zFileBytes contain all bytes of Z file.
-func (f *Fpdf) AddUTF8FontFromBytes(familyStr, styleStr string, utf8Bytes []byte) {
+func (f *DocPDF) AddUTF8FontFromBytes(familyStr, styleStr string, utf8Bytes []byte) {
 	f.addFontFromBytes(fontFamilyEscape(familyStr), styleStr, nil, nil, utf8Bytes)
 }
 
-func (f *Fpdf) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes, utf8Bytes []byte) {
+func (f *DocPDF) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes, utf8Bytes []byte) {
 	if f.err != nil {
 		return
 	}
@@ -2249,7 +2249,7 @@ func getFontKey(familyStr, styleStr string) string {
 // AddFontFromReader imports a TrueType, OpenType or Type1 font and makes it
 // available using a reader that satisifies the io.Reader interface. See
 // AddFont for details about familyStr and styleStr.
-func (f *Fpdf) AddFontFromReader(familyStr, styleStr string, r io.Reader) {
+func (f *DocPDF) AddFontFromReader(familyStr, styleStr string, r io.Reader) {
 	if f.err != nil {
 		return
 	}
@@ -2297,7 +2297,7 @@ func (f *Fpdf) AddFontFromReader(familyStr, styleStr string, r io.Reader) {
 // current font descriptor will be returned.
 // See FontDescType for documentation about the font descriptor.
 // See AddFont for details about familyStr and styleStr.
-func (f *Fpdf) GetFontDesc(familyStr, styleStr string) FontDescType {
+func (f *DocPDF) GetFontDesc(familyStr, styleStr string) FontDescType {
 	if familyStr == "" {
 		return f.currentFont.Desc
 	}
@@ -2331,7 +2331,7 @@ func (f *Fpdf) GetFontDesc(familyStr, styleStr string) FontDescType {
 // size is the font size measured in points. The default value is the current
 // size. If no size has been specified since the beginning of the document, the
 // value taken is 12.
-func (f *Fpdf) SetFont(familyStr, styleStr string, size float64) {
+func (f *DocPDF) SetFont(familyStr, styleStr string, size float64) {
 	// dbg("SetFont x %.2f, lMargin %.2f", f.x, f.lMargin)
 
 	if f.err != nil {
@@ -2411,12 +2411,12 @@ func (f *Fpdf) SetFont(familyStr, styleStr string, size float64) {
 }
 
 // GetFontFamily returns the family of the current font. See SetFont() for details.
-func (f *Fpdf) GetFontFamily() string {
+func (f *DocPDF) GetFontFamily() string {
 	return f.fontFamily
 }
 
 // GetFontStyle returns the style of the current font. See SetFont() for details.
-func (f *Fpdf) GetFontStyle() string {
+func (f *DocPDF) GetFontStyle() string {
 	styleStr := f.fontStyle
 
 	if f.underline {
@@ -2430,13 +2430,13 @@ func (f *Fpdf) GetFontStyle() string {
 }
 
 // SetFontStyle sets the style of the current font. See also SetFont()
-func (f *Fpdf) SetFontStyle(styleStr string) {
+func (f *DocPDF) SetFontStyle(styleStr string) {
 	f.SetFont(f.fontFamily, styleStr, f.fontSizePt)
 }
 
 // SetFontSize defines the size of the current font. Size is specified in
 // points (1/ 72 inch). See also SetFontUnitSize().
-func (f *Fpdf) SetFontSize(size float64) {
+func (f *DocPDF) SetFontSize(size float64) {
 	f.fontSizePt = size
 	f.fontSize = size / f.k
 	if f.page > 0 {
@@ -2446,7 +2446,7 @@ func (f *Fpdf) SetFontSize(size float64) {
 
 // SetFontUnitSize defines the size of the current font. Size is specified in
 // the unit of measure specified in New(). See also SetFontSize().
-func (f *Fpdf) SetFontUnitSize(size float64) {
+func (f *DocPDF) SetFontUnitSize(size float64) {
 	f.fontSizePt = size * f.k
 	f.fontSize = size
 	if f.page > 0 {
@@ -2457,7 +2457,7 @@ func (f *Fpdf) SetFontUnitSize(size float64) {
 // GetFontSize returns the size of the current font in points followed by the
 // size in the unit of measure specified in New(). The second value can be used
 // as a line height value in drawing operations.
-func (f *Fpdf) GetFontSize() (ptSize, unitSize float64) {
+func (f *DocPDF) GetFontSize() (ptSize, unitSize float64) {
 	return f.fontSizePt, f.fontSize
 }
 
@@ -2465,13 +2465,13 @@ func (f *Fpdf) GetFontSize() (ptSize, unitSize float64) {
 // link is a clickable area which directs to another place within the document.
 // The identifier can then be passed to Cell(), Write(), Image() or Link(). The
 // destination is defined with SetLink().
-func (f *Fpdf) AddLink() int {
+func (f *DocPDF) AddLink() int {
 	f.links = append(f.links, intLinkType{})
 	return len(f.links) - 1
 }
 
 // SetLink defines the page and position a link points to. See AddLink().
-func (f *Fpdf) SetLink(link int, y float64, page int) {
+func (f *DocPDF) SetLink(link int, y float64, page int) {
 	if y == -1 {
 		y = f.y
 	}
@@ -2482,7 +2482,7 @@ func (f *Fpdf) SetLink(link int, y float64, page int) {
 }
 
 // newLink adds a new clickable link on current page
-func (f *Fpdf) newLink(x, y, w, h float64, link int, linkStr string) {
+func (f *DocPDF) newLink(x, y, w, h float64, link int, linkStr string) {
 	// linkList, ok := f.pageLinks[f.page]
 	// if !ok {
 	// linkList = make([]linkType, 0, 8)
@@ -2496,7 +2496,7 @@ func (f *Fpdf) newLink(x, y, w, h float64, link int, linkStr string) {
 // generally put via Cell(), Write() or Image(), but this method can be useful
 // for instance to define a clickable area inside an image. link is the value
 // returned by AddLink().
-func (f *Fpdf) Link(x, y, w, h float64, link int) {
+func (f *DocPDF) Link(x, y, w, h float64, link int) {
 	f.newLink(x, y, w, h, link, "")
 }
 
@@ -2504,7 +2504,7 @@ func (f *Fpdf) Link(x, y, w, h float64, link int) {
 // links are generally put via Cell(), Write() or Image(), but this method can
 // be useful for instance to define a clickable area inside an image. linkStr
 // is the target URL.
-func (f *Fpdf) LinkString(x, y, w, h float64, linkStr string) {
+func (f *DocPDF) LinkString(x, y, w, h float64, linkStr string) {
 	f.newLink(x, y, w, h, 0, linkStr)
 }
 
@@ -2513,7 +2513,7 @@ func (f *Fpdf) LinkString(x, y, w, h float64, linkStr string) {
 // the outline; 0 is the top level, 1 is just below, and so on. y specifies the
 // vertical position of the bookmark destination in the current page; -1
 // indicates the current position.
-func (f *Fpdf) Bookmark(txtStr string, level int, y float64) {
+func (f *DocPDF) Bookmark(txtStr string, level int, y float64) {
 	if y == -1 {
 		y = f.y
 	}
@@ -2527,7 +2527,7 @@ func (f *Fpdf) Bookmark(txtStr string, level int, y float64) {
 // first character at the baseline. This method permits a string to be placed
 // precisely on the page, but it is usually easier to use Cell(), MultiCell()
 // or Write() which are the standard methods to print text.
-func (f *Fpdf) Text(x, y float64, txtStr string) {
+func (f *DocPDF) Text(x, y float64, txtStr string) {
 	var txt2 string
 	if f.isCurrentUTF8 {
 		if f.isRTL {
@@ -2555,13 +2555,13 @@ func (f *Fpdf) Text(x, y float64, txtStr string) {
 }
 
 // GetWordSpacing returns the spacing between words of following text.
-func (f *Fpdf) GetWordSpacing() float64 {
+func (f *DocPDF) GetWordSpacing() float64 {
 	return f.ws
 }
 
 // SetWordSpacing sets spacing between words of following text. See the
 // WriteAligned() example for a demonstration of its use.
-func (f *Fpdf) SetWordSpacing(space float64) {
+func (f *DocPDF) SetWordSpacing(space float64) {
 	f.ws = space
 	f.out(sprintf("%.5f Tw", space*f.k))
 }
@@ -2577,7 +2577,7 @@ func (f *Fpdf) SetWordSpacing(space float64) {
 // 6: Fills then stroke text and add to path for clipping
 // 7: Add text to path for clipping
 // This method is demonstrated in the SetTextRenderingMode example.
-func (f *Fpdf) SetTextRenderingMode(mode int) {
+func (f *DocPDF) SetTextRenderingMode(mode int) {
 	if mode >= 0 && mode <= 7 {
 		f.out(sprintf("%d Tr", mode))
 	}
@@ -2594,7 +2594,7 @@ func (f *Fpdf) SetTextRenderingMode(mode int) {
 //
 // See the example for SetLeftMargin() to see how this function can be used to
 // manage multiple columns.
-func (f *Fpdf) SetAcceptPageBreakFunc(fnc func() bool) {
+func (f *DocPDF) SetAcceptPageBreakFunc(fnc func() bool) {
 	f.acceptPageBreak = fnc
 }
 
@@ -2637,7 +2637,7 @@ func (f *Fpdf) SetAcceptPageBreakFunc(fnc func() bool) {
 //
 // linkStr is a target URL or empty for no external link. A non--zero value for
 // link takes precedence over linkStr.
-func (f *Fpdf) CellFormat(w, h float64, txtStr, borderStr string, ln int,
+func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 	alignStr string, fill bool, link int, linkStr string) {
 	// dbg("CellFormat. h = %.2f, borderStr = %s", h, borderStr)
 	if f.err != nil {
@@ -2836,14 +2836,14 @@ func reverseText(text string) string {
 
 // Cell is a simpler version of CellFormat with no fill, border, links or
 // special alignment. The Cell_strikeout() example demonstrates this method.
-func (f *Fpdf) Cell(w, h float64, txtStr string) {
+func (f *DocPDF) Cell(w, h float64, txtStr string) {
 	f.CellFormat(w, h, txtStr, "", 0, "L", false, 0, "")
 }
 
 // Cellf is a simpler printf-style version of CellFormat with no fill, border,
 // links or special alignment. See documentation for the fmt package for
 // details on fmtStr and args.
-func (f *Fpdf) Cellf(w, h float64, fmtStr string, args ...interface{}) {
+func (f *DocPDF) Cellf(w, h float64, fmtStr string, args ...interface{}) {
 	f.CellFormat(w, h, sprintf(fmtStr, args...), "", 0, "L", false, 0, "")
 }
 
@@ -2857,7 +2857,7 @@ func (f *Fpdf) Cellf(w, h float64, fmtStr string, args ...interface{}) {
 //
 // You can use MultiCell if you want to print a text on several lines in a
 // simple way.
-func (f *Fpdf) SplitLines(txt []byte, w float64) [][]byte {
+func (f *DocPDF) SplitLines(txt []byte, w float64) [][]byte {
 	// Function contributed by Bruno Michel
 	lines := [][]byte{}
 	cw := f.currentFont.Cw
@@ -2924,7 +2924,7 @@ func (f *Fpdf) SplitLines(txt []byte, w float64) [][]byte {
 // applications that use UTF-8 fonts and depend on having all trailing newlines
 // removed should call strings.TrimRight(txtStr, "\r\n") before calling this
 // method.
-func (f *Fpdf) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill bool) {
+func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill bool) {
 	if f.err != nil {
 		return
 	}
@@ -3116,7 +3116,7 @@ func (f *Fpdf) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill 
 }
 
 // write outputs text in flowing mode
-func (f *Fpdf) write(h float64, txtStr string, link int, linkStr string) {
+func (f *DocPDF) write(h float64, txtStr string, link int, linkStr string) {
 	// dbg("Write")
 	cw := f.currentFont.Cw
 	w := f.w - f.rMargin - f.x
@@ -3228,26 +3228,26 @@ func (f *Fpdf) write(h float64, txtStr string, link int, linkStr string) {
 // It is possible to put a link on the text.
 //
 // h indicates the line height in the unit of measure specified in New().
-func (f *Fpdf) Write(h float64, txtStr string) {
+func (f *DocPDF) Write(h float64, txtStr string) {
 	f.write(h, txtStr, 0, "")
 }
 
 // Writef is like Write but uses printf-style formatting. See the documentation
 // for package fmt for more details on fmtStr and args.
-func (f *Fpdf) Writef(h float64, fmtStr string, args ...interface{}) {
+func (f *DocPDF) Writef(h float64, fmtStr string, args ...interface{}) {
 	f.write(h, sprintf(fmtStr, args...), 0, "")
 }
 
 // WriteLinkString writes text that when clicked launches an external URL. See
 // Write() for argument details.
-func (f *Fpdf) WriteLinkString(h float64, displayStr, targetStr string) {
+func (f *DocPDF) WriteLinkString(h float64, displayStr, targetStr string) {
 	f.write(h, displayStr, 0, targetStr)
 }
 
 // WriteLinkID writes text that when clicked jumps to another location in the
 // PDF. linkID is an identifier returned by AddLink(). See Write() for argument
 // details.
-func (f *Fpdf) WriteLinkID(h float64, displayStr string, linkID int) {
+func (f *DocPDF) WriteLinkID(h float64, displayStr string, linkID int) {
 	f.write(h, displayStr, linkID, "")
 }
 
@@ -3263,7 +3263,7 @@ func (f *Fpdf) WriteLinkID(h float64, displayStr string, linkID int) {
 //
 // alignStr sees to horizontal alignment of the given textStr. The options are
 // "L", "C" and "R" (Left, Center, Right). The default is "L".
-func (f *Fpdf) WriteAligned(width, lineHeight float64, textStr, alignStr string) {
+func (f *DocPDF) WriteAligned(width, lineHeight float64, textStr, alignStr string) {
 	lMargin, _, rMargin, _ := f.GetMargins()
 
 	pageWidth, _ := f.GetPageSize()
@@ -3307,7 +3307,7 @@ func (f *Fpdf) WriteAligned(width, lineHeight float64, textStr, alignStr string)
 // value of h indicates the height of the last printed cell.
 //
 // This method is demonstrated in the example for MultiCell.
-func (f *Fpdf) Ln(h float64) {
+func (f *DocPDF) Ln(h float64) {
 	f.x = f.lMargin
 	if h < 0 {
 		f.y += f.lasth
@@ -3320,7 +3320,7 @@ func (f *Fpdf) Ln(h float64) {
 // functions (for example, Image()) that is associated with the specified MIME
 // type. For example, "jpg" is returned if mimeStr is "image/jpeg". An error is
 // set if the specified MIME type is not supported.
-func (f *Fpdf) ImageTypeFromMime(mimeStr string) (tp string) {
+func (f *DocPDF) ImageTypeFromMime(mimeStr string) (tp string) {
 	switch mimeStr {
 	case "image/png":
 		tp = "png"
@@ -3336,7 +3336,7 @@ func (f *Fpdf) ImageTypeFromMime(mimeStr string) (tp string) {
 	return
 }
 
-func (f *Fpdf) imageOut(info *ImageInfoType, x, y, w, h float64, allowNegativeX, flow bool, link int, linkStr string) {
+func (f *DocPDF) imageOut(info *ImageInfoType, x, y, w, h float64, allowNegativeX, flow bool, link int, linkStr string) {
 	// Automatic width and height calculation if needed
 	if w == 0 && h == 0 {
 		// Put image at 96 dpi
@@ -3406,7 +3406,7 @@ func (f *Fpdf) imageOut(info *ImageInfoType, x, y, w, h float64, allowNegativeX,
 //
 // Deprecated in favor of ImageOptions -- see that function for
 // details on the behavior of arguments
-func (f *Fpdf) Image(imageNameStr string, x, y, w, h float64, flow bool, tp string, link int, linkStr string) {
+func (f *DocPDF) Image(imageNameStr string, x, y, w, h float64, flow bool, tp string, link int, linkStr string) {
 	options := ImageOptions{
 		ReadDpi:   false,
 		ImageType: tp,
@@ -3450,7 +3450,7 @@ func (f *Fpdf) Image(imageNameStr string, x, y, w, h float64, flow bool, tp stri
 // If link refers to an internal page anchor (that is, it is non-zero; see
 // AddLink()), the image will be a clickable internal link. Otherwise, if
 // linkStr specifies a URL, the image will be a clickable external link.
-func (f *Fpdf) ImageOptions(imageNameStr string, x, y, w, h float64, flow bool, options ImageOptions, link int, linkStr string) {
+func (f *DocPDF) ImageOptions(imageNameStr string, x, y, w, h float64, flow bool, options ImageOptions, link int, linkStr string) {
 	if f.err != nil {
 		return
 	}
@@ -3465,7 +3465,7 @@ func (f *Fpdf) ImageOptions(imageNameStr string, x, y, w, h float64, flow bool, 
 // to the PDF file but not adding it to the page.
 //
 // This function is now deprecated in favor of RegisterImageOptionsReader
-func (f *Fpdf) RegisterImageReader(imgName, tp string, r io.Reader) (info *ImageInfoType) {
+func (f *DocPDF) RegisterImageReader(imgName, tp string, r io.Reader) (info *ImageInfoType) {
 	options := ImageOptions{
 		ReadDpi:   false,
 		ImageType: tp,
@@ -3500,7 +3500,7 @@ type ImageOptions struct {
 // case.
 //
 // See Image() for restrictions on the image and the options parameters.
-func (f *Fpdf) RegisterImageOptionsReader(imgName string, options ImageOptions, r io.Reader) (info *ImageInfoType) {
+func (f *DocPDF) RegisterImageOptionsReader(imgName string, options ImageOptions, r io.Reader) (info *ImageInfoType) {
 	// Thanks, Ivan Daniluk, for generalizing this code to use the Reader interface.
 	if f.err != nil {
 		return
@@ -3548,7 +3548,7 @@ func (f *Fpdf) RegisterImageOptionsReader(imgName string, options ImageOptions, 
 //
 // This function is now deprecated in favor of RegisterImageOptions.
 // See Image() for restrictions on the image and the "tp" parameters.
-func (f *Fpdf) RegisterImage(fileStr, tp string) (info *ImageInfoType) {
+func (f *DocPDF) RegisterImage(fileStr, tp string) (info *ImageInfoType) {
 	options := ImageOptions{
 		ReadDpi:   false,
 		ImageType: tp,
@@ -3561,7 +3561,7 @@ func (f *Fpdf) RegisterImage(fileStr, tp string) (info *ImageInfoType) {
 // to the page. Note that Image() calls this function, so this function is only
 // necessary if you need information about the image before placing it. See
 // Image() for restrictions on the image and the "tp" parameters.
-func (f *Fpdf) RegisterImageOptions(fileStr string, options ImageOptions) (info *ImageInfoType) {
+func (f *DocPDF) RegisterImageOptions(fileStr string, options ImageOptions) (info *ImageInfoType) {
 	info, ok := f.images[fileStr]
 	if ok {
 		return
@@ -3590,26 +3590,26 @@ func (f *Fpdf) RegisterImageOptions(fileStr string, options ImageOptions) (info 
 // GetImageInfo returns information about the registered image specified by
 // imageStr. If the image has not been registered, nil is returned. The
 // internal error is not modified by this method.
-func (f *Fpdf) GetImageInfo(imageStr string) (info *ImageInfoType) {
+func (f *DocPDF) GetImageInfo(imageStr string) (info *ImageInfoType) {
 	return f.images[imageStr]
 }
 
 // ImportObjects imports objects from gofpdi into current document
-func (f *Fpdf) ImportObjects(objs map[string][]byte) {
+func (f *DocPDF) ImportObjects(objs map[string][]byte) {
 	for k, v := range objs {
 		f.importedObjs[k] = v
 	}
 }
 
 // ImportObjPos imports object hash positions from gofpdi
-func (f *Fpdf) ImportObjPos(objPos map[string]map[int]string) {
+func (f *DocPDF) ImportObjPos(objPos map[string]map[int]string) {
 	for k, v := range objPos {
 		f.importedObjPos[k] = v
 	}
 }
 
 // putImportedTemplates writes the imported template objects to the PDF
-func (f *Fpdf) putImportedTemplates() {
+func (f *DocPDF) putImportedTemplates() {
 	nOffset := f.n + 1
 
 	// keep track of list of sha1 hashes (to be replaced with integers)
@@ -3664,13 +3664,13 @@ func (f *Fpdf) putImportedTemplates() {
 
 // UseImportedTemplate uses imported template from gofpdi. It draws imported
 // PDF page onto page.
-func (f *Fpdf) UseImportedTemplate(tplName string, scaleX float64, scaleY float64, tX float64, tY float64) {
+func (f *DocPDF) UseImportedTemplate(tplName string, scaleX float64, scaleY float64, tX float64, tY float64) {
 	f.outf("q 0 J 1 w 0 j 0 G 0 g q %.4F 0 0 %.4F %.4F %.4F cm %s Do Q Q\n", scaleX*f.k, scaleY*f.k, tX*f.k, (tY+f.h)*f.k, tplName)
 }
 
 // ImportTemplates imports gofpdi template names into importedTplObjs for
 // inclusion in the procset dictionary
-func (f *Fpdf) ImportTemplates(tpls map[string]string) {
+func (f *DocPDF) ImportTemplates(tpls map[string]string) {
 	for tplName, tplID := range tpls {
 		f.importedTplObjs[tplName] = tplID
 	}
@@ -3678,7 +3678,7 @@ func (f *Fpdf) ImportTemplates(tpls map[string]string) {
 
 // GetConversionRatio returns the conversion ratio based on the unit given when
 // creating the PDF.
-func (f *Fpdf) GetConversionRatio() float64 {
+func (f *DocPDF) GetConversionRatio() float64 {
 	return f.k
 }
 
@@ -3688,7 +3688,7 @@ func (f *Fpdf) GetConversionRatio() float64 {
 // cell margin. To account for this, you may need to either add the value
 // returned by GetCellMargin() to it or call SetCellMargin(0) to remove the
 // cell margin.
-func (f *Fpdf) GetXY() (float64, float64) {
+func (f *DocPDF) GetXY() (float64, float64) {
 	return f.x, f.y
 }
 
@@ -3697,13 +3697,13 @@ func (f *Fpdf) GetXY() (float64, float64) {
 // Note: the value returned will be affected by the current cell margin. To
 // account for this, you may need to either add the value returned by
 // GetCellMargin() to it or call SetCellMargin(0) to remove the cell margin.
-func (f *Fpdf) GetX() float64 {
+func (f *DocPDF) GetX() float64 {
 	return f.x
 }
 
 // SetX defines the abscissa of the current position. If the passed value is
 // negative, it is relative to the right of the page.
-func (f *Fpdf) SetX(x float64) {
+func (f *DocPDF) SetX(x float64) {
 	if x >= 0 {
 		f.x = x
 	} else {
@@ -3712,14 +3712,14 @@ func (f *Fpdf) SetX(x float64) {
 }
 
 // GetY returns the ordinate of the current position.
-func (f *Fpdf) GetY() float64 {
+func (f *DocPDF) GetY() float64 {
 	return f.y
 }
 
 // SetY moves the current abscissa back to the left margin and sets the
 // ordinate. If the passed value is negative, it is relative to the bottom of
 // the page.
-func (f *Fpdf) SetY(y float64) {
+func (f *DocPDF) SetY(y float64) {
 	// dbg("SetY x %.2f, lMargin %.2f", f.x, f.lMargin)
 	f.x = f.lMargin
 	if y >= 0 {
@@ -3731,7 +3731,7 @@ func (f *Fpdf) SetY(y float64) {
 
 // SetHomeXY is a convenience method that sets the current position to the left
 // and top margins.
-func (f *Fpdf) SetHomeXY() {
+func (f *DocPDF) SetHomeXY() {
 	f.SetY(f.tMargin)
 	f.SetX(f.lMargin)
 }
@@ -3739,7 +3739,7 @@ func (f *Fpdf) SetHomeXY() {
 // SetXY defines the abscissa and ordinate of the current position. If the
 // passed values are negative, they are relative respectively to the right and
 // bottom of the page.
-func (f *Fpdf) SetXY(x, y float64) {
+func (f *DocPDF) SetXY(x, y float64) {
 	f.SetY(y)
 	f.SetX(x)
 }
@@ -3762,7 +3762,7 @@ func (f *Fpdf) SetXY(x, y float64) {
 // full access to the document regardless of the actionFlag value. An empty
 // string for this argument will be replaced with a random value, effectively
 // prohibiting full access to the document.
-func (f *Fpdf) SetProtection(actionFlag byte, userPassStr, ownerPassStr string) {
+func (f *DocPDF) SetProtection(actionFlag byte, userPassStr, ownerPassStr string) {
 	if f.err != nil {
 		return
 	}
@@ -3772,7 +3772,7 @@ func (f *Fpdf) SetProtection(actionFlag byte, userPassStr, ownerPassStr string) 
 // OutputAndClose sends the PDF document to the writer specified by w. This
 // method will close both f and w, even if an error is detected and no document
 // is produced.
-func (f *Fpdf) OutputAndClose(w io.WriteCloser) error {
+func (f *DocPDF) OutputAndClose(w io.WriteCloser) error {
 	_ = f.Output(w)
 	err := w.Close()
 	if err != nil {
@@ -3786,7 +3786,7 @@ func (f *Fpdf) OutputAndClose(w io.WriteCloser) error {
 // written file, even if an error is detected and no document is produced.
 //
 // Most examples demonstrate the use of this method.
-func (f *Fpdf) OutputFileAndClose(fileStr string) error {
+func (f *DocPDF) OutputFileAndClose(fileStr string) error {
 	if f.err != nil {
 		return f.err
 	}
@@ -3811,7 +3811,7 @@ func (f *Fpdf) OutputFileAndClose(fileStr string) error {
 // take place if an error has occurred in the document generation process. w
 // remains open after this function returns. After returning, f is in a closed
 // state and its methods should not be called.
-func (f *Fpdf) Output(w io.Writer) error {
+func (f *DocPDF) Output(w io.Writer) error {
 	if f.err != nil {
 		return f.err
 	}
@@ -3826,7 +3826,7 @@ func (f *Fpdf) Output(w io.Writer) error {
 	return f.err
 }
 
-func (f *Fpdf) getpagesizestr(sizeStr string) (size SizeType) {
+func (f *DocPDF) getpagesizestr(sizeStr string) (size SizeType) {
 	if f.err != nil {
 		return
 	}
@@ -3846,11 +3846,11 @@ func (f *Fpdf) getpagesizestr(sizeStr string) (size SizeType) {
 }
 
 // GetPageSizeStr returns the SizeType for the given sizeStr (that is A4, A3, etc..)
-func (f *Fpdf) GetPageSizeStr(sizeStr string) (size SizeType) {
+func (f *DocPDF) GetPageSizeStr(sizeStr string) (size SizeType) {
 	return f.getpagesizestr(sizeStr)
 }
 
-func (f *Fpdf) beginpage(orientationStr string, size SizeType) {
+func (f *DocPDF) beginpage(orientationStr string, size SizeType) {
 	if f.err != nil {
 		return
 	}
@@ -3893,13 +3893,13 @@ func (f *Fpdf) beginpage(orientationStr string, size SizeType) {
 	}
 }
 
-func (f *Fpdf) endpage() {
+func (f *DocPDF) endpage() {
 	f.EndLayer()
 	f.state = 1
 }
 
 // Load a font definition file from the given Reader
-func (f *Fpdf) loadfont(r io.Reader) (def fontDefType) {
+func (f *DocPDF) loadfont(r io.Reader) (def fontDefType) {
 	if f.err != nil {
 		return
 	}
@@ -3924,7 +3924,7 @@ func (f *Fpdf) loadfont(r io.Reader) (def fontDefType) {
 }
 
 // Escape special characters in strings
-func (f *Fpdf) escape(s string) string {
+func (f *DocPDF) escape(s string) string {
 	s = strings.Replace(s, "\\", "\\\\", -1)
 	s = strings.Replace(s, "(", "\\(", -1)
 	s = strings.Replace(s, ")", "\\)", -1)
@@ -3933,7 +3933,7 @@ func (f *Fpdf) escape(s string) string {
 }
 
 // textstring formats a text string
-func (f *Fpdf) textstring(s string) string {
+func (f *DocPDF) textstring(s string) string {
 	if f.protect.encrypted {
 		b := []byte(s)
 		f.protect.rc4(uint32(f.n), &b)
@@ -3953,18 +3953,18 @@ func blankCount(str string) (count int) {
 }
 
 // GetUnderlineThickness returns the current text underline thickness multiplier.
-func (f *Fpdf) GetUnderlineThickness() float64 {
+func (f *DocPDF) GetUnderlineThickness() float64 {
 	return f.userUnderlineThickness
 }
 
 // SetUnderlineThickness accepts a multiplier for adjusting the text underline
 // thickness, defaulting to 1. See SetUnderlineThickness example.
-func (f *Fpdf) SetUnderlineThickness(thickness float64) {
+func (f *DocPDF) SetUnderlineThickness(thickness float64) {
 	f.userUnderlineThickness = thickness
 }
 
 // Underline text
-func (f *Fpdf) dounderline(x, y float64, txt string) string {
+func (f *DocPDF) dounderline(x, y float64, txt string) string {
 	up := float64(f.currentFont.Up)
 	ut := float64(f.currentFont.Ut) * f.userUnderlineThickness
 	w := f.GetStringWidth(txt) + f.ws*float64(blankCount(txt))
@@ -3972,7 +3972,7 @@ func (f *Fpdf) dounderline(x, y float64, txt string) string {
 		(f.h-(y-up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.fontSizePt)
 }
 
-func (f *Fpdf) dostrikeout(x, y float64, txt string) string {
+func (f *DocPDF) dostrikeout(x, y float64, txt string) string {
 	up := float64(f.currentFont.Up)
 	ut := float64(f.currentFont.Ut)
 	w := f.GetStringWidth(txt) + f.ws*float64(blankCount(txt))
@@ -3980,14 +3980,14 @@ func (f *Fpdf) dostrikeout(x, y float64, txt string) string {
 		(f.h-(y+4*up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.fontSizePt)
 }
 
-func (f *Fpdf) newImageInfo() *ImageInfoType {
+func (f *DocPDF) newImageInfo() *ImageInfoType {
 	// default dpi to 72 unless told otherwise
 	return &ImageInfoType{scale: f.k, dpi: 72}
 }
 
 // parsejpg extracts info from io.Reader with JPEG data
 // Thank you, Bruno Michel, for providing this code.
-func (f *Fpdf) parsejpg(r io.Reader) (info *ImageInfoType) {
+func (f *DocPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
 	info = f.newImageInfo()
 	var (
 		data bytes.Buffer
@@ -4024,7 +4024,7 @@ func (f *Fpdf) parsejpg(r io.Reader) (info *ImageInfoType) {
 }
 
 // parsepng extracts info from a PNG data
-func (f *Fpdf) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
+func (f *DocPDF) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
 	buf, err := newRBuffer(r)
 	if err != nil {
 		f.err = err
@@ -4034,7 +4034,7 @@ func (f *Fpdf) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
 }
 
 // parsegif extracts info from a GIF data (via PNG conversion)
-func (f *Fpdf) parsegif(r io.Reader) (info *ImageInfoType) {
+func (f *DocPDF) parsegif(r io.Reader) (info *ImageInfoType) {
 	data, err := newRBuffer(r)
 	if err != nil {
 		f.err = err
@@ -4056,7 +4056,7 @@ func (f *Fpdf) parsegif(r io.Reader) (info *ImageInfoType) {
 }
 
 // newobj begins a new object
-func (f *Fpdf) newobj() {
+func (f *DocPDF) newobj() {
 	// dbg("newobj")
 	f.n++
 	for j := len(f.offsets); j <= f.n; j++ {
@@ -4066,7 +4066,7 @@ func (f *Fpdf) newobj() {
 	f.outf("%d 0 obj", f.n)
 }
 
-func (f *Fpdf) putstream(b []byte) {
+func (f *DocPDF) putstream(b []byte) {
 	// dbg("putstream")
 	if f.protect.encrypted {
 		f.protect.rc4(uint32(f.n), &b)
@@ -4077,7 +4077,7 @@ func (f *Fpdf) putstream(b []byte) {
 }
 
 // out; Add a line to the document
-func (f *Fpdf) out(s string) {
+func (f *DocPDF) out(s string) {
 	if f.state == 2 {
 		must(f.pages[f.page].WriteString(s))
 		must(f.pages[f.page].WriteString("\n"))
@@ -4087,7 +4087,7 @@ func (f *Fpdf) out(s string) {
 	}
 }
 
-func (f *Fpdf) put(s string) {
+func (f *DocPDF) put(s string) {
 	if f.state == 2 {
 		f.pages[f.page].WriteString(s)
 	} else {
@@ -4096,7 +4096,7 @@ func (f *Fpdf) put(s string) {
 }
 
 // outbuf adds a buffered line to the document
-func (f *Fpdf) outbuf(r io.Reader) {
+func (f *DocPDF) outbuf(r io.Reader) {
 	if f.state == 2 {
 		must64(f.pages[f.page].ReadFrom(r))
 		must(f.pages[f.page].WriteString("\n"))
@@ -4110,7 +4110,7 @@ func (f *Fpdf) outbuf(r io.Reader) {
 // low-level function that is not required for normal PDF construction. An
 // understanding of the PDF specification is needed to use this method
 // correctly.
-func (f *Fpdf) RawWriteStr(str string) {
+func (f *DocPDF) RawWriteStr(str string) {
 	f.out(str)
 }
 
@@ -4118,67 +4118,67 @@ func (f *Fpdf) RawWriteStr(str string) {
 // generation buffer. This is a low-level function that is not required for
 // normal PDF construction. An understanding of the PDF specification is needed
 // to use this method correctly.
-func (f *Fpdf) RawWriteBuf(r io.Reader) {
+func (f *DocPDF) RawWriteBuf(r io.Reader) {
 	f.outbuf(r)
 }
 
 // outf adds a formatted line to the document
-func (f *Fpdf) outf(fmtStr string, args ...interface{}) {
+func (f *DocPDF) outf(fmtStr string, args ...interface{}) {
 	f.out(sprintf(fmtStr, args...))
 }
 
-func (f *Fpdf) putF64(v float64, prec int) {
+func (f *DocPDF) putF64(v float64, prec int) {
 	f.put(f.fmtF64(v, prec))
 }
 
 // fmtF64 converts the floating-point number f to a string with precision prec.
-func (f *Fpdf) fmtF64(v float64, prec int) string {
+func (f *DocPDF) fmtF64(v float64, prec int) string {
 	return string(strconv.AppendFloat(f.fmt.buf[:0], v, 'f', prec, 64))
 }
 
-func (f *Fpdf) putInt(v int) {
+func (f *DocPDF) putInt(v int) {
 	f.put(f.fmtInt(v))
 }
 
-func (f *Fpdf) fmtInt(v int) string {
+func (f *DocPDF) fmtInt(v int) string {
 	return string(strconv.AppendInt(f.fmt.buf[:0], int64(v), 10))
 }
 
 // SetDefaultCatalogSort sets the default value of the catalog sort flag that
-// will be used when initializing a new Fpdf instance. See SetCatalogSort() for
+// will be used when initializing a new DocPDF instance. See SetCatalogSort() for
 // more details.
 func SetDefaultCatalogSort(flag bool) {
 	gl.catalogSort = flag
 }
 
 // GetCatalogSort returns the document's internal catalog sort flag.
-func (f *Fpdf) GetCatalogSort() bool {
+func (f *DocPDF) GetCatalogSort() bool {
 	return f.catalogSort
 }
 
 // SetCatalogSort sets a flag that will be used, if true, to consistently order
 // the document's internal resource catalogs. This method is typically only
 // used for test purposes to facilitate PDF comparison.
-func (f *Fpdf) SetCatalogSort(flag bool) {
+func (f *DocPDF) SetCatalogSort(flag bool) {
 	f.catalogSort = flag
 }
 
 // SetDefaultCreationDate sets the default value of the document creation date
-// that will be used when initializing a new Fpdf instance. See
+// that will be used when initializing a new DocPDF instance. See
 // SetCreationDate() for more details.
 func SetDefaultCreationDate(tm time.Time) {
 	gl.creationDate = tm
 }
 
 // SetDefaultModificationDate sets the default value of the document modification date
-// that will be used when initializing a new Fpdf instance. See
+// that will be used when initializing a new DocPDF instance. See
 // SetCreationDate() for more details.
 func SetDefaultModificationDate(tm time.Time) {
 	gl.modDate = tm
 }
 
 // GetCreationDate returns the document's internal CreationDate value.
-func (f *Fpdf) GetCreationDate() time.Time {
+func (f *DocPDF) GetCreationDate() time.Time {
 	return f.creationDate
 }
 
@@ -4186,18 +4186,18 @@ func (f *Fpdf) GetCreationDate() time.Time {
 // default, the time when the document is generated is used for this value.
 // This method is typically only used for testing purposes to facilitate PDF
 // comparison. Specify a zero-value time to revert to the default behavior.
-func (f *Fpdf) SetCreationDate(tm time.Time) {
+func (f *DocPDF) SetCreationDate(tm time.Time) {
 	f.creationDate = tm
 }
 
 // GetModificationDate returns the document's internal ModDate value.
-func (f *Fpdf) GetModificationDate() time.Time {
+func (f *DocPDF) GetModificationDate() time.Time {
 	return f.modDate
 }
 
 // SetModificationDate fixes the document's internal ModDate value.
 // See `SetCreationDate` for more details.
-func (f *Fpdf) SetModificationDate(tm time.Time) {
+func (f *DocPDF) SetModificationDate(tm time.Time) {
 	f.modDate = tm
 }
 
@@ -4205,7 +4205,7 @@ func (f *Fpdf) SetModificationDate(tm time.Time) {
 //
 // GetJavascript returns an empty string if no javascript was
 // previously defined.
-func (f *Fpdf) GetJavascript() string {
+func (f *DocPDF) GetJavascript() string {
 	if f.javascript == nil {
 		return ""
 	}
@@ -4213,7 +4213,7 @@ func (f *Fpdf) GetJavascript() string {
 }
 
 // SetJavascript adds Adobe JavaScript to the document.
-func (f *Fpdf) SetJavascript(script string) {
+func (f *DocPDF) SetJavascript(script string) {
 	f.javascript = &script
 }
 
@@ -4221,7 +4221,7 @@ func (f *Fpdf) SetJavascript(script string) {
 // replace all occurrences of that alias after writing but before the document
 // is closed. Functions ExampleFpdf_RegisterAlias() and
 // ExampleFpdf_RegisterAlias_utf8() in fpdf_test.go demonstrate this method.
-func (f *Fpdf) RegisterAlias(alias, replacement string) {
+func (f *DocPDF) RegisterAlias(alias, replacement string) {
 	// Note: map[string]string assignments embed literal escape ("\00") sequences
 	// into utf16 key and value strings. Consequently, subsequent search/replace
 	// operations will fail unexpectedly if utf8toutf16() conversions take place
@@ -4230,7 +4230,7 @@ func (f *Fpdf) RegisterAlias(alias, replacement string) {
 	f.aliasMap[alias] = replacement
 }
 
-func (f *Fpdf) replaceAliases() {
+func (f *DocPDF) replaceAliases() {
 	for mode := 0; mode < 2; mode++ {
 		for alias, replacement := range f.aliasMap {
 			if mode == 1 {
@@ -4249,7 +4249,7 @@ func (f *Fpdf) replaceAliases() {
 	}
 }
 
-func (f *Fpdf) putpages() {
+func (f *DocPDF) putpages() {
 	var wPt, hPt float64
 	var pageSize SizeType
 	var ok bool
@@ -4344,7 +4344,7 @@ func (f *Fpdf) putpages() {
 	f.out("endobj")
 }
 
-func (f *Fpdf) putfonts() {
+func (f *DocPDF) putfonts() {
 	if f.err != nil {
 		return
 	}
@@ -4568,7 +4568,7 @@ func (f *Fpdf) putfonts() {
 	}
 }
 
-func (f *Fpdf) generateCIDFontMap(font *fontDefType, LastRune int) {
+func (f *DocPDF) generateCIDFontMap(font *fontDefType, LastRune int) {
 	rangeID := 0
 	cidArray := make(map[int]*untypedKeyMap)
 	cidArrayKeys := make([]int, 0)
@@ -4706,7 +4706,7 @@ func arrayCountValues(mp []int) map[int]int {
 	return answer
 }
 
-func (f *Fpdf) loadFontFile(name string) ([]byte, error) {
+func (f *DocPDF) loadFontFile(name string) ([]byte, error) {
 	if f.fontLoader != nil {
 		reader, err := f.fontLoader.Open(name)
 		if err == nil {
@@ -4720,7 +4720,7 @@ func (f *Fpdf) loadFontFile(name string) ([]byte, error) {
 	return os.ReadFile(path.Join(f.fontpath, name))
 }
 
-func (f *Fpdf) putimages() {
+func (f *DocPDF) putimages() {
 	var keyList []string
 	var key string
 	for key = range f.images {
@@ -4754,7 +4754,7 @@ func (f *Fpdf) putimages() {
 	}
 }
 
-func (f *Fpdf) putimage(info *ImageInfoType) {
+func (f *DocPDF) putimage(info *ImageInfoType) {
 	f.newobj()
 	info.n = f.n
 	f.out("<</Type /XObject")
@@ -4820,7 +4820,7 @@ func (f *Fpdf) putimage(info *ImageInfoType) {
 	}
 }
 
-func (f *Fpdf) putxobjectdict() {
+func (f *DocPDF) putxobjectdict() {
 	{
 		var image *ImageInfoType
 		var key string
@@ -4858,7 +4858,7 @@ func (f *Fpdf) putxobjectdict() {
 	}
 }
 
-func (f *Fpdf) putresourcedict() {
+func (f *DocPDF) putresourcedict() {
 	f.out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]")
 	f.out("/Font <<")
 	{
@@ -4901,7 +4901,7 @@ func (f *Fpdf) putresourcedict() {
 	f.spotColorPutResourceDict()
 }
 
-func (f *Fpdf) putBlendModes() {
+func (f *DocPDF) putBlendModes() {
 	count := len(f.blendList)
 	for j := 1; j < count; j++ {
 		bl := f.blendList[j]
@@ -4913,7 +4913,7 @@ func (f *Fpdf) putBlendModes() {
 	}
 }
 
-func (f *Fpdf) putGradients() {
+func (f *DocPDF) putGradients() {
 	count := len(f.gradientList)
 	for j := 1; j < count; j++ {
 		var f1 int
@@ -4938,7 +4938,7 @@ func (f *Fpdf) putGradients() {
 	}
 }
 
-func (f *Fpdf) putjavascript() {
+func (f *DocPDF) putjavascript() {
 	if f.javascript == nil {
 		return
 	}
@@ -4957,7 +4957,7 @@ func (f *Fpdf) putjavascript() {
 	f.out("endobj")
 }
 
-func (f *Fpdf) putresources() {
+func (f *DocPDF) putresources() {
 	if f.err != nil {
 		return
 	}
@@ -5003,7 +5003,7 @@ func timeOrNow(tm time.Time) time.Time {
 	return tm
 }
 
-func (f *Fpdf) putinfo() {
+func (f *DocPDF) putinfo() {
 	if len(f.producer) > 0 {
 		f.outf("/Producer %s", f.textstring(f.producer))
 	}
@@ -5028,7 +5028,7 @@ func (f *Fpdf) putinfo() {
 	f.outf("/ModDate %s", f.textstring("D:"+mod.Format("20060102150405")))
 }
 
-func (f *Fpdf) putcatalog() {
+func (f *DocPDF) putcatalog() {
 	f.out("/Type /Catalog")
 	f.out("/Pages 1 0 R")
 	f.putOutputIntents()
@@ -5084,12 +5084,12 @@ func (f *Fpdf) putcatalog() {
 	f.out(">>")
 }
 
-func (f *Fpdf) putheader() {
+func (f *DocPDF) putheader() {
 	f.outf("%%PDF-%s", f.pdfVersion)
 	f.out("%µ¶")
 }
 
-func (f *Fpdf) puttrailer() {
+func (f *DocPDF) puttrailer() {
 	f.outf("/Size %d", f.n+1)
 	f.outf("/Root %d 0 R", f.n)
 	f.outf("/Info %d 0 R", f.n-1)
@@ -5099,7 +5099,7 @@ func (f *Fpdf) puttrailer() {
 	}
 }
 
-func (f *Fpdf) putxmp() {
+func (f *DocPDF) putxmp() {
 	if len(f.xmp) == 0 {
 		return
 	}
@@ -5110,7 +5110,7 @@ func (f *Fpdf) putxmp() {
 	f.out("endobj")
 }
 
-func (f *Fpdf) putbookmarks() {
+func (f *DocPDF) putbookmarks() {
 	nb := len(f.outlines)
 	if nb > 0 {
 		lru := make(map[int]int)
@@ -5163,7 +5163,7 @@ func (f *Fpdf) putbookmarks() {
 	}
 }
 
-func (f *Fpdf) putOutputIntents() {
+func (f *DocPDF) putOutputIntents() {
 	if len(f.outputIntents) <= 0 {
 		return
 	}
@@ -5182,7 +5182,7 @@ func (f *Fpdf) putOutputIntents() {
 	f.out("]")
 }
 
-func (f *Fpdf) putOutputIntentStreams() {
+func (f *DocPDF) putOutputIntentStreams() {
 	if len(f.outputIntents) <= 0 {
 		return
 	}
@@ -5200,7 +5200,7 @@ func (f *Fpdf) putOutputIntentStreams() {
 	}
 }
 
-func (f *Fpdf) enddoc() {
+func (f *DocPDF) enddoc() {
 	if f.err != nil {
 		return
 	}
@@ -5260,10 +5260,10 @@ func (f *Fpdf) enddoc() {
 // Create a "path" by moving a virtual stylus around the page (with
 // MoveTo, LineTo, CurveTo, CurveBezierCubicTo, ArcTo & ClosePath)
 // then draw it or  fill it in (with DrawPath). The main advantage of
-// using the path drawing routines rather than multiple Fpdf.Line is
+// using the path drawing routines rather than multiple DocPDF.Line is
 // that PDF creates nice line joins at the angles, rather than just
 // overlaying the lines.
-func (f *Fpdf) MoveTo(x, y float64) {
+func (f *DocPDF) MoveTo(x, y float64) {
 	f.point(x, y)
 	f.x, f.y = x, y
 }
@@ -5273,7 +5273,7 @@ func (f *Fpdf) MoveTo(x, y float64) {
 // the path; it does not actually draw the line on the page.
 //
 // The MoveTo() example demonstrates this method.
-func (f *Fpdf) LineTo(x, y float64) {
+func (f *DocPDF) LineTo(x, y float64) {
 	// f.outf("%.2f %.2f l", x*f.k, (f.h-y)*f.k)
 	const prec = 2
 	f.putF64(x*f.k, prec)
@@ -5293,7 +5293,7 @@ func (f *Fpdf) LineTo(x, y float64) {
 // the end point and the control point.
 //
 // The MoveTo() example demonstrates this method.
-func (f *Fpdf) CurveTo(cx, cy, x, y float64) {
+func (f *DocPDF) CurveTo(cx, cy, x, y float64) {
 	// f.outf("%.5f %.5f %.5f %.5f v", cx*f.k, (f.h-cy)*f.k, x*f.k, (f.h-y)*f.k)
 	const prec = 5
 	f.putF64(cx*f.k, prec)
@@ -5316,7 +5316,7 @@ func (f *Fpdf) CurveTo(cx, cy, x, y float64) {
 // control point (cx1, cy1).
 //
 // The MoveTo() example demonstrates this method.
-func (f *Fpdf) CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64) {
+func (f *DocPDF) CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64) {
 	f.curve(cx0, cy0, cx1, cy1, x, y)
 	f.x, f.y = x, y
 }
@@ -5326,7 +5326,7 @@ func (f *Fpdf) CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64) {
 // join nicely.
 //
 // The MoveTo() example demonstrates this method.
-func (f *Fpdf) ClosePath() {
+func (f *DocPDF) ClosePath() {
 	f.outf("h")
 }
 
@@ -5348,7 +5348,7 @@ func (f *Fpdf) ClosePath() {
 // path. Filling uses the current fill color.
 //
 // The MoveTo() example demonstrates this method.
-func (f *Fpdf) DrawPath(styleStr string) {
+func (f *DocPDF) DrawPath(styleStr string) {
 	f.outf("%s", fillDrawOp(styleStr))
 }
 
@@ -5367,11 +5367,11 @@ func (f *Fpdf) DrawPath(styleStr string) {
 // path. Filling uses the current fill color.
 //
 // The MoveTo() example demonstrates this method.
-func (f *Fpdf) ArcTo(x, y, rx, ry, degRotate, degStart, degEnd float64) {
+func (f *DocPDF) ArcTo(x, y, rx, ry, degRotate, degStart, degEnd float64) {
 	f.arc(x, y, rx, ry, degRotate, degStart, degEnd, "", true)
 }
 
-func (f *Fpdf) arc(x, y, rx, ry, degRotate, degStart, degEnd float64,
+func (f *DocPDF) arc(x, y, rx, ry, degRotate, degStart, degEnd float64,
 	styleStr string, path bool) {
 	x *= f.k
 	y = (f.h - y) * f.k

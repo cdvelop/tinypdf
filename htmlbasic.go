@@ -99,7 +99,7 @@ func HTMLBasicTokenize(htmlStr string) (list []HTMLBasicSegmentType) {
 // of hyperlinks. The Bold, Italic and Underscore values define the hyperlink
 // style.
 type HTMLBasicType struct {
-	pdf  *Fpdf
+	pdf  *DocPDF
 	Link struct {
 		ClrR, ClrG, ClrB         int
 		Bold, Italic, Underscore bool
@@ -108,7 +108,7 @@ type HTMLBasicType struct {
 
 // HTMLBasicNew returns an instance that facilitates writing basic HTML in the
 // specified PDF file.
-func (f *Fpdf) HTMLBasicNew() (html HTMLBasicType) {
+func (f *DocPDF) HTMLBasicNew() (html HTMLBasicType) {
 	html.pdf = f
 	html.Link.ClrR, html.Link.ClrG, html.Link.ClrB = 0, 0, 128
 	html.Link.Bold, html.Link.Italic, html.Link.Underscore = false, false, true
