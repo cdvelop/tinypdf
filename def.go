@@ -1,23 +1,3 @@
-// Copyright ©2023 The go-pdf Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
-
-/*
- * Copyright (c) 2013-2014 Kurt Jung (Gmail: kurt.w.jung)
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package docpdf
 
 import (
@@ -50,12 +30,14 @@ type gradientType struct {
 	objNum            int
 }
 
-const (
-	// OrientationPortrait represents the portrait orientation.
-	OrientationPortrait = "portrait"
+type orientationType string
 
-	// OrientationLandscape represents the landscape orientation.
-	OrientationLandscape = "landscape"
+const (
+	// Portrait represents the portrait orientation.
+	Portrait orientationType = "p"
+
+	// Landscape represents the landscape orientation.
+	Landscape orientationType = "l"
 )
 
 const (
@@ -361,7 +343,7 @@ type outlineType struct {
 // zero, Size will be used to set the default page size rather than SizeStr. Wd
 // and Ht are specified in the units of measure indicated by UnitStr.
 type InitType struct {
-	OrientationStr string
+	OrientationStr orientationType // Landscape or Portrait
 	UnitStr        string
 	SizeStr        string
 	Size           SizeType
@@ -403,7 +385,7 @@ type Pdf interface {
 	AddLayer(name string, visible bool) (layerID int)
 	AddLink() int
 	AddPage()
-	AddPageFormat(orientationStr string, size SizeType)
+	AddPageFormat(orientationStr orientationType, size SizeType)
 	AddSpotColor(nameStr string, c, m, y, k byte)
 	AliasNbPages(aliasStr string)
 	ArcTo(x, y, rx, ry, degRotate, degStart, degEnd float64)
@@ -621,8 +603,8 @@ type DocPDF struct {
 	state            int                        // current document state
 	compress         bool                       // compression flag
 	k                float64                    // scale factor (number of points in user unit)
-	defOrientation   string                     // default orientation
-	curOrientation   string                     // current orientation
+	defOrientation   orientationType            // default orientation
+	curOrientation   orientationType            // current orientation
 	stdPageSizes     map[string]SizeType        // standard page sizes
 	defPageSize      SizeType                   // default page size
 	defPageBoxes     map[string]PageBox         // default page size

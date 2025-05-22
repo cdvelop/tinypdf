@@ -27,7 +27,7 @@ func report(fileStr string, err error) {
 }
 
 func newPdf() (pdf *docpdf.DocPDF) {
-	pdf = docpdf.New("P", "mm", "A4", "../../font")
+	pdf = docpdf.New("mm", "A4", "../../font")
 	pdf.SetCompression(false)
 	pdf.AddFont("Calligrapher", "", "calligra.json")
 	pdf.AddPage()

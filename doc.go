@@ -71,7 +71,7 @@ Later, to receive updates, run
 
 The following Go code generates a simple PDF file.
 
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "Hello, world")

@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleRegister() {
-	pdf := docpdf.New("L", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "", docpdf.Landscape)
 	pdf.SetFont("Helvetica", "", 12)
 	pdf.SetFillColor(200, 200, 220)
 	pdf.AddPage()

@@ -12,7 +12,7 @@ import (
 
 func ExampleNewImporter() {
 	// create new pdf
-	pdf := docpdf.New("P", "pt", "A4", "")
+	pdf := docpdf.New("pt", "A4", "")
 
 	// for testing purposes, get an arbitrary template pdf as stream
 	rs, _ := getTemplatePdf()
@@ -48,7 +48,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			pdf := docpdf.New("P", "mm", "A4", "")
+			pdf := docpdf.New("mm", "A4", "")
 			pdf.AddPage()
 			rs, _ := getTemplatePdf()
 			imp := NewImporter()
@@ -65,7 +65,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 }
 
 func getTemplatePdf() (io.ReadSeeker, error) {
-	tpdf := docpdf.New("P", "pt", "A4", "")
+	tpdf := docpdf.New("pt", "A4", "")
 	tpdf.AddPage()
 	tpdf.SetFont("Arial", "", 12)
 	tpdf.Text(20, 20, "Example Page 1")

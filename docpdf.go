@@ -34,13 +34,43 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 	b.Buffer.WriteString(fmt.Sprintf(fmtStr, args...))
 }
 
-func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType) (f *DocPDF) {
+func New(options ...any) (f *DocPDF) {
 	f = new(DocPDF)
-	if orientationStr == "" {
-		orientationStr = "p"
-	} else {
-		orientationStr = strings.ToLower(orientationStr)
+
+	var unitStr, sizeStr, fontDirStr string // deprecated
+	var size = SizeType{0, 0}
+
+	// Set default values
+	f.defOrientation = Portrait
+
+	for num, opt := range options {
+
+		switch v := opt.(type) {
+		case string: // deprecated
+			switch num {
+			case 0: // unitStr
+				unitStr = v
+			case 1: // sizeStr
+				sizeStr = v
+			case 2: // fontDirStr
+				fontDirStr = v
+			} // end deprecated
+
+		case orientationType:
+			f.defOrientation = v
+		case SizeType:
+			size = v
+
+		case *InitType:
+			f.defOrientation = v.OrientationStr
+			f.unitStr = v.UnitStr
+			f.defPageSize = v.Size
+			f.fontDirStr = v.FontDirStr
+			sizeStr = v.SizeStr
+
+		}
 	}
+
 	if unitStr == "" {
 		unitStr = "mm"
 	}
@@ -134,18 +164,16 @@ func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType)
 	}
 	f.curPageSize = f.defPageSize
 	// Page orientation
-	switch orientationStr {
-	case "p", "portrait":
-		f.defOrientation = "P"
+	switch f.defOrientation {
+	case Portrait:
 		f.w = f.defPageSize.Wd
 		f.h = f.defPageSize.Ht
 		// dbg("Assign h: %8.2f", f.h)
-	case "l", "landscape":
-		f.defOrientation = "L"
+	case Landscape:
 		f.w = f.defPageSize.Ht
 		f.h = f.defPageSize.Wd
 	default:
-		f.err = fmt.Errorf("incorrect orientation: %s", orientationStr)
+		f.err = fmt.Errorf("incorrect orientation: %s", f.defOrientation)
 		return
 	}
 	f.curOrientation = f.defOrientation
@@ -192,38 +220,6 @@ func fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr string, size SizeType)
 	// math.MaxUint64 needs 20.
 	f.fmt.buf = make([]byte, 24)
 	return
-}
-
-// NewCustom returns a pointer to a new DocPDF instance. Its methods are
-// subsequently called to produce a single PDF document. NewCustom() is an
-// alternative to New() that provides additional customization. The PageSize()
-// example demonstrates this method.
-func NewCustom(init *InitType) (f *DocPDF) {
-	return fpdfNew(init.OrientationStr, init.UnitStr, init.SizeStr, init.FontDirStr, init.Size)
-}
-
-// New returns a pointer to a new DocPDF instance. Its methods are subsequently
-// called to produce a single PDF document.
-//
-// orientationStr specifies the default page orientation. For portrait mode,
-// specify "P" or "Portrait". For landscape mode, specify "L" or "Landscape".
-// An empty string will be replaced with "P".
-//
-// unitStr specifies the unit of length used in size parameters for elements
-// other than fonts, which are always measured in points. Specify "pt" for
-// point, "mm" for millimeter, "cm" for centimeter, or "in" for inch. An empty
-// string will be replaced with "mm".
-//
-// sizeStr specifies the page size. Acceptable values are "A1", "A2", "A3", "A4", "A5",
-// "A6", "A7", "Letter", "Legal", or "Tabloid". An empty string will be replaced with "A4".
-//
-// fontDirStr specifies the file system location in which font resources will
-// be found. An empty string is replaced with ".". This argument only needs to
-// reference an actual directory if a font other than one of the core
-// fonts is used. The core fonts are "courier", "helvetica" (also called
-// "arial"), "times", and "zapfdingbats" (also called "symbol").
-func New(orientationStr, unitStr, sizeStr, fontDirStr string) (f *DocPDF) {
-	return fpdfNew(orientationStr, unitStr, sizeStr, fontDirStr, SizeType{0, 0})
 }
 
 // Ok returns true if no processing errors have occurred.
@@ -773,7 +769,7 @@ func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 // size specifies the size of the new page in the units established in New().
 //
 // The PageSize() example demonstrates this method.
-func (f *DocPDF) AddPageFormat(orientationStr string, size SizeType) {
+func (f *DocPDF) AddPageFormat(orientationStr orientationType, size SizeType) {
 	if f.err != nil {
 		return
 	}
@@ -3850,7 +3846,7 @@ func (f *DocPDF) GetPageSizeStr(sizeStr string) (size SizeType) {
 	return f.getpagesizestr(sizeStr)
 }
 
-func (f *DocPDF) beginpage(orientationStr string, size SizeType) {
+func (f *DocPDF) beginpage(newPageOrientation orientationType, size SizeType) {
 	if f.err != nil {
 		return
 	}
@@ -3867,15 +3863,10 @@ func (f *DocPDF) beginpage(orientationStr string, size SizeType) {
 	f.x = f.lMargin
 	f.y = f.tMargin
 	f.fontFamily = ""
-	// Check page size and orientation
-	if orientationStr == "" {
-		orientationStr = f.defOrientation
-	} else {
-		orientationStr = strings.ToUpper(orientationStr[0:1])
-	}
-	if orientationStr != f.curOrientation || size.Wd != f.curPageSize.Wd || size.Ht != f.curPageSize.Ht {
+
+	if newPageOrientation != f.curOrientation || size.Wd != f.curPageSize.Wd || size.Ht != f.curPageSize.Ht {
 		// New size or orientation
-		if orientationStr == "P" {
+		if newPageOrientation == Portrait {
 			f.w = size.Wd
 			f.h = size.Ht
 		} else {
@@ -3885,10 +3876,10 @@ func (f *DocPDF) beginpage(orientationStr string, size SizeType) {
 		f.wPt = f.w * f.k
 		f.hPt = f.h * f.k
 		f.pageBreakTrigger = f.h - f.bMargin
-		f.curOrientation = orientationStr
+		f.curOrientation = newPageOrientation
 		f.curPageSize = size
 	}
-	if orientationStr != f.defOrientation || size.Wd != f.defPageSize.Wd || size.Ht != f.defPageSize.Ht {
+	if newPageOrientation != f.defOrientation || size.Wd != f.defPageSize.Wd || size.Ht != f.defPageSize.Ht {
 		f.pageSizes[f.page] = SizeType{f.wPt, f.hPt}
 	}
 }

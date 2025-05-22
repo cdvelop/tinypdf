@@ -1,23 +1,3 @@
-// Copyright ©2023 The go-pdf Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
-
-/*
- * Copyright (c) 2013-2015 Kurt Jung (Gmail: kurt.w.jung)
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package docpdf_test
 
 import (
@@ -72,7 +52,7 @@ func TestFpdfImplementPdf(t *testing.T) {
 
 // TestPagedTemplate ensures new paged templates work
 func TestPagedTemplate(t *testing.T) {
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	tpl := pdf.CreateTemplate(func(t *docpdf.Tpl) {
 		// this will be the second page, as a page is already
 		// created by default
@@ -109,7 +89,7 @@ func TestPagedTemplate(t *testing.T) {
 // TestIssue0116 addresses issue 116 in which library silently fails after
 // calling CellFormat when no font has been set.
 func TestIssue0116(t *testing.T) {
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "OK")
@@ -117,7 +97,7 @@ func TestIssue0116(t *testing.T) {
 		t.Fatalf("not expecting error when rendering text")
 	}
 
-	pdf = docpdf.New("P", "mm", "A4", "")
+	pdf = docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 	pdf.Cell(40, 10, "Not OK") // Font not set
 	if pdf.Error() == nil {
@@ -136,7 +116,7 @@ func TestIssue0193(t *testing.T) {
 	png, err = os.ReadFile(example.ImageFile("sweden.png"))
 	if err == nil {
 		rdr = bytes.NewReader(png)
-		pdf = docpdf.New("P", "mm", "A4", "")
+		pdf = docpdf.New("mm", "A4", "")
 		pdf.AddPage()
 		_ = pdf.RegisterImageOptionsReader("sweden", docpdf.ImageOptions{ImageType: "png", ReadDpi: true}, rdr)
 		err = pdf.Error()
@@ -150,7 +130,7 @@ func TestIssue0193(t *testing.T) {
 // TestIssue0209SplitLinesEqualMultiCell addresses issue 209
 // make SplitLines and MultiCell split at the same place
 func TestIssue0209SplitLinesEqualMultiCell(t *testing.T) {
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 8)
 	// this sentence should not be splited
@@ -186,7 +166,7 @@ func TestIssue0209SplitLinesEqualMultiCell(t *testing.T) {
 // TestFooterFuncLpi tests to make sure the footer is not call twice and SetFooterFuncLpi can work
 // without SetFooterFunc.
 func TestFooterFuncLpi(t *testing.T) {
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	var (
 		oldFooterFnc  = "oldFooterFnc"
 		bothPages     = "bothPages"
@@ -256,7 +236,7 @@ func TestIssue0069PanicOnSplitTextWithUnicode(t *testing.T) {
 		}
 	}()
 
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 8)
 
@@ -277,7 +257,7 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 		}
 	}()
 
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 8)
 
@@ -308,7 +288,7 @@ func TestAFMFontParser(t *testing.T) {
 }
 
 func BenchmarkLineTo(b *testing.B) {
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 
 	b.ResetTimer()
@@ -318,7 +298,7 @@ func BenchmarkLineTo(b *testing.B) {
 }
 
 func BenchmarkCurveTo(b *testing.B) {
-	pdf := docpdf.New("P", "mm", "A4", "")
+	pdf := docpdf.New("mm", "A4", "")
 	pdf.AddPage()
 
 	b.ResetTimer()
