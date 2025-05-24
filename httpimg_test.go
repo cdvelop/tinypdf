@@ -18,5 +18,5 @@ func ExampleRegister() {
 	err := pdf.OutputFileAndClose(fileStr)
 	Summary(err, fileStr)
 	// Output:
-	// Successfully generated ../pdf/contrib_httpimg_Register.pdf
+	// Successfully generated pdf/contrib_httpimg_Register.pdf
 }

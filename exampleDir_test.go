@@ -113,6 +113,10 @@ func referenceCompare(fileStr string) (err error) {
 // error is not nil, its String() value is printed to standard output.
 func Summary(err error, fileStr string) {
 	if err == nil {
+		// Convert absolute path to relative path for consistent output
+		if relPath, relErr := filepath.Rel(string(rootTestDir), fileStr); relErr == nil {
+			fileStr = relPath
+		}
 		fileStr = filepath.ToSlash(fileStr)
 		fmt.Printf("Successfully generated %s\n", fileStr)
 	} else {
@@ -132,6 +136,10 @@ func SummaryCompare(err error, fileStr string) {
 		err = referenceCompare(fileStr)
 	}
 	if err == nil {
+		// Convert absolute path to relative path for consistent output
+		if relPath, relErr := filepath.Rel(string(rootTestDir), fileStr); relErr == nil {
+			fileStr = relPath
+		}
 		fileStr = filepath.ToSlash(fileStr)
 		fmt.Printf("Successfully generated %s\n", fileStr)
 	} else {
