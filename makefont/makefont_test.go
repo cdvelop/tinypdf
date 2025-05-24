@@ -15,8 +15,8 @@ func TestMakefont(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err = exec.Command("./makefont", "--dst=../font", "--embed",
-		"--enc=../font/cp1252.map", "../font/calligra.ttf").CombinedOutput()
+	out, err = exec.Command("./makefont", "--dst=../fonts", "--embed",
+		"--enc=../fonts/cp1252.map", "../fonts/calligra.ttf").CombinedOutput()
 	if err != nil {
 		t.Fatal(err)
 	}
