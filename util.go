@@ -249,7 +249,7 @@ func (f *DocPDF) UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string)
 			defer emb.Close()
 			rep, f.err = UnicodeTranslator(emb)
 		} else {
-			rep, f.err = UnicodeTranslatorFromFile(filepath.Join(f.fontpath, cpStr) + ".map")
+			rep, f.err = UnicodeTranslatorFromFile(filepath.Join(f.fontsPath, cpStr) + ".map")
 		}
 	} else {
 		rep = doNothing

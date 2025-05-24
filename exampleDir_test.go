@@ -1,89 +1,80 @@
-// Copyright (c) 2015 Kurt Jung (Gmail: kurt.w.jung)
-//
-// Permission to use, copy, modify, and distribute this software for any purpose
-// with or without fee is hereby granted, provided that the above copyright notice
-// and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-// FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
-
-// Package example provides some helper routines for the test packages of
-// gofpdf and its various contributed packages located beneath the contrib
-// directory.
-package example
+package docpdf_test
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/cdvelop/docpdf"
+	"github.com/cdvelop/docpdf/errs"
 )
 
-var gofpdfDir string
+var rootTestDir docpdf.RootDirectoryType
 
-func init() {
-	setRoot()
-	docpdf.SetDefaultCompression(false)
-	docpdf.SetDefaultCatalogSort(true)
-	docpdf.SetDefaultCreationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
-	docpdf.SetDefaultModificationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
-}
-
-// setRoot assigns the relative path to the gofpdfDir directory based on current working
+// setRoot assigns the relative path to the rootTestDir directory based on current working
 // directory
-func setRoot() {
+func init() {
 	wdStr, err := os.Getwd()
 	if err == nil {
-		gofpdfDir = ""
-		list := strings.Split(filepath.ToSlash(wdStr), "/")
-		for j := len(list) - 1; j >= 0 && list[j] != "docpdf"; j-- {
-			gofpdfDir = filepath.Join(gofpdfDir, "..")
-		}
+		rootTestDir = docpdf.RootDirectoryType(wdStr)
 	} else {
 		panic(err)
 	}
 }
 
+// default docpdf init for testing
+func NewDocPdfTest(options ...any) *docpdf.DocPDF {
+
+	// add root directory to the options
+	options = append(options, rootTestDir)
+
+	pdf := docpdf.New(options...)
+	pdf.SetCompression(false)
+	pdf.SetCatalogSort(true)
+	pdf.SetCreationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+	pdf.SetModificationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+
+	return pdf
+}
+
 // ImageFile returns a qualified filename in which the path to the image
 // directory is prepended to the specified filename.
 func ImageFile(fileStr string) string {
-	return filepath.Join(gofpdfDir, "image", fileStr)
+	return rootTestDir.MakePath("image", fileStr)
 }
 
-// FontDir returns the path to the font directory.
-func FontDir() string {
-	return filepath.Join(gofpdfDir, "font")
+// FontsDirName returns the name to the font directory test.
+func FontsDirName() string {
+	return "fonts"
+}
+
+// FontsDirPath returns the path to the font directory test.
+func FontsDirPath() string {
+	return rootTestDir.MakePath(FontsDirName())
 }
 
 // FontFile returns a qualified filename in which the path to the font
 // directory is prepended to the specified filename.
 func FontFile(fileStr string) string {
-	return filepath.Join(FontDir(), fileStr)
+	return filepath.Join(FontsDirPath(), fileStr)
 }
 
 // TextFile returns a qualified filename in which the path to the text
 // directory is prepended to the specified filename.
 func TextFile(fileStr string) string {
-	return filepath.Join(gofpdfDir, "text", fileStr)
+	return rootTestDir.MakePath("text", fileStr)
 }
 
 // PdfDir returns the path to the PDF output directory.
 func PdfDir() string {
-	return filepath.Join(gofpdfDir, "pdf")
+	return rootTestDir.MakePath("pdf")
 }
 
 // ICCFile returns a qualified filename in which the path to the ICC file
 // directory is prepended to the specified filename.
 func ICCFile(fileStr string) string {
-	return filepath.Join(gofpdfDir, "icc", fileStr)
+	return rootTestDir.MakePath("icc", fileStr)
 }
 
 // PdfFile returns a qualified filename in which the path to the PDF output
@@ -146,4 +137,12 @@ func SummaryCompare(err error, fileStr string) {
 	} else {
 		fmt.Println(err)
 	}
+}
+
+// ExampleFilename tests the Filename() and Summary() functions.
+func ExampleFilename() {
+	fileStr := Filename("example")
+	Summary(errs.New("printer on fire"), fileStr)
+	// Output:
+	// printer on fire
 }

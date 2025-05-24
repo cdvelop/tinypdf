@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"path"
 	"strconv"
 	"time"
 )
@@ -29,6 +30,20 @@ type gradientType struct {
 	x1, y1, x2, y2, r float64
 	objNum            int
 }
+
+type RootDirectoryType string // RootDirectoryType is the root directory of the executable default is "." but test can set it to a different directory
+
+// MakePath joins the root directory with one or more path elements.
+// For example, with root "/home/user/docpdf":
+//
+//	r.MakePath("file.txt") returns "/home/user/docpdf/file.txt"
+//	r.MakePath("dir", "file.txt") returns "/home/user/docpdf/dir/file.txt"
+func (r RootDirectoryType) MakePath(pathElements ...string) string {
+	elements := append([]string{string(r)}, pathElements...)
+	return path.Join(elements...)
+}
+
+type FontsDirName string // FontsDirName is the name of the font directory default is "fonts"
 
 type orientationType string
 
@@ -347,7 +362,8 @@ type InitType struct {
 	UnitStr        string
 	SizeStr        string
 	Size           SizeType
-	FontDirStr     string
+	RootDirectory  RootDirectoryType // Root directory of the executable default is "." but test can set it to a different directory
+	FontDirName    string            // name to the font directory default is "fonts"
 }
 
 // FontLoader is used to read fonts (JSON font specification and zlib compressed font binaries)
@@ -622,7 +638,9 @@ type DocPDF struct {
 	x, y             float64                    // current position in user unit
 	lasth            float64                    // height of last printed cell
 	lineWidth        float64                    // line width in user unit
-	fontpath         string                     // path containing fonts
+	rootDirectory    RootDirectoryType          // root directory of the executable default is "." for test change
+	fontsDirName     FontsDirName               // fonts directory name default is "fonts"
+	fontsPath        string                     // full path containing fonts directory included rootDirectory eg. "/home/user/docpdf/fonts"
 	fontLoader       FontLoader                 // used to load font files from arbitrary locations
 	coreFonts        map[string]bool            // array of core font names
 	fonts            map[string]fontDefType     // array of used fonts
@@ -668,7 +686,6 @@ type DocPDF struct {
 	modDate          time.Time                  // override for document ModDate value
 	aliasNbPagesStr  string                     // alias for total number of pages
 	pdfVersion       pdfVersion                 // PDF version number
-	fontDirStr       string                     // location of font definition files
 	capStyle         int                        // line cap style: butt 0, round 1, square 2
 	joinStyle        int                        // line segment join style: miter 0, round 1, bevel 2
 	dashArray        []float64                  // dash array
