@@ -33,13 +33,12 @@ func ExampleNewImporter() {
 		}
 		imp.UseImportedTemplate(pdf, tpl, 0, 0, pageSizes[i]["/MediaBox"]["w"], pageSizes[i]["/MediaBox"]["h"])
 	}
-
 	// output
 	fileStr := Filename("contrib_gofpdi_Importer")
 	err := pdf.OutputFileAndClose(fileStr)
 	Summary(err, fileStr)
 	// Output:
-	// Successfully generated ../pdf/contrib_gofpdi_Importer.pdf
+	// Successfully generated pdf/contrib_gofpdi_Importer.pdf
 }
 
 func TestGofpdiConcurrent(t *testing.T) {
