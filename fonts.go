@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -71,7 +72,11 @@ func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 		}
 		var ttfStat os.FileInfo
 		var err error
-		fileStr = path.Join(f.fontsPath, fileStr)
+		// If fileStr is already an absolute path, use it directly
+		// Otherwise, join it with the fonts path
+		if !filepath.IsAbs(fileStr) {
+			fileStr = path.Join(f.fontsPath, fileStr)
+		}
 		ttfStat, err = os.Stat(fileStr)
 		if err != nil {
 			f.SetError(err)
@@ -142,7 +147,11 @@ func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 			}
 		}
 
-		fileStr = path.Join(f.fontsPath, fileStr)
+		// If fileStr is already an absolute path, use it directly
+		// Otherwise, join it with the fonts path
+		if !filepath.IsAbs(fileStr) {
+			fileStr = path.Join(f.fontsPath, fileStr)
+		}
 		file, err := os.Open(fileStr)
 		if err != nil {
 			f.err = err
@@ -178,4 +187,8 @@ func (f *DocPDF) loadFontFile(name string) ([]byte, error) {
 		}
 	}
 	return os.ReadFile(path.Join(f.fontsPath, name))
+}
+
+func isAbsolutePath(p string) bool {
+	return filepath.IsAbs(p)
 }
