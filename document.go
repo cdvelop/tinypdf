@@ -507,7 +507,7 @@ func (f *DocPDF) beginpage(newPageOrientation orientationType, size SizeType) {
 		f.curPageSize = size
 	}
 	if newPageOrientation != f.defOrientation || size.Wd != f.defPageSize.Wd || size.Ht != f.defPageSize.Ht {
-		f.pageSizes[f.page] = SizeType{f.wPt, f.hPt}
+		f.pageSizes[f.page] = SizeType{size.Wd * f.k, size.Ht * f.k}
 	}
 }
 
@@ -547,7 +547,7 @@ func (f *DocPDF) putpages() {
 		f.RegisterAlias(f.aliasNbPagesStr, sprintf("%d", nb))
 	}
 	f.replaceAliases()
-	if f.defOrientation == "P" {
+	if f.defOrientation == Portrait {
 		wPt = f.defPageSize.Wd * f.k
 		hPt = f.defPageSize.Ht * f.k
 	} else {
