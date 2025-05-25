@@ -17,11 +17,12 @@ import (
 func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 	sz, ok := f.pageSizes[pageNum]
 	if ok {
-		sz.Wd, sz.Ht = sz.Wd/f.k, sz.Ht/f.k
+		// Convert from points back to user units
+		return sz.Wd / f.k, sz.Ht / f.k, f.unitStr
 	} else {
-		sz = f.defPageSize // user units
+		// Return default page size, converting from points to user units
+		return f.defPageSize.Wd / f.k, f.defPageSize.Ht / f.k, f.unitStr
 	}
-	return sz.Wd, sz.Ht, f.unitStr
 }
 
 // AddPageFormat adds a new page with non-default orientation or size. See
@@ -32,7 +33,7 @@ func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 // size specifies the size of the new page in the units established in New().
 //
 // The PageSize() example demonstrates this method.
-func (f *DocPDF) AddPageFormat(orientationStr orientationType, size SizeType) {
+func (f *DocPDF) AddPageFormat(orientationStr orientationType, size PageSize) {
 	if f.err != nil {
 		return
 	}
@@ -449,7 +450,7 @@ func (f *DocPDF) Output(w io.Writer) error {
 	return f.err
 }
 
-func (f *DocPDF) getpagesizestr(sizeStr string) (size SizeType) {
+func (f *DocPDF) getpagesizestr(sizeStr string) (size PageSize) {
 	if f.err != nil {
 		return
 	}
@@ -468,12 +469,12 @@ func (f *DocPDF) getpagesizestr(sizeStr string) (size SizeType) {
 	return
 }
 
-// GetPageSizeStr returns the SizeType for the given sizeStr (that is A4, A3, etc..)
-func (f *DocPDF) GetPageSizeStr(sizeStr string) (size SizeType) {
+// GetPageSizeStr returns the PageSize for the given sizeStr (that is A4, A3, etc..)
+func (f *DocPDF) GetPageSizeStr(sizeStr string) (size PageSize) {
 	return f.getpagesizestr(sizeStr)
 }
 
-func (f *DocPDF) beginpage(newPageOrientation orientationType, size SizeType) {
+func (f *DocPDF) beginpage(newPageOrientation orientationType, size PageSize) {
 	if f.err != nil {
 		return
 	}
@@ -490,15 +491,15 @@ func (f *DocPDF) beginpage(newPageOrientation orientationType, size SizeType) {
 	f.x = f.lMargin
 	f.y = f.tMargin
 	f.fontFamily = ""
-
 	if newPageOrientation != f.curOrientation || size.Wd != f.curPageSize.Wd || size.Ht != f.curPageSize.Ht {
 		// New size or orientation
+		// size is in points, convert to user units for f.w and f.h
 		if newPageOrientation == Portrait {
-			f.w = size.Wd
-			f.h = size.Ht
+			f.w = size.Wd / f.k
+			f.h = size.Ht / f.k
 		} else {
-			f.w = size.Ht
-			f.h = size.Wd
+			f.w = size.Ht / f.k
+			f.h = size.Wd / f.k
 		}
 		f.wPt = f.w * f.k
 		f.hPt = f.h * f.k
@@ -507,7 +508,14 @@ func (f *DocPDF) beginpage(newPageOrientation orientationType, size SizeType) {
 		f.curPageSize = size
 	}
 	if newPageOrientation != f.defOrientation || size.Wd != f.defPageSize.Wd || size.Ht != f.defPageSize.Ht {
-		f.pageSizes[f.page] = SizeType{size.Wd * f.k, size.Ht * f.k}
+		// Store the actual page dimensions (after orientation is applied) in points
+		// size is already in points, so no conversion needed
+		if newPageOrientation == Portrait {
+			f.pageSizes[f.page] = PageSize{Wd: size.Wd, Ht: size.Ht, AutoHt: size.AutoHt}
+		} else {
+			// For landscape, swap dimensions
+			f.pageSizes[f.page] = PageSize{Wd: size.Ht, Ht: size.Wd, AutoHt: size.AutoHt}
+		}
 	}
 }
 
@@ -539,7 +547,7 @@ func arrayCountValues(mp []int) map[int]int {
 
 func (f *DocPDF) putpages() {
 	var wPt, hPt float64
-	var pageSize SizeType
+	var pageSize PageSize
 	var ok bool
 	nb := f.page
 	if len(f.aliasNbPagesStr) > 0 {
@@ -547,12 +555,13 @@ func (f *DocPDF) putpages() {
 		f.RegisterAlias(f.aliasNbPagesStr, sprintf("%d", nb))
 	}
 	f.replaceAliases()
+	// f.defPageSize is already in points, no need to multiply by f.k
 	if f.defOrientation == Portrait {
-		wPt = f.defPageSize.Wd * f.k
-		hPt = f.defPageSize.Ht * f.k
+		wPt = f.defPageSize.Wd
+		hPt = f.defPageSize.Ht
 	} else {
-		wPt = f.defPageSize.Ht * f.k
-		hPt = f.defPageSize.Wd * f.k
+		wPt = f.defPageSize.Ht
+		hPt = f.defPageSize.Wd
 	}
 	pagesObjectNumbers := make([]int, nb+1) // 1-based
 	for n := 1; n <= nb; n++ {
@@ -580,7 +589,7 @@ func (f *DocPDF) putpages() {
 					annots.printf("/A <</S /URI /URI %s>>>>", f.textstring(pl.linkStr))
 				} else {
 					l := f.links[pl.link]
-					var sz SizeType
+					var sz PageSize
 					var h float64
 					sz, ok = f.pageSizes[l.page]
 					if ok {

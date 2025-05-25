@@ -7,7 +7,7 @@ import (
 
 // CreateTemplate defines a new template using the current page size.
 func (f *DocPDF) CreateTemplate(fn func(*Tpl)) Template {
-	return newTpl(PointType{0, 0}, f.curPageSize, f.defOrientation, f.unitStr, f.fontsDirName, fn, f)
+	return newTpl(PointType{0, 0}, f.curPageSize.ToSizeType(), f.defOrientation, f.unitStr, f.fontsDirName, fn, f)
 }
 
 // CreateTemplateCustom starts a template, using the given bounds.

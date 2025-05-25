@@ -32,9 +32,9 @@ import (
 
 // newTpl creates a template, copying graphics settings from a template if one is given
 func newTpl(corner PointType, size SizeType, orientationStr orientationType, unitStr string, fontsDirName FontsDirName, fn func(*Tpl), copyFrom *DocPDF) Template {
-	sizeStr := ""
+	pageSize := PageSize{Wd: size.Wd, Ht: size.Ht, AutoHt: false}
 
-	docpdf := New(unitStr, sizeStr, fontsDirName, size, orientationStr)
+	docpdf := New(unitStr, orientationStr, pageSize, fontsDirName)
 	tpl := Tpl{*docpdf}
 	if copyFrom != nil {
 		tpl.loadParamsFromFpdf(copyFrom)

@@ -34,8 +34,8 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 func New(options ...any) (f *DocPDF) {
 	f = new(DocPDF)
 
-	var unitStr, sizeStr string // deprecated
-	var size = SizeType{0, 0}
+	var unitStr string
+	var size = PageSize{0, 0, false}
 	var initType *InitType
 
 	// Set default values
@@ -44,19 +44,15 @@ func New(options ...any) (f *DocPDF) {
 	f.fontsDirName = "fonts"
 
 	for num, opt := range options {
-
 		switch v := opt.(type) {
-		case string: // deprecated
+		case string:
 			switch num {
 			case 0: // unitStr
 				unitStr = v
-			case 1: // sizeStr
-				sizeStr = v
-			} // end deprecated
-
+			}
 		case orientationType:
 			f.defOrientation = v
-		case SizeType:
+		case PageSize:
 			size = v
 
 		case *InitType:
@@ -64,35 +60,38 @@ func New(options ...any) (f *DocPDF) {
 
 		case RootDirectoryType:
 			f.rootDirectory = v
-
 		case FontsDirName:
 			f.fontsDirName = v
 
 		}
 	}
-
 	if initType != nil {
 		f.defOrientation = initType.OrientationStr
-		f.unitStr = initType.UnitStr
-		f.defPageSize = initType.Size
+		if f.defOrientation == "" {
+			f.defOrientation = Portrait
+		}
+		if initType.UnitStr != "" {
+			f.unitStr = initType.UnitStr
+		} else if unitStr != "" {
+			f.unitStr = unitStr
+		} else {
+			f.unitStr = "mm"
+		}
+		// Note: page size conversion happens later after scale factor is set
 		f.rootDirectory = initType.RootDirectory
 		f.fontsPath = initType.RootDirectory.MakePath(initType.FontDirName)
-		sizeStr = initType.SizeStr
-
-	}
-
-	if unitStr == "" {
-		unitStr = "mm"
-	}
-	if sizeStr == "" {
-		sizeStr = "A4"
+	} else {
+		if unitStr == "" {
+			unitStr = "mm"
+		}
+		f.unitStr = unitStr
 	}
 
 	f.page = 0
 	f.n = 2
 	f.pages = make([]*bytes.Buffer, 0, 8)
 	f.pages = append(f.pages, bytes.NewBufferString("")) // pages[0] is unused (1-based)
-	f.pageSizes = make(map[int]SizeType)
+	f.pageSizes = make(map[int]PageSize)
 	f.pageBoxes = make(map[int]map[string]PageBox)
 	f.defPageBoxes = make(map[string]PageBox)
 	f.state = 0
@@ -126,9 +125,9 @@ func New(options ...any) (f *DocPDF) {
 	f.setTextColor(0, 0, 0)
 	f.colorFlag = false
 	f.ws = 0
-
 	// Set fontsPath instance
 	f.fontsPath = f.rootDirectory.MakePath(string(f.fontsDirName))
+
 	// Core fonts
 	f.coreFonts = map[string]bool{
 		"courier":      true,
@@ -137,8 +136,9 @@ func New(options ...any) (f *DocPDF) {
 		"symbol":       true,
 		"zapfdingbats": true,
 	}
+
 	// Scale factor
-	switch unitStr {
+	switch f.unitStr {
 	case "pt", "point":
 		f.k = 1.0
 	case "mm":
@@ -148,40 +148,49 @@ func New(options ...any) (f *DocPDF) {
 	case "in", "inch":
 		f.k = 72.0
 	default:
-		f.err = fmt.Errorf("incorrect unit %s", unitStr)
+		f.err = fmt.Errorf("incorrect unit %s", f.unitStr)
 		return
 	}
-	f.unitStr = unitStr
-	// Page sizes
-	f.stdPageSizes = make(map[string]SizeType)
-	f.stdPageSizes["a3"] = SizeType{841.89, 1190.55}
-	f.stdPageSizes["a4"] = SizeType{595.28, 841.89}
-	f.stdPageSizes["a5"] = SizeType{420.94, 595.28}
-	f.stdPageSizes["a6"] = SizeType{297.64, 420.94}
-	f.stdPageSizes["a7"] = SizeType{209.76, 297.64}
-	f.stdPageSizes["a2"] = SizeType{1190.55, 1683.78}
-	f.stdPageSizes["a1"] = SizeType{1683.78, 2383.94}
-	f.stdPageSizes["letter"] = SizeType{612, 792}
-	f.stdPageSizes["legal"] = SizeType{612, 1008}
-	f.stdPageSizes["tabloid"] = SizeType{792, 1224}
-	if size.Wd > 0 && size.Ht > 0 {
-		f.defPageSize = size
-	} else {
-		f.defPageSize = f.getpagesizestr(sizeStr)
-		if f.err != nil {
-			return
+	f.stdPageSizes = make(map[string]PageSize)
+	f.stdPageSizes["a3"] = A3
+	f.stdPageSizes["a4"] = A4
+	f.stdPageSizes["a5"] = A5
+	f.stdPageSizes["a6"] = A6
+	f.stdPageSizes["a7"] = A7
+	f.stdPageSizes["a2"] = A2
+	f.stdPageSizes["a1"] = A1
+	f.stdPageSizes["letter"] = Letter
+	f.stdPageSizes["legal"] = Legal
+	f.stdPageSizes["tabloid"] = Tabloid
+
+	// Set default page size
+	if initType != nil && initType.Size.Wd > 0 && initType.Size.Ht > 0 {
+		// Convert user-specified page size to points for internal use
+		f.defPageSize = PageSize{
+			Wd:     initType.Size.Wd * f.k,
+			Ht:     initType.Size.Ht * f.k,
+			AutoHt: initType.Size.AutoHt,
 		}
+	} else if size.Wd > 0 && size.Ht > 0 {
+		// Convert deprecated size parameter to points for internal use
+		f.defPageSize = PageSize{
+			Wd:     size.Wd * f.k,
+			Ht:     size.Ht * f.k,
+			AutoHt: size.AutoHt,
+		}
+	} else {
+		// Use default A4 size in points
+		f.defPageSize = A4
 	}
-	f.curPageSize = f.defPageSize
-	// Page orientation
+	f.curPageSize = f.defPageSize // Page orientation
 	switch f.defOrientation {
 	case Portrait:
-		f.w = f.defPageSize.Wd
-		f.h = f.defPageSize.Ht
+		f.w = f.defPageSize.Wd / f.k
+		f.h = f.defPageSize.Ht / f.k
 		// dbg("Assign h: %8.2f", f.h)
 	case Landscape:
-		f.w = f.defPageSize.Ht
-		f.h = f.defPageSize.Wd
+		f.w = f.defPageSize.Ht / f.k
+		f.h = f.defPageSize.Wd / f.k
 	default:
 		f.err = fmt.Errorf("incorrect orientation: %s", f.defOrientation)
 		return

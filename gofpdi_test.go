@@ -47,7 +47,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			pdf := NewDocPdfTest("mm", "A4")
+			pdf := NewDocPdfTest("mm")
 			pdf.AddPage()
 			rs, _ := getTemplatePdf()
 			imp := gofpdi.NewImporter()

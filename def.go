@@ -66,17 +66,28 @@ const (
 	UnitInch = "inch"
 )
 
-const (
-	// PageSizeA3 represents DIN/ISO A3 page size
-	PageSizeA3 = "A3"
-	// PageSizeA4 represents DIN/ISO A4 page size
-	PageSizeA4 = "A4"
-	// PageSizeA5 represents DIN/ISO A5 page size
-	PageSizeA5 = "A5"
-	// PageSizeLetter represents US Letter page size
-	PageSizeLetter = "Letter"
-	// PageSizeLegal represents US Legal page size
-	PageSizeLegal = "Legal"
+// Standard page sizes in points (1/72 inch)
+var (
+	// A3 represents DIN/ISO A3 page size
+	A3 = PageSize{Wd: 841.89, Ht: 1190.55, AutoHt: false}
+	// A4 represents DIN/ISO A4 page size
+	A4 = PageSize{Wd: 595.28, Ht: 841.89, AutoHt: false}
+	// A5 represents DIN/ISO A5 page size
+	A5 = PageSize{Wd: 420.94, Ht: 595.28, AutoHt: false}
+	// A6 represents DIN/ISO A6 page size
+	A6 = PageSize{Wd: 297.64, Ht: 420.94, AutoHt: false}
+	// A7 represents DIN/ISO A7 page size
+	A7 = PageSize{Wd: 209.76, Ht: 297.64, AutoHt: false}
+	// A2 represents DIN/ISO A2 page size
+	A2 = PageSize{Wd: 1190.55, Ht: 1683.78, AutoHt: false}
+	// A1 represents DIN/ISO A1 page size
+	A1 = PageSize{Wd: 1683.78, Ht: 2383.94, AutoHt: false}
+	// Letter represents US Letter page size
+	Letter = PageSize{Wd: 612, Ht: 792, AutoHt: false}
+	// Legal represents US Legal page size
+	Legal = PageSize{Wd: 612, Ht: 1008, AutoHt: false}
+	// Tabloid represents US Tabloid page size
+	Tabloid = PageSize{Wd: 792, Ht: 1224, AutoHt: false}
 )
 
 const (
@@ -153,6 +164,19 @@ type SizeType struct {
 	Wd, Ht float64
 }
 
+// PageSize specifies the dimensions and properties of a page.
+// Wd and Ht specify the horizontal and vertical extents in points.
+// AutoHt indicates if the page height should grow automatically based on content.
+type PageSize struct {
+	Wd, Ht float64
+	AutoHt bool // For cases where page size needs to grow automatically (e.g., thermal printer paper)
+}
+
+// ToSizeType converts a PageSize to SizeType for compatibility
+func (ps PageSize) ToSizeType() SizeType {
+	return SizeType{Wd: ps.Wd, Ht: ps.Ht}
+}
+
 // PointType fields X and Y specify the horizontal and vertical coordinates of
 // a point, typically used in drawing.
 type PointType struct {
@@ -162,6 +186,21 @@ type PointType struct {
 // XY returns the X and Y components of the receiver point.
 func (p PointType) XY() (float64, float64) {
 	return p.X, p.Y
+}
+
+// Extent returns the width and height of the page size
+func (ps PageSize) Extent() (wd, ht float64) {
+	return ps.Wd, ps.Ht
+}
+
+// Width returns the width of the page size
+func (ps PageSize) Width() float64 {
+	return ps.Wd
+}
+
+// Height returns the height of the page size
+func (ps PageSize) Height() float64 {
+	return ps.Ht
 }
 
 // ImageInfoType contains size, color and other information about an image.
@@ -353,15 +392,14 @@ type outlineType struct {
 }
 
 // InitType is used with NewCustom() to customize an DocPDF instance.
-// OrientationStr, UnitStr, SizeStr and FontDirStr correspond to the arguments
-// accepted by New(). If the Wd and Ht fields of Size are each greater than
-// zero, Size will be used to set the default page size rather than SizeStr. Wd
-// and Ht are specified in the units of measure indicated by UnitStr.
+// OrientationStr, UnitStr correspond to the arguments accepted by New().
+// If the Wd and Ht fields of Size are each greater than zero, Size will be used
+// to set the default page size. Wd and Ht are specified in the units of measure
+// indicated by UnitStr.
 type InitType struct {
 	OrientationStr orientationType // Landscape or Portrait
 	UnitStr        string
-	SizeStr        string
-	Size           SizeType
+	Size           PageSize
 	RootDirectory  RootDirectoryType // Root directory of the executable default is "." but test can set it to a different directory
 	FontDirName    string            // name to the font directory default is "fonts"
 }
@@ -401,7 +439,7 @@ type Pdf interface {
 	AddLayer(name string, visible bool) (layerID int)
 	AddLink() int
 	AddPage()
-	AddPageFormat(orientationStr orientationType, size SizeType)
+	AddPageFormat(orientationStr orientationType, size PageSize)
 	AddSpotColor(nameStr string, c, m, y, k byte)
 	AliasNbPages(aliasStr string)
 	ArcTo(x, y, rx, ry, degRotate, degStart, degEnd float64)
@@ -465,7 +503,7 @@ type Pdf interface {
 	GetMargins() (left, top, right, bottom float64)
 	GetModificationDate() time.Time
 	GetPageSize() (width, height float64)
-	GetPageSizeStr(sizeStr string) (size SizeType)
+	GetPageSizeStr(sizeStr string) (size PageSize)
 	GetProducer() string
 	GetStringWidth(s string) float64
 	GetSubject() string
@@ -621,11 +659,11 @@ type DocPDF struct {
 	k                float64                    // scale factor (number of points in user unit)
 	defOrientation   orientationType            // default orientation
 	curOrientation   orientationType            // current orientation
-	stdPageSizes     map[string]SizeType        // standard page sizes
-	defPageSize      SizeType                   // default page size
+	stdPageSizes     map[string]PageSize        // standard page sizes
+	defPageSize      PageSize                   // default page size
 	defPageBoxes     map[string]PageBox         // default page size
-	curPageSize      SizeType                   // current page size
-	pageSizes        map[int]SizeType           // used for pages with non default sizes or orientations
+	curPageSize      PageSize                   // current page size
+	pageSizes        map[int]PageSize           // used for pages with non default sizes or orientations
 	pageBoxes        map[int]map[string]PageBox // used to define the crop, trim, bleed and art boxes
 	unitStr          string                     // unit of measure for all rendered objects except fonts
 	wPt, hPt         float64                    // dimensions of current page in points
