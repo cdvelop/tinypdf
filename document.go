@@ -18,10 +18,10 @@ func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 	sz, ok := f.pageSizes[pageNum]
 	if ok {
 		// Convert from points back to user units
-		return sz.Wd / f.k, sz.Ht / f.k, f.unitStr
+		return sz.Wd / f.k, sz.Ht / f.k, string(f.unitType)
 	} else {
 		// Return default page size, converting from points to user units
-		return f.defPageSize.Wd / f.k, f.defPageSize.Ht / f.k, f.unitStr
+		return f.defPageSize.Wd / f.k, f.defPageSize.Ht / f.k, string(f.unitType)
 	}
 }
 

@@ -47,7 +47,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			pdf := NewDocPdfTest("mm")
+			pdf := NewDocPdfTest()
 			pdf.AddPage()
 			rs, _ := getTemplatePdf()
 			imp := gofpdi.NewImporter()
@@ -64,7 +64,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 }
 
 func getTemplatePdf() (io.ReadSeeker, error) {
-	tpdf := docpdf.New("pt", "A4", "")
+	tpdf := docpdf.New(docpdf.PT, "A4", "")
 	tpdf.AddPage()
 	tpdf.SetFont("Arial", "", 12)
 	tpdf.Text(20, 20, "Example Page 1")

@@ -18,7 +18,7 @@ func floatEqual(a, b float64) bool {
 }
 
 func TestGetAlpha(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetAlpha(0.17, "Luminosity")
 
 	alpha, blendModeStr := pdf.GetAlpha()
@@ -32,7 +32,7 @@ func TestGetAlpha(t *testing.T) {
 }
 
 func TestGetAuthor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetAuthor("John Doe", false)
 
 	author := pdf.GetAuthor()
@@ -43,7 +43,7 @@ func TestGetAuthor(t *testing.T) {
 }
 
 func TestGetAutoPageBreak(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetAutoPageBreak(true, 10)
 
 	autoPageBreak, margin := pdf.GetAutoPageBreak()
@@ -57,7 +57,7 @@ func TestGetAutoPageBreak(t *testing.T) {
 }
 
 func TestGetCatalogSort(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetCatalogSort(true)
 
 	catalogSort := pdf.GetCatalogSort()
@@ -76,7 +76,7 @@ func TestGetCatalogSort(t *testing.T) {
 }
 
 func TestGetCellMargin(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetCellMargin(6)
 
 	cellMargin := pdf.GetCellMargin()
@@ -87,7 +87,7 @@ func TestGetCellMargin(t *testing.T) {
 }
 
 func TestGetCompression(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetCompression(true)
 
 	compression := pdf.GetCompression()
@@ -106,7 +106,7 @@ func TestGetCompression(t *testing.T) {
 }
 
 func TestGetConversionRatio(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 
 	conversionRatio := pdf.GetConversionRatio()
 
@@ -114,7 +114,7 @@ func TestGetConversionRatio(t *testing.T) {
 		t.Errorf("invalid conversionRatio: got=%v, want=%v", got, want)
 	}
 
-	pdf = docpdf.New("pt", "A4", "")
+	pdf = docpdf.New(docpdf.PT, "A4", "")
 
 	conversionRatio = pdf.GetConversionRatio()
 
@@ -125,7 +125,7 @@ func TestGetConversionRatio(t *testing.T) {
 
 func TestGetCreationDate(t *testing.T) {
 	setDate, _ := time.Parse(time.RFC3339, "2003-06-17T01:23:45Z")
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetCreationDate(setDate)
 
 	creationDate := pdf.GetCreationDate()
@@ -136,7 +136,7 @@ func TestGetCreationDate(t *testing.T) {
 }
 
 func TestGetCreator(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetCreator("John Doe", false)
 
 	creator := pdf.GetCreator()
@@ -147,7 +147,7 @@ func TestGetCreator(t *testing.T) {
 }
 
 func TestGetDisplayMode(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetDisplayMode("real", "OneColumn")
 
 	zoom, layout := pdf.GetDisplayMode()
@@ -161,7 +161,7 @@ func TestGetDisplayMode(t *testing.T) {
 }
 
 func TestGetDrawColor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetDrawColor(134, 26, 34)
 
 	r, g, b := pdf.GetDrawColor()
@@ -178,7 +178,7 @@ func TestGetDrawColor(t *testing.T) {
 }
 
 func TestGetDrawSpotColor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.AddSpotColor("RAL 5018", 81, 0, 5, 48)
 	pdf.SetDrawSpotColor("RAL 5018", 100)
 
@@ -202,7 +202,7 @@ func TestGetDrawSpotColor(t *testing.T) {
 }
 
 func TestGetFillColor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetFillColor(255, 203, 0)
 
 	r, g, b := pdf.GetFillColor()
@@ -219,7 +219,7 @@ func TestGetFillColor(t *testing.T) {
 }
 
 func TestGetFillSpotColor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.AddSpotColor("RAL 5018", 81, 0, 5, 48)
 	pdf.SetFillSpotColor("RAL 5018", 100)
 
@@ -243,7 +243,7 @@ func TestGetFillSpotColor(t *testing.T) {
 }
 
 func TestGetFontFamily(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetFont("Times", "", 12)
 
 	fontFamily := pdf.GetFontFamily()
@@ -269,7 +269,7 @@ func TestGetFontLoader(t *testing.T) {
 		err:    testErr,
 	}
 
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetFontLoader(tfl)
 
 	fontLoader := pdf.GetFontLoader()
@@ -293,7 +293,7 @@ func TestGetFontLoader(t *testing.T) {
 }
 
 func TestGetFontLocation(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetFontLocation("test-font-location")
 
 	fontLocation := pdf.GetFontLocation()
@@ -304,7 +304,7 @@ func TestGetFontLocation(t *testing.T) {
 }
 
 func TestGetFontSize(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetFontSize(19)
 
 	ptSize, _ := pdf.GetFontSize()
@@ -323,7 +323,7 @@ func TestGetFontSize(t *testing.T) {
 }
 
 func TestGetFontStyle(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetFont("Arial", "BIUS", 12)
 
 	fontStyle := pdf.GetFontStyle()
@@ -347,7 +347,7 @@ func TestGetFontStyle(t *testing.T) {
 
 func TestGetJavascript(t *testing.T) {
 	const want = `<script>console.log('docpdf is awesome')</script>`
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 
 	if got, want := pdf.GetJavascript(), ""; got != want {
 		t.Errorf("invalid javascript: got=%v, want=%v", got, want)
@@ -370,7 +370,7 @@ func TestGetJavascript(t *testing.T) {
 }
 
 func TestGetKeywords(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetKeywords("test keywords", false)
 
 	keywords := pdf.GetKeywords()
@@ -381,7 +381,7 @@ func TestGetKeywords(t *testing.T) {
 }
 
 func TestGetLang(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetLang("de-CH")
 
 	lang := pdf.GetLang()
@@ -392,7 +392,7 @@ func TestGetLang(t *testing.T) {
 }
 
 func TestGetLineCapStyle(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetLineCapStyle("round")
 
 	lineCapStyle := pdf.GetLineCapStyle()
@@ -403,7 +403,7 @@ func TestGetLineCapStyle(t *testing.T) {
 }
 
 func TestGetLineJoinStyle(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetLineJoinStyle("bevel")
 
 	lineJoinStyle := pdf.GetLineJoinStyle()
@@ -414,7 +414,7 @@ func TestGetLineJoinStyle(t *testing.T) {
 }
 
 func TestGetLineWidth(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetLineWidth(42)
 
 	lineWidth := pdf.GetLineWidth()
@@ -425,7 +425,7 @@ func TestGetLineWidth(t *testing.T) {
 }
 
 func TestGetMargins(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetMargins(17, 6, 3)
 	pdf.SetAutoPageBreak(true, 3.14)
 
@@ -447,7 +447,7 @@ func TestGetMargins(t *testing.T) {
 
 func TestGetModificationDate(t *testing.T) {
 	setDate, _ := time.Parse(time.RFC3339, "9-08-02T09:54:32Z")
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetModificationDate(setDate)
 
 	modificationDate := pdf.GetModificationDate()
@@ -458,7 +458,7 @@ func TestGetModificationDate(t *testing.T) {
 }
 
 func TestGetPageSize(t *testing.T) {
-	pdf := docpdf.New("pt", "A4", "")
+	pdf := docpdf.New(docpdf.PT, "A4", "")
 
 	pageWidth, pageHeight := pdf.GetPageSize()
 
@@ -471,7 +471,7 @@ func TestGetPageSize(t *testing.T) {
 }
 
 func TestGetProducer(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetProducer("John Doe", false)
 
 	producer := pdf.GetProducer()
@@ -482,7 +482,7 @@ func TestGetProducer(t *testing.T) {
 }
 
 func TestGetSubject(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetSubject("test subject", false)
 
 	subject := pdf.GetSubject()
@@ -493,7 +493,7 @@ func TestGetSubject(t *testing.T) {
 }
 
 func TestGetTextColor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetTextColor(255, 203, 0)
 
 	r, g, b := pdf.GetTextColor()
@@ -510,7 +510,7 @@ func TestGetTextColor(t *testing.T) {
 }
 
 func TestGetTextSpotColor(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.AddSpotColor("RAL 5018", 81, 0, 5, 48)
 	pdf.SetTextSpotColor("RAL 5018", 100)
 
@@ -534,7 +534,7 @@ func TestGetTextSpotColor(t *testing.T) {
 }
 
 func TestGetTitle(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetTitle("test title", false)
 
 	title := pdf.GetTitle()
@@ -545,7 +545,7 @@ func TestGetTitle(t *testing.T) {
 }
 
 func TestGetUnderlineThickness(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetUnderlineThickness(17)
 
 	underlineThickness := pdf.GetUnderlineThickness()
@@ -556,7 +556,7 @@ func TestGetUnderlineThickness(t *testing.T) {
 }
 
 func TestGetWordSpacing(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetWordSpacing(6)
 
 	wordSpacing := pdf.GetWordSpacing()
@@ -567,7 +567,7 @@ func TestGetWordSpacing(t *testing.T) {
 }
 
 func TestGetX(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetX(17)
 
 	x := pdf.GetX()
@@ -578,7 +578,7 @@ func TestGetX(t *testing.T) {
 }
 
 func TestGetXmpMetadata(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetXmpMetadata([]byte("test xmp metadata"))
 
 	xmpMetadata := pdf.GetXmpMetadata()
@@ -589,7 +589,7 @@ func TestGetXmpMetadata(t *testing.T) {
 }
 
 func TestGetXY(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetXY(42, 4.13)
 
 	x, y := pdf.GetXY()
@@ -603,7 +603,7 @@ func TestGetXY(t *testing.T) {
 }
 
 func TestGetY(t *testing.T) {
-	pdf := NewDocPdfTest("mm")
+	pdf := NewDocPdfTest()
 	pdf.SetY(4.13)
 
 	y := pdf.GetY()

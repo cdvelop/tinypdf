@@ -55,15 +55,17 @@ const (
 	Landscape orientationType = "l"
 )
 
+type unit string
+
 const (
-	// UnitPoint represents the size unit point
-	UnitPoint = "pt"
-	// UnitMillimeter represents the size unit millimeter
-	UnitMillimeter = "mm"
-	// UnitCentimeter represents the size unit centimeter
-	UnitCentimeter = "cm"
-	// UnitInch represents the size unit inch
-	UnitInch = "inch"
+	// PT represents the size unit point
+	PT unit = "pt"
+	// MM represents the size unit millimeter
+	MM unit = "mm"
+	// CM represents the size unit centimeter
+	CM unit = "cm"
+	// IN represents the size unit inch
+	IN unit = "inch"
 )
 
 // Standard page sizes in points (1/72 inch)
@@ -392,13 +394,13 @@ type outlineType struct {
 }
 
 // InitType is used with NewCustom() to customize an DocPDF instance.
-// OrientationStr, UnitStr correspond to the arguments accepted by New().
+// OrientationStr, UnitType correspond to the arguments accepted by New().
 // If the Wd and Ht fields of Size are each greater than zero, Size will be used
 // to set the default page size. Wd and Ht are specified in the units of measure
-// indicated by UnitStr.
+// indicated by UnitType.
 type InitType struct {
 	OrientationStr orientationType // Landscape or Portrait
-	UnitStr        string
+	UnitType       unit
 	Size           PageSize
 	RootDirectory  RootDirectoryType // Root directory of the executable default is "." but test can set it to a different directory
 	FontDirName    string            // name to the font directory default is "fonts"
@@ -665,7 +667,7 @@ type DocPDF struct {
 	curPageSize      PageSize                   // current page size
 	pageSizes        map[int]PageSize           // used for pages with non default sizes or orientations
 	pageBoxes        map[int]map[string]PageBox // used to define the crop, trim, bleed and art boxes
-	unitStr          string                     // unit of measure for all rendered objects except fonts
+	unitType         unit                       // unit of measure for all rendered objects except fonts
 	wPt, hPt         float64                    // dimensions of current page in points
 	w, h             float64                    // dimensions of current page in user unit
 	lMargin          float64                    // left margin

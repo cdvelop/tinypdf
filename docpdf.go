@@ -34,7 +34,7 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 func New(options ...any) (f *DocPDF) {
 	f = new(DocPDF)
 
-	var unitStr string
+	var unitType unit
 	var size = PageSize{0, 0, false}
 	var initType *InitType
 
@@ -45,10 +45,10 @@ func New(options ...any) (f *DocPDF) {
 
 	for num, opt := range options {
 		switch v := opt.(type) {
-		case string:
+		case unit:
 			switch num {
-			case 0: // unitStr
-				unitStr = v
+			case 0: // unitType
+				unitType = v
 			}
 		case orientationType:
 			f.defOrientation = v
@@ -57,7 +57,6 @@ func New(options ...any) (f *DocPDF) {
 
 		case *InitType:
 			initType = v
-
 		case RootDirectoryType:
 			f.rootDirectory = v
 		case FontsDirName:
@@ -70,21 +69,21 @@ func New(options ...any) (f *DocPDF) {
 		if f.defOrientation == "" {
 			f.defOrientation = Portrait
 		}
-		if initType.UnitStr != "" {
-			f.unitStr = initType.UnitStr
-		} else if unitStr != "" {
-			f.unitStr = unitStr
+		if initType.UnitType != "" {
+			f.unitType = initType.UnitType
+		} else if unitType != "" {
+			f.unitType = unitType
 		} else {
-			f.unitStr = "mm"
+			f.unitType = MM
 		}
 		// Note: page size conversion happens later after scale factor is set
 		f.rootDirectory = initType.RootDirectory
 		f.fontsPath = initType.RootDirectory.MakePath(initType.FontDirName)
 	} else {
-		if unitStr == "" {
-			unitStr = "mm"
+		if unitType == "" {
+			unitType = MM
 		}
-		f.unitStr = unitStr
+		f.unitType = unitType
 	}
 
 	f.page = 0
@@ -136,19 +135,18 @@ func New(options ...any) (f *DocPDF) {
 		"symbol":       true,
 		"zapfdingbats": true,
 	}
-
 	// Scale factor
-	switch f.unitStr {
-	case "pt", "point":
+	switch f.unitType {
+	case PT:
 		f.k = 1.0
-	case "mm":
+	case MM:
 		f.k = 72.0 / 25.4
-	case "cm":
+	case CM:
 		f.k = 72.0 / 2.54
-	case "in", "inch":
+	case IN:
 		f.k = 72.0
 	default:
-		f.err = fmt.Errorf("incorrect unit %s", f.unitStr)
+		f.err = fmt.Errorf("incorrect unit %s", f.unitType)
 		return
 	}
 	f.stdPageSizes = make(map[string]PageSize)

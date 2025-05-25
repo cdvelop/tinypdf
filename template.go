@@ -7,12 +7,12 @@ import (
 
 // CreateTemplate defines a new template using the current page size.
 func (f *DocPDF) CreateTemplate(fn func(*Tpl)) Template {
-	return newTpl(PointType{0, 0}, f.curPageSize.ToSizeType(), f.defOrientation, f.unitStr, f.fontsDirName, fn, f)
+	return newTpl(PointType{0, 0}, f.curPageSize.ToSizeType(), f.defOrientation, f.unitType, f.fontsDirName, fn, f)
 }
 
 // CreateTemplateCustom starts a template, using the given bounds.
 func (f *DocPDF) CreateTemplateCustom(corner PointType, size SizeType, fn func(*Tpl)) Template {
-	return newTpl(corner, size, f.defOrientation, f.unitStr, f.fontsDirName, fn, f)
+	return newTpl(corner, size, f.defOrientation, f.unitType, f.fontsDirName, fn, f)
 }
 
 // CreateTemplate creates a template that is not attached to any document.
@@ -22,18 +22,18 @@ func (f *DocPDF) CreateTemplateCustom(corner PointType, size SizeType, fn func(*
 // landscape mode. This causes problems when placing the template in a master
 // document where this condition does not apply. CreateTpl() is a similar
 // function that lets you specify the orientation to avoid this problem.
-func CreateTemplate(corner PointType, size SizeType, unitStr string, fontsDirName FontsDirName, fn func(*Tpl)) Template {
+func CreateTemplate(corner PointType, size SizeType, unitType unit, fontsDirName FontsDirName, fn func(*Tpl)) Template {
 	orientationStr := Portrait
 	if size.Wd > size.Ht {
 		orientationStr = Landscape
 	}
 
-	return CreateTpl(corner, size, orientationStr, unitStr, fontsDirName, fn)
+	return CreateTpl(corner, size, orientationStr, unitType, fontsDirName, fn)
 }
 
 // CreateTpl creates a template not attached to any document
-func CreateTpl(corner PointType, size SizeType, orientationStr orientationType, unitStr string, fontsDirName FontsDirName, fn func(*Tpl)) Template {
-	return newTpl(corner, size, orientationStr, unitStr, fontsDirName, fn, nil)
+func CreateTpl(corner PointType, size SizeType, orientationStr orientationType, unitType unit, fontsDirName FontsDirName, fn func(*Tpl)) Template {
+	return newTpl(corner, size, orientationStr, unitType, fontsDirName, fn, nil)
 }
 
 // UseTemplate adds a template to the current page or another template,
