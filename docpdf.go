@@ -34,7 +34,6 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 func New(options ...any) (f *DocPDF) {
 	f = new(DocPDF)
 
-	var unitType unit
 	var size = PageSize{0, 0, false}
 	var initType *InitType
 
@@ -42,19 +41,18 @@ func New(options ...any) (f *DocPDF) {
 	f.defOrientation = Portrait
 	f.rootDirectory = "."
 	f.fontsDirName = "fonts"
+	f.unitType = MM
 
-	for num, opt := range options {
+	for _, opt := range options {
 		switch v := opt.(type) {
 		case unit:
-			switch num {
-			case 0: // unitType
-				unitType = v
+			if v != "" {
+				f.unitType = v
 			}
 		case orientationType:
 			f.defOrientation = v
 		case PageSize:
 			size = v
-
 		case *InitType:
 			initType = v
 		case RootDirectoryType:
@@ -71,19 +69,11 @@ func New(options ...any) (f *DocPDF) {
 		}
 		if initType.UnitType != "" {
 			f.unitType = initType.UnitType
-		} else if unitType != "" {
-			f.unitType = unitType
-		} else {
-			f.unitType = MM
 		}
+
 		// Note: page size conversion happens later after scale factor is set
 		f.rootDirectory = initType.RootDirectory
 		f.fontsPath = initType.RootDirectory.MakePath(initType.FontDirName)
-	} else {
-		if unitType == "" {
-			unitType = MM
-		}
-		f.unitType = unitType
 	}
 
 	f.page = 0
