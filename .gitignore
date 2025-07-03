@@ -26,3 +26,4 @@ coverage.html
 
 # macOS
 .DS_Store
+ISSUE_*.md

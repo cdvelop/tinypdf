@@ -64,7 +64,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 }
 
 func getTemplatePdf() (io.ReadSeeker, error) {
-	tpdf := tinypdf.New(tinypdf.PT, "A4", "")
+	tpdf := tinypdf.New(tinypdf.POINT, "A4", "")
 	tpdf.AddPage()
 	tpdf.SetFont("Arial", "", 12)
 	tpdf.Text(20, 20, "Example Page 1")

@@ -127,7 +127,7 @@ func New(options ...any) (f *DocPDF) {
 	}
 	// Scale factor
 	switch f.unitType {
-	case PT:
+	case POINT:
 		f.k = 1.0
 	case MM:
 		f.k = 72.0 / 25.4

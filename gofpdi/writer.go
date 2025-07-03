@@ -10,7 +10,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/cdvelop/tinypdf/errs"
+	. "github.com/cdvelop/tinystring"
 )
 
 type PdfWriter struct {
@@ -75,7 +75,7 @@ func NewPdfWriter(filename string) (*PdfWriter, error) {
 		var err error
 		f, err := os.Create(filename)
 		if err != nil {
-			return nil, errs.New(err, "Unable to create filename: "+filename)
+			return nil, Err(err, "Unable to create filename: "+filename)
 		}
 		writer.f = f
 		writer.w = bufio.NewWriter(f)
@@ -123,7 +123,7 @@ func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string)
 	// Get all page boxes
 	pageBoxes, err := reader.getPageBoxes(1, this.k)
 	if err != nil {
-		return -1, errs.New(err, "Failed to get page boxes")
+		return -1, Err(err, "Failed to get page boxes")
 	}
 
 	// If requested box name does not exist for this page, use an alternate box
@@ -138,17 +138,17 @@ func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string)
 	// If the requested box name or an alternate box name cannot be found, trigger an error
 	// TODO: Improve error handling
 	if _, ok := pageBoxes[boxName]; !ok {
-		return -1, errs.New("Box not found: " + boxName)
+		return -1, Err("Box not found: " + boxName)
 	}
 
 	pageResources, err := reader.getPageResources(pageno)
 	if err != nil {
-		return -1, errs.New(err, "Failed to get page resources")
+		return -1, Err(err, "Failed to get page resources")
 	}
 
 	content, err := reader.getContent(pageno)
 	if err != nil {
-		return -1, errs.New(err, "Failed to get content")
+		return -1, Err(err, "Failed to get content")
 	}
 
 	// Set template values
@@ -166,7 +166,7 @@ func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string)
 	// Set template rotation
 	rotation, err := reader.getPageRotation(pageno)
 	if err != nil {
-		return -1, errs.New(err, "Failed to get page rotation")
+		return -1, Err(err, "Failed to get page rotation")
 	}
 	angle := rotation.Int % 360
 
@@ -263,15 +263,12 @@ func (this *PdfWriter) writeValue(value *PdfValue) {
 	switch value.Type {
 	case PDF_TYPE_TOKEN:
 		this.straightOut(value.Token + " ")
-		break
 
 	case PDF_TYPE_NUMERIC:
 		this.straightOut(fmt.Sprintf("%d", value.Int) + " ")
-		break
 
 	case PDF_TYPE_REAL:
 		this.straightOut(fmt.Sprintf("%F", value.Real) + " ")
-		break
 
 	case PDF_TYPE_ARRAY:
 		this.straightOut("[")
@@ -279,7 +276,6 @@ func (this *PdfWriter) writeValue(value *PdfValue) {
 			this.writeValue(value.Array[i])
 		}
 		this.out("]")
-		break
 
 	case PDF_TYPE_DICTIONARY:
 		this.straightOut("<<")
@@ -288,7 +284,6 @@ func (this *PdfWriter) writeValue(value *PdfValue) {
 			this.writeValue(v)
 		}
 		this.straightOut(">>")
-		break
 
 	case PDF_TYPE_OBJREF:
 		// An indirect object reference.  Fill the object stack if needed.
@@ -303,12 +298,10 @@ func (this *PdfWriter) writeValue(value *PdfValue) {
 		objId := this.don_obj_stack[value.Id].NewId
 		this.outObjRef(objId)
 		//this.out(fmt.Sprintf("%d 0 R", objId))
-		break
 
 	case PDF_TYPE_STRING:
 		// A string
 		this.straightOut("(" + value.String + ")")
-		break
 
 	case PDF_TYPE_STREAM:
 		// A stream.  First, output the stream dictionary, then the stream data itself.
@@ -316,11 +309,9 @@ func (this *PdfWriter) writeValue(value *PdfValue) {
 		this.out("stream")
 		this.out(string(value.Stream.Bytes))
 		this.out("endstream")
-		break
 
 	case PDF_TYPE_HEX:
 		this.straightOut("<" + value.String + ">")
-		break
 
 	case PDF_TYPE_BOOLEAN:
 		if value.Bool {
@@ -328,12 +319,10 @@ func (this *PdfWriter) writeValue(value *PdfValue) {
 		} else {
 			this.straightOut("false ")
 		}
-		break
 
 	case PDF_TYPE_NULL:
 		// The null object
 		this.straightOut("null ")
-		break
 	}
 }
 
@@ -355,7 +344,7 @@ func (this *PdfWriter) PutFormXobjects(reader *PdfReader) (map[string]*PdfObject
 	for i := 0; i < len(this.tpls); i++ {
 		tpl := this.tpls[i]
 		if tpl == nil {
-			return nil, errs.New("Template is nil")
+			return nil, Err("Template is nil")
 		}
 		var p string
 		if compress {
@@ -405,12 +394,10 @@ func (this *PdfWriter) PutFormXobjects(reader *PdfReader) (map[string]*PdfObject
 				case -90:
 					tx = -tpl.Box["lly"]
 					ty = tpl.Box["urx"]
-					break
 
 				case -180:
 					tx = tpl.Box["urx"]
 					ty = tpl.Box["ury"]
-					break
 
 				case -270:
 					tx = tpl.Box["ury"]
@@ -435,7 +422,7 @@ func (this *PdfWriter) PutFormXobjects(reader *PdfReader) (map[string]*PdfObject
 		if tpl.Resources != nil {
 			this.writeValue(tpl.Resources) // "n" will be changed
 		} else {
-			return nil, errs.New("Template resources are empty")
+			return nil, Err("Template resources are empty")
 		}
 
 		nN := this.n // remember new "n"
@@ -455,7 +442,7 @@ func (this *PdfWriter) PutFormXobjects(reader *PdfReader) (map[string]*PdfObject
 		// then from dependencies of those resources).
 		err = this.putImportedObjects(reader)
 		if err != nil {
-			return nil, errs.New(err, "Failed to put imported objects")
+			return nil, Err(err, "Failed to put imported objects")
 		}
 	}
 
@@ -484,7 +471,7 @@ func (this *PdfWriter) putImportedObjects(reader *PdfReader) error {
 
 			nObj, err = reader.resolveObject(v)
 			if err != nil {
-				return errs.New(err, "Unable to resolve object")
+				return Err(err, "Unable to resolve object")
 			}
 
 			// New object with "NewId" field

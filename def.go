@@ -6,12 +6,12 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math"
 	"path"
-	"strconv"
 	"time"
+
+	"github.com/cdvelop/tinystring"
 )
 
 // Version of FPDF from which this package is derived
@@ -58,8 +58,8 @@ const (
 type unit string
 
 const (
-	// PT represents the size unit point
-	PT unit = "pt"
+	// POINT represents the size unit point
+	POINT unit = "pt"
 	// MM represents the size unit millimeter
 	MM unit = "mm"
 	// CM represents the size unit centimeter
@@ -288,7 +288,7 @@ func generateImageID(info *ImageInfoType) (string, error) {
 	enc.f64(info.dpi)
 	enc.str(info.i)
 
-	return fmt.Sprintf("%x", sha.Sum(nil)), nil
+	return tinystring.Fmt("%x", sha.Sum(nil)), nil
 }
 
 // GobEncode encodes the receiving image to a byte slice.
@@ -769,7 +769,7 @@ type pdfVersion uint16
 
 func pdfVersionFrom(maj, min uint) pdfVersion {
 	if min > 255 {
-		panic(fmt.Errorf("docpdf: invalid PDF version %d.%d", maj, min))
+		panic(tinystring.Err(tinystring.D.Format, tinystring.D.Invalid, maj, min))
 	}
 	return pdfVersion(uint16(maj)<<8 | uint16(min))
 }
@@ -777,7 +777,7 @@ func pdfVersionFrom(maj, min uint) pdfVersion {
 func (v pdfVersion) String() string {
 	maj := int64(byte(v >> 8))
 	min := int64(byte(v))
-	return strconv.FormatInt(maj, 10) + "." + strconv.FormatInt(min, 10)
+	return tinystring.Fmt("%d.%d", maj, min)
 }
 
 type encType struct {
@@ -896,7 +896,7 @@ func generateFontID(fdt fontDefType) (string, error) {
 	// file can be different if generated in different instance
 	fdt.File = ""
 	b, err := json.Marshal(&fdt)
-	return fmt.Sprintf("%x", sha1.Sum(b)), err
+	return tinystring.Fmt("%x", sha1.Sum(b)), err
 }
 
 type fontInfoType struct {

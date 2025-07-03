@@ -25,9 +25,8 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/gob"
-	"fmt"
 
-	"github.com/cdvelop/tinypdf/errs"
+	. "github.com/cdvelop/tinystring"
 )
 
 // newTpl creates a template, copying graphics settings from a template if one is given
@@ -70,7 +69,7 @@ type FpdfTpl struct {
 
 // ID returns the global template identifier
 func (t *FpdfTpl) ID() string {
-	return fmt.Sprintf("%x", sha1.Sum(t.Bytes()))
+	return Fmt("%x", sha1.Sum(t.Bytes()))
 }
 
 // Size gives the bounding dimensions of this template
@@ -87,11 +86,11 @@ func (t *FpdfTpl) Bytes() []byte {
 func (t *FpdfTpl) FromPage(page int) (Template, error) {
 	// pages start at 1
 	if page == 0 {
-		return nil, errs.New("docpdf: pages start at 1 No template will have a page 0")
+		return nil, Err(D.Invalid, "docpdf: pages start at 1. No template will have a page 0")
 	}
 
 	if page > t.NumPages() {
-		return nil, fmt.Errorf("docpdf: the template does not have a page %d", page)
+		return nil, Err(D.Invalid, Fmt("docpdf: the template does not have a page %d", page))
 	}
 	// if it is already pointing to the correct page
 	// there is no need to create a new template
@@ -161,7 +160,7 @@ func (t *FpdfTpl) childrenImages() map[string]*ImageInfoType {
 	for x := 0; x < len(t.templates); x++ {
 		imgs := t.templates[x].Images()
 		for key, val := range imgs {
-			name := sprintf("t%s-%s", t.templates[x].ID(), key)
+			name := Fmt("t%s-%s", t.templates[x].ID(), key)
 			childrenImgs[name] = val
 		}
 	}

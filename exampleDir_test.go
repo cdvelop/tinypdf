@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cdvelop/tinystring"
+
 	"github.com/cdvelop/tinypdf"
-	"github.com/cdvelop/tinypdf/errs"
 )
 
 var rootTestDir tinypdf.RootDirectoryType
@@ -150,7 +151,7 @@ func SummaryCompare(err error, fileStr string) {
 // ExampleFilename tests the Filename() and Summary() functions.
 func ExampleFilename() {
 	fileStr := Filename("example")
-	Summary(errs.New("printer on fire"), fileStr)
+	Summary(tinystring.Err("printer on fire"), fileStr)
 	// Output:
 	// printer on fire
 }

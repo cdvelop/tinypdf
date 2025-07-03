@@ -7,8 +7,8 @@ package tinypdf
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // Attachment defines a content to be included in the pdf, in one
@@ -92,9 +92,9 @@ func (f *DocPDF) putAttachments() {
 func (f DocPDF) getEmbeddedFiles() string {
 	names := make([]string, len(f.attachments))
 	for i, as := range f.attachments {
-		names[i] = fmt.Sprintf("(Attachement%d) %d 0 R ", i+1, as.objectNumber)
+		names[i] = Fmt("(Attachement%d) %d 0 R ", i+1, as.objectNumber)
 	}
-	nameTree := fmt.Sprintf("<< /Names [\n %s \n] >>", strings.Join(names, "\n"))
+	nameTree := Fmt("<< /Names [\n %s \n] >>", Convert(names).Join("\n").String())
 	return nameTree
 }
 
@@ -145,7 +145,7 @@ func (f *DocPDF) putAnnotationsAttachments() {
 func (f *DocPDF) putAttachmentAnnotationLinks(out *fmtBuffer, page int) {
 	for _, an := range f.pageAttachments[page] {
 		x1, y1, x2, y2 := an.x, an.y, an.x+an.w, an.y-an.h
-		as := fmt.Sprintf("<< /Type /XObject /Subtype /Form /BBox [%.2f %.2f %.2f %.2f] /Length 0 >>",
+		as := Fmt("<< /Type /XObject /Subtype /Form /BBox [%.2f %.2f %.2f %.2f] /Length 0 >>",
 			x1, y1, x2, y2)
 		as += "\nstream\nendstream"
 

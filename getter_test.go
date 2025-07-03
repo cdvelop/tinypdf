@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/cdvelop/tinypdf"
-	"github.com/cdvelop/tinypdf/errs"
+	. "github.com/cdvelop/tinystring"
 )
 
 var floatEpsilon = math.Nextafter(1.0, 2.0) - 1.0
@@ -114,7 +114,7 @@ func TestGetConversionRatio(t *testing.T) {
 		t.Errorf("invalid conversionRatio: got=%v, want=%v", got, want)
 	}
 
-	pdf = tinypdf.New(tinypdf.PT, "A4", "")
+	pdf = tinypdf.New(tinypdf.POINT, "A4", "")
 
 	conversionRatio = pdf.GetConversionRatio()
 
@@ -263,7 +263,7 @@ func (tfl *testFontLoader) Open(name string) (io.Reader, error) {
 }
 
 func TestGetFontLoader(t *testing.T) {
-	testErr := errs.New("TestGetFontLoader error")
+	testErr := Err(D.Invalid, "TestGetFontLoader error")
 	tfl := &testFontLoader{
 		reader: strings.NewReader("TestGetFontLoader reader"),
 		err:    testErr,
@@ -458,7 +458,7 @@ func TestGetModificationDate(t *testing.T) {
 }
 
 func TestGetPageSize(t *testing.T) {
-	pdf := tinypdf.New(tinypdf.PT, "A4", "")
+	pdf := tinypdf.New(tinypdf.POINT, "A4", "")
 
 	pageWidth, pageHeight := pdf.GetPageSize()
 
