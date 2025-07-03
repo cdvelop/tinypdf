@@ -1,7 +1,7 @@
-package docpdf
+package tinypdf
 
 // Routines in this file are translated from
-// http://www.docpdf.org/en/script/script97.php
+// http://www.tinypdf.org/en/script/script97.php
 
 type layerType struct {
 	name    string

@@ -1,12 +1,12 @@
-package docpdf_test
+package tinypdf_test
 
 import (
-	"github.com/cdvelop/docpdf"
-	"github.com/cdvelop/docpdf/contrib/httpimg"
+	"github.com/cdvelop/tinypdf"
+	"github.com/cdvelop/tinypdf/contrib/httpimg"
 )
 
 func ExampleRegister() {
-	pdf := NewDocPdfTest("mm", "A4", docpdf.Landscape)
+	pdf := NewDocPdfTest("mm", "A4", tinypdf.Landscape)
 	pdf.SetFont("Helvetica", "", 12)
 	pdf.SetFillColor(200, 200, 220)
 	pdf.AddPage()

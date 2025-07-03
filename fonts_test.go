@@ -1,4 +1,4 @@
-package docpdf_test
+package tinypdf_test
 
 import "testing"
 

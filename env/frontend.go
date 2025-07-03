@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/cdvelop/docpdf/errs"
-	"github.com/cdvelop/docpdf/utils"
+	"github.com/cdvelop/tinypdf/errs"
+	"github.com/cdvelop/tinypdf/utils"
 )
 
 // SetupDefaultLogger configures the default logger for frontend environments

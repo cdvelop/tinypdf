@@ -1,4 +1,4 @@
-package docpdf_test
+package tinypdf_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cdvelop/docpdf"
+	"github.com/cdvelop/tinypdf"
 )
 
 func init() {
@@ -45,14 +45,14 @@ func init() {
 func TestFpdfImplementPdf(t *testing.T) {
 	// this will not compile if DocPDF and Tpl
 	// do not implement Pdf
-	var _ docpdf.Pdf = (*docpdf.DocPDF)(nil)
-	var _ docpdf.Pdf = (*docpdf.Tpl)(nil)
+	var _ tinypdf.Pdf = (*tinypdf.DocPDF)(nil)
+	var _ tinypdf.Pdf = (*tinypdf.Tpl)(nil)
 }
 
 // TestPagedTemplate ensures new paged templates work
 func TestPagedTemplate(t *testing.T) {
 	pdf := NewDocPdfTest()
-	tpl := pdf.CreateTemplate(func(t *docpdf.Tpl) {
+	tpl := pdf.CreateTemplate(func(t *tinypdf.Tpl) {
 		// this will be the second page, as a page is already
 		// created by default
 		t.AddPage()
@@ -96,7 +96,7 @@ func TestIssue0116(t *testing.T) {
 		t.Fatalf("not expecting error when rendering text")
 	}
 
-	pdf = docpdf.New(docpdf.MM, "A4", "")
+	pdf = tinypdf.New(tinypdf.MM, "A4", "")
 	pdf.AddPage()
 	pdf.Cell(40, 10, "Not OK") // Font not set
 	if pdf.Error() == nil {
@@ -108,16 +108,16 @@ func TestIssue0116(t *testing.T) {
 // assigned to the FPDF instance error.
 func TestIssue0193(t *testing.T) {
 	var png []byte
-	var pdf *docpdf.DocPDF
+	var pdf *tinypdf.DocPDF
 	var err error
 	var rdr *bytes.Reader
 
 	png, err = os.ReadFile(ImageFile("sweden.png"))
 	if err == nil {
 		rdr = bytes.NewReader(png)
-		pdf = docpdf.New(docpdf.MM, "A4", "")
+		pdf = tinypdf.New(tinypdf.MM, "A4", "")
 		pdf.AddPage()
-		_ = pdf.RegisterImageOptionsReader("sweden", docpdf.ImageOptions{ImageType: "png", ReadDpi: true}, rdr)
+		_ = pdf.RegisterImageOptionsReader("sweden", tinypdf.ImageOptions{ImageType: "png", ReadDpi: true}, rdr)
 		err = pdf.Error()
 	}
 	if err != nil {
@@ -274,7 +274,7 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 
 func TestAFMFontParser(t *testing.T) {
 	const embed = true
-	err := docpdf.MakeFont(
+	err := tinypdf.MakeFont(
 		FontFile("cmmi10.pfb"),
 		FontFile("cp1252.map"),
 		FontsDirName(),

@@ -1,4 +1,4 @@
-package docpdf
+package tinypdf
 
 import (
 	"bufio"
@@ -56,7 +56,7 @@ func fileSize(filename string) (size int64, ok bool) {
 	return
 }
 
-// utf8toutf16 converts UTF-8 to UTF-16BE; from http://www.docpdf.org/
+// utf8toutf16 converts UTF-8 to UTF-16BE; from http://www.tinypdf.org/
 func utf8toutf16(s string, withBOM ...bool) string {
 	bom := true
 	if len(withBOM) > 0 {

@@ -1,4 +1,4 @@
-package docpdf
+package tinypdf
 
 import (
 	"regexp"
@@ -17,7 +17,7 @@ type HTMLBasicSegmentType struct {
 // done with regular expressions, so the result is only marginally better than
 // useless.
 func HTMLBasicTokenize(htmlStr string) (list []HTMLBasicSegmentType) {
-	// This routine is adapted from http://www.docpdf.org/
+	// This routine is adapted from http://www.tinypdf.org/
 	list = make([]HTMLBasicSegmentType, 0, 16)
 	htmlStr = strings.Replace(htmlStr, "\n", " ", -1)
 	htmlStr = strings.Replace(htmlStr, "\r", "", -1)

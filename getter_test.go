@@ -1,4 +1,4 @@
-package docpdf_test
+package tinypdf_test
 
 import (
 	"io"
@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/docpdf"
-	"github.com/cdvelop/docpdf/errs"
+	"github.com/cdvelop/tinypdf"
+	"github.com/cdvelop/tinypdf/errs"
 )
 
 var floatEpsilon = math.Nextafter(1.0, 2.0) - 1.0
@@ -114,7 +114,7 @@ func TestGetConversionRatio(t *testing.T) {
 		t.Errorf("invalid conversionRatio: got=%v, want=%v", got, want)
 	}
 
-	pdf = docpdf.New(docpdf.PT, "A4", "")
+	pdf = tinypdf.New(tinypdf.PT, "A4", "")
 
 	conversionRatio = pdf.GetConversionRatio()
 
@@ -458,7 +458,7 @@ func TestGetModificationDate(t *testing.T) {
 }
 
 func TestGetPageSize(t *testing.T) {
-	pdf := docpdf.New(docpdf.PT, "A4", "")
+	pdf := tinypdf.New(tinypdf.PT, "A4", "")
 
 	pageWidth, pageHeight := pdf.GetPageSize()
 

@@ -1,4 +1,4 @@
-package docpdf
+package tinypdf
 
 // GetJavascript returns the Adobe JavaScript for the document.
 //

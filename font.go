@@ -1,4 +1,4 @@
-package docpdf
+package tinypdf
 
 // Utility to generate font definition files
 

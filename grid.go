@@ -1,4 +1,4 @@
-package docpdf
+package tinypdf
 
 import (
 	"math"

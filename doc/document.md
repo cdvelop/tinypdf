@@ -61,7 +61,7 @@ go get -u -v github.com/cdvelop/docpdf/...
 The following Go code generates a simple PDF file.
 
 ```go
-pdf := docpdf.New("P", "mm", "A4", "")
+pdf := tinypdf.New("P", "mm", "A4", "")
 pdf.AddPage()
 pdf.SetFont("Arial", "B", 16)
 pdf.Cell(40, 10, "Hello, world")
@@ -244,12 +244,12 @@ for file attachments and annotations.
 [badge-mit]: https://img.shields.io/badge/license-MIT-blue.svg
 [badge-no-maintain]: http://unmaintained.tech/badge.svg
 [badge-report]: https://goreportcard.com/badge/github.com/cdvelop/docpdf
-[badge-status]: https://travis-ci.org/go-pdf/docpdf.svg?branch=master
+[badge-status]: https://travis-ci.org/go-pdf/tinypdf.svg?branch=master
 [coverage]: https://blog.golang.org/cover
 [dfont]: http://dejavu-fonts.org/
 [draw2d-site]: https://github.com/llgcode/draw2d
 [effective-go]: https://golang.org/doc/effective_go.html 
-[docpdf-site]: http://www.docpdf.org/
+[docpdf-site]: http://www.tinypdf.org/
 [docpdf-test]: https://github.com/cdvelop/docpdf/blob/master/fpdf_test.go
 [gfont]: https://fonts.google.com/
 [github]: https://github.com/cdvelop/docpdf

@@ -1,15 +1,15 @@
-package docpdf_test
+package tinypdf_test
 
 import (
 	"bytes"
 	"fmt"
 	"testing"
 
-	"github.com/cdvelop/docpdf"
+	"github.com/cdvelop/tinypdf"
 )
 
 func ExampleTtfParse() {
-	ttf, err := docpdf.TtfParse(FontsDirPath() + "/calligra.ttf")
+	ttf, err := tinypdf.TtfParse(FontsDirPath() + "/calligra.ttf")
 	if err == nil {
 		fmt.Printf("Postscript name:  %s\n", ttf.PostScriptName)
 		fmt.Printf("unitsPerEm:       %8d\n", ttf.UnitsPerEm)
@@ -40,7 +40,7 @@ func hexStr(s string) string {
 }
 
 func TestGetStringWidth(t *testing.T) {
-	pdf := docpdf.New("", "", "")
+	pdf := tinypdf.New("", "", "")
 	pdf.SetFont("Helvetica", "", 12)
 	pdf.AddPage()
 	for _, s := range []string{"Hello", "世界", "\xe7a va?"} {

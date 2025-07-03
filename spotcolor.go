@@ -16,9 +16,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-// Adapted from http://www.docpdf.org/en/script/script89.php by Olivier PLATHEY
+// Adapted from http://www.tinypdf.org/en/script/script89.php by Olivier PLATHEY
 
-package docpdf
+package tinypdf
 
 import (
 	"fmt"

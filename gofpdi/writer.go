@@ -10,7 +10,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/cdvelop/docpdf/errs"
+	"github.com/cdvelop/tinypdf/errs"
 )
 
 type PdfWriter struct {

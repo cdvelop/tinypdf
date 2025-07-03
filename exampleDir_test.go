@@ -1,4 +1,4 @@
-package docpdf_test
+package tinypdf_test
 
 import (
 	"fmt"
@@ -6,30 +6,30 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cdvelop/docpdf"
-	"github.com/cdvelop/docpdf/errs"
+	"github.com/cdvelop/tinypdf"
+	"github.com/cdvelop/tinypdf/errs"
 )
 
-var rootTestDir docpdf.RootDirectoryType
+var rootTestDir tinypdf.RootDirectoryType
 
 // setRoot assigns the relative path to the rootTestDir directory based on current working
 // directory
 func init() {
 	wdStr, err := os.Getwd()
 	if err == nil {
-		rootTestDir = docpdf.RootDirectoryType(wdStr)
+		rootTestDir = tinypdf.RootDirectoryType(wdStr)
 	} else {
 		panic(err)
 	}
 }
 
 // default docpdf init for testing
-func NewDocPdfTest(options ...any) *docpdf.DocPDF {
+func NewDocPdfTest(options ...any) *tinypdf.DocPDF {
 
 	// add root directory to the options
 	options = append(options, rootTestDir)
 
-	pdf := docpdf.New(options...)
+	pdf := tinypdf.New(options...)
 	pdf.SetCompression(false)
 	pdf.SetCatalogSort(true)
 	pdf.SetCreationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
@@ -102,7 +102,7 @@ func referenceCompare(fileStr string) (err error) {
 	err = os.MkdirAll(refDirStr, 0755)
 	if err == nil {
 		refFileStr = filepath.Join(refDirStr, baseFileStr)
-		err = docpdf.ComparePDFFiles(fileStr, refFileStr, false)
+		err = tinypdf.ComparePDFFiles(fileStr, refFileStr, false)
 	}
 	return
 }

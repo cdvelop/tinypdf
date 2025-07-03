@@ -1,4 +1,4 @@
-package docpdf
+package tinypdf
 
 type wbuffer struct {
 	p []byte

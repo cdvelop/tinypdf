@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	gofpdf "github.com/cdvelop/docpdf"
+	gofpdf "github.com/cdvelop/tinypdf"
 )
 
 // httpimgPdf is a partial interface that only implements the functions we need

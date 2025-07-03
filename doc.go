@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package docpdf implements a PDF document generator with high level
+Package tinypdf implements a PDF document generator with high level
 support for text, drawing and images.
 
 # Features
@@ -46,10 +46,10 @@ support for text, drawing and images.
 
 -   Import PDFs as templates
 
-go-pdf/docpdf has no dependencies other than the Go standard library. All tests
+go-pdf/tinypdf has no dependencies other than the Go standard library. All tests
 pass on Linux, Mac and Windows platforms.
 
-go-pdf/docpdf supports UTF-8 TrueType fonts and “right-to-left” languages. Note
+go-pdf/tinypdf supports UTF-8 TrueType fonts and “right-to-left” languages. Note
 that Chinese, Japanese, and Korean characters may not be included in
 many general purpose fonts. For these languages, a specialized font (for
 example, NotoSansSC for simplified Chinese) can be used.
@@ -61,17 +61,18 @@ page encodings for languages that have fewer than 256 glyphs.
 
 To install the package on your system, run
 
-	go get github.com/cdvelop/docpdf
+	go get github.com/cdvelop/tinypdf
 
 Later, to receive updates, run
 
-	go get -u -v github.com/cdvelop/docpdf/...
+	go get -u -v github.com/cdvelop/tinypdf/...
 
 # Quick Start
 
 The following Go code generates a simple PDF file.
 
-	pdf := docpdf.New("mm", "A4", "")
+pdf := tinypdf.New("mm", "A4", "")
+
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "Hello, world")
@@ -82,16 +83,16 @@ documentation) for more advanced PDF examples.
 
 # Errors
 
-If an error occurs in an DocPDF method, an internal error field is set.
-After this occurs, DocPDF method calls typically return without performing
+If an error occurs in an TinyPDF method, an internal error field is set.
+After this occurs, TinyPDF method calls typically return without performing
 any operations and the error state is retained. This error management
 scheme facilitates PDF generation since individual method calls do not
 need to be examined for failure; it is generally sufficient to wait
 until after Output() is called. For the same reason, if an error occurs
 in the calling application during PDF generation, it may be desirable
-for the application to transfer the error to the DocPDF instance by
+for the application to transfer the error to the TinyPDF instance by
 calling the SetError() method or the SetErrorf() method. At any time
-during the life cycle of the DocPDF instance, the error state can be
+during the life cycle of the TinyPDF instance, the error state can be
 determined with a call to Ok() or Err(). The error itself can be
 retrieved with a call to Error().
 
@@ -118,7 +119,7 @@ PHP.
 # Example PDFs
 
 A side effect of running go test ./... is the production of a number of
-example PDFs. These can be found in the go-pdf/docpdf/pdf directory after the
+example PDFs. These can be found in the go-pdf/tinypdf/pdf directory after the
 tests complete.
 
 Please note that these examples run in the context of a test. In order
@@ -129,7 +130,7 @@ summary().
 Example PDFs can be compared with reference copies in order to verify
 that they have been generated as expected. This comparison will be
 performed if a PDF with the same name as the example PDF is placed in
-the go-pdf/docpdf/pdf/reference directory and if the third argument to
+the go-pdf/tinypdf/pdf/reference directory and if the third argument to
 ComparePDFFiles() in internal/example/example.go is true. (By default it
 is false.) The routine that summarizes an example will look for this
 file and, if found, will call ComparePDFFiles() to check the example PDF
@@ -259,4 +260,4 @@ times, and for file attachments and annotations.
 
 -   Improve test coverage as reported by the coverage tool.
 */
-package docpdf // import "github.com/cdvelop/docpdf"
+package tinypdf // import "github.com/cdvelop/tinypdf"

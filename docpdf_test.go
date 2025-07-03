@@ -1,4 +1,4 @@
-package docpdf_test
+package tinypdf_test
 
 import (
 	"bufio"
@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/docpdf"
-	"github.com/cdvelop/docpdf/internal/files"
+	"github.com/cdvelop/tinypdf"
+	"github.com/cdvelop/tinypdf/internal/files"
 )
 
 func loremList() []string {
@@ -550,7 +550,7 @@ func Test_HTMLBasicNew(t *testing.T) {
 
 // Test_AddFont demonstrates the use of a non-standard font.
 func Test_AddFont(t *testing.T) {
-	pdf := docpdf.New(docpdf.MM, "A4", FontsDirName())
+	pdf := tinypdf.New(tinypdf.MM, "A4", FontsDirName())
 	pdf.AddFont("Calligrapher", "", "calligra.json")
 	pdf.AddPage()
 	pdf.SetFont("Calligrapher", "", 35)
@@ -564,7 +564,7 @@ func Test_AddFont(t *testing.T) {
 
 // Test_WriteAligned demonstrates how to align text with the Write function.
 func Test_WriteAligned(t *testing.T) {
-	pdf := docpdf.New(docpdf.MM, "A4", FontsDirName())
+	pdf := tinypdf.New(tinypdf.MM, "A4", FontsDirName())
 	pdf.SetLeftMargin(50.0)
 	pdf.SetRightMargin(50.0)
 	pdf.AddPage()
@@ -621,7 +621,7 @@ func Test_Image(t *testing.T) {
 // Test_ImageOptions demonstrates how the AllowNegativePosition field of the
 // ImageOption struct can be used to affect horizontal image placement.
 func Test_ImageOptions(t *testing.T) {
-	var opt docpdf.ImageOptions
+	var opt tinypdf.ImageOptions
 
 	pdf := NewDocPdfTest()
 	pdf.AddPage()
@@ -642,7 +642,7 @@ func Test_ImageOptions(t *testing.T) {
 // from a io.Reader (in this case, a file) and register it with options.
 func Test_RegisterImageOptionsReader(t *testing.T) {
 	var (
-		opt    docpdf.ImageOptions
+		opt    tinypdf.ImageOptions
 		pdfStr string
 		fl     *os.File
 		err    error
@@ -713,7 +713,7 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 	pdf.SetFont("Times", "", 12)
 	for j := 0; j < 20; j++ {
 		if j == 1 {
-			pdf.Image(ImageFile("docpdf.png"), -1, 0, colWd, 0, true, "", 0, "")
+			pdf.Image(ImageFile("tinypdf.png"), -1, 0, colWd, 0, true, "", 0, "")
 		} else if j == 5 {
 			pdf.Image(ImageFile("golang-gopher.png"),
 				-1, 0, colWd, 0, true, "", 0, "")
@@ -732,7 +732,7 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 func Test_SetKeywords(t *testing.T) {
 	var err error
 	fileStr := Filename("Test_SetKeywords")
-	err = docpdf.MakeFont(FontFile("CalligrapherRegular.pfb"),
+	err = tinypdf.MakeFont(FontFile("CalligrapherRegular.pfb"),
 		FontFile("cp1252.map"), FontsDirName(), nil, true)
 	if err == nil {
 		pdf := NewDocPdfTest()
@@ -957,7 +957,7 @@ func Test_ClipText(t *testing.T) {
 		0.7, 0.3, 0.7, 0.5)
 	pdf.ClipEnd()
 
-	pdf.ClipPolygon([]docpdf.PointType{{X: 80, Y: y + 20}, {X: 90, Y: y},
+	pdf.ClipPolygon([]tinypdf.PointType{{X: 80, Y: y + 20}, {X: 90, Y: y},
 		{X: 100, Y: y + 20}}, true)
 	pdf.LinearGradient(80, y, 20, 20, 250, 220, 250, 60, 40, 60, 0.5,
 		1, 0.5, 0.5)
@@ -993,22 +993,22 @@ func Test_ClipText(t *testing.T) {
 
 // Test_PageSize generates a PDF document with various page sizes.
 func Test_PageSize(t *testing.T) {
-	pdf := docpdf.New(&docpdf.InitType{
-		OrientationStr: docpdf.Portrait,
-		UnitType:       docpdf.IN,
-		Size:           docpdf.PageSize{Wd: 6, Ht: 6, AutoHt: false},
+	pdf := tinypdf.New(&tinypdf.InitType{
+		OrientationStr: tinypdf.Portrait,
+		UnitType:       tinypdf.IN,
+		Size:           tinypdf.PageSize{Wd: 6, Ht: 6, AutoHt: false},
 		RootDirectory:  rootTestDir,
 		FontDirName:    FontsDirName(),
 	})
 	pdf.SetMargins(0.5, 1, 0.5)
 	pdf.SetFont("Times", "", 14)
-	pdf.AddPageFormat(docpdf.Landscape, docpdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
+	pdf.AddPageFormat(tinypdf.Landscape, tinypdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
 	pdf.SetXY(0.5, 1.5)
 	pdf.CellFormat(11, 0.2, "12 in x 3 in", "", 0, "C", false, 0, "")
 	pdf.AddPage() // Default size established in NewCustom()
 	pdf.SetXY(0.5, 3)
 	pdf.CellFormat(5, 0.2, "6 in x 6 in", "", 0, "C", false, 0, "")
-	pdf.AddPageFormat(docpdf.Portrait, docpdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
+	pdf.AddPageFormat(tinypdf.Portrait, tinypdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
 	pdf.SetXY(0.5, 6)
 	pdf.CellFormat(2, 0.2, "3 in x 12 in", "", 0, "C", false, 0, "")
 	for j := 0; j <= 3; j++ {
@@ -1186,7 +1186,7 @@ func Test_RegisterImage(t *testing.T) {
 		"logo-rgb.png",
 		"logo-progressive.jpg",
 	}
-	var infoPtr *docpdf.ImageInfoType
+	var infoPtr *tinypdf.ImageInfoType
 	var imageFileStr string
 	var imgWd, imgHt, lf, tp float64
 	pdf := NewDocPdfTest()
@@ -1279,7 +1279,7 @@ func Test_SVGBasicWrite(t *testing.T) {
 		sigFileStr = "signature.svg"
 	)
 	var (
-		sig docpdf.SVGBasicType
+		sig tinypdf.SVGBasicType
 		err error
 	)
 	pdf := NewDocPdfTest() // A4 210.0 x 297.0
@@ -1296,7 +1296,7 @@ func Test_SVGBasicWrite(t *testing.T) {
 		`web control is supported and is used in this example.`
 	html := pdf.HTMLBasicNew()
 	html.Write(lineHt, htmlStr)
-	sig, err = docpdf.SVGBasicFileParse(ImageFile(sigFileStr))
+	sig, err = tinypdf.SVGBasicFileParse(ImageFile(sigFileStr))
 	if err == nil {
 		scale := 100 / sig.Wd
 		scaleY := 30 / sig.Ht
@@ -1329,7 +1329,7 @@ func Test_SVGBasicDraw(t *testing.T) {
 		sigFileStr = "drawing.svg"
 	)
 	var (
-		sig docpdf.SVGBasicType
+		sig tinypdf.SVGBasicType
 		err error
 	)
 	pdf := NewDocPdfTest() // A4 210.0 x 297.0
@@ -1345,7 +1345,7 @@ func Test_SVGBasicDraw(t *testing.T) {
 		`size is used. scale 1.0 is pt`
 	html := pdf.HTMLBasicNew()
 	html.Write(lineHt, htmlStr)
-	sig, err = docpdf.SVGBasicFileParse(ImageFile(sigFileStr))
+	sig, err = tinypdf.SVGBasicFileParse(ImageFile(sigFileStr))
 	if err == nil {
 		pdf.SetLineCapStyle("round")
 		pdf.SetLineWidth(0.15)
@@ -1390,7 +1390,7 @@ func Test_CellFormat_align(t *testing.T) {
 		{"AC", "baseline center"},
 		{"AR", "baseline right"},
 	}
-	var formatRect = func(pdf *docpdf.DocPDF, recList []recType) {
+	var formatRect = func(pdf *tinypdf.DocPDF, recList []recType) {
 		linkStr := ""
 		for pageJ := 0; pageJ < 2; pageJ++ {
 			pdf.AddPage()
@@ -1402,7 +1402,7 @@ func Test_CellFormat_align(t *testing.T) {
 				pdf.CellFormat(170, 257, rec.txt, borderStr, 0, rec.align, false, 0, linkStr)
 				borderStr = ""
 			}
-			linkStr = "https://github.com/cdvelop/docpdf"
+			linkStr = "https://github.com/cdvelop/tinypdf"
 		}
 	}
 	pdf := NewDocPdfTest() // A4 210.0 x 297.0
@@ -1458,7 +1458,7 @@ func Test_CellFormat_codepageescape(t *testing.T) {
 // Test_CellFormat_codepage demonstrates the automatic conversion of UTF-8 strings to an
 // 8-bit font encoding.
 func Test_CellFormat_codepage(t *testing.T) {
-	pdf := docpdf.New(docpdf.MM, "A4", FontsDirName()) // A4 210.0 x 297.0
+	pdf := tinypdf.New(tinypdf.MM, "A4", FontsDirName()) // A4 210.0 x 297.0
 	// See documentation for details on how to generate fonts
 	pdf.AddFont("Helvetica-1251", "", "helvetica_1251.json")
 	pdf.AddFont("Helvetica-1253", "", "helvetica_1253.json")
@@ -1500,7 +1500,7 @@ func Test_CellFormat_codepage(t *testing.T) {
 // Test_SetProtection demonstrates password protection for documents.
 func Test_SetProtection(t *testing.T) {
 	pdf := NewDocPdfTest()
-	pdf.SetProtection(docpdf.CnProtectPrint, "123", "abc")
+	pdf.SetProtection(tinypdf.CnProtectPrint, "123", "abc")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 12)
 	pdf.Write(10, "Password-protected.")
@@ -1519,14 +1519,14 @@ func Test_Polygon(t *testing.T) {
 	const ptSize = 36
 	var x, y, radius, gap, advance float64
 	var rgVal int
-	var pts []docpdf.PointType
-	vertices := func(count int) (res []docpdf.PointType) {
-		var pt docpdf.PointType
-		res = make([]docpdf.PointType, 0, count)
+	var pts []tinypdf.PointType
+	vertices := func(count int) (res []tinypdf.PointType) {
+		var pt tinypdf.PointType
+		res = make([]tinypdf.PointType, 0, count)
 		mlt := 2.0 * math.Pi / float64(count)
 		for j := 0; j < count; j++ {
 			pt.Y, pt.X = math.Sincos(float64(j) * mlt)
-			res = append(res, docpdf.PointType{
+			res = append(res, tinypdf.PointType{
 				X: x + radius*pt.X,
 				Y: y + radius*pt.Y})
 		}
@@ -1610,7 +1610,7 @@ func Test_RegisterImageReader(t *testing.T) {
 		wd       = 210
 		ht       = 297
 		fontSize = 15
-		urlStr   = "https://github.com/cdvelop/docpdf/raw/main/image/docpdf.png"
+		urlStr   = "https://github.com/cdvelop/tinypdf/raw/main/image/tinypdf.png"
 		msgStr   = `Images from the web can be easily embedded when a PDF document is generated.`
 	)
 
@@ -1662,7 +1662,7 @@ func Test_Beziergon(t *testing.T) {
 		offsetY     = offsetX + 2*ln
 	)
 
-	srcList := []docpdf.PointType{
+	srcList := []tinypdf.PointType{
 		{X: 0, Y: 0},
 		{X: 1, Y: 0},
 		{X: 1, Y: 1},
@@ -1677,7 +1677,7 @@ func Test_Beziergon(t *testing.T) {
 		{X: 0, Y: 3},
 	}
 
-	ctrlList := []docpdf.PointType{
+	ctrlList := []tinypdf.PointType{
 		{X: 1, Y: -1},
 		{X: 1, Y: 1},
 		{X: 1, Y: 1},
@@ -1705,9 +1705,9 @@ func Test_Beziergon(t *testing.T) {
 	}
 	jPrev := len(srcList) - 1
 	srcPrev := srcList[jPrev]
-	curveList := []docpdf.PointType{srcPrev} // point [, control 0, control 1, point]*
+	curveList := []tinypdf.PointType{srcPrev} // point [, control 0, control 1, point]*
 	control := func(x, y float64) {
-		curveList = append(curveList, docpdf.PointType{X: x, Y: y})
+		curveList = append(curveList, tinypdf.PointType{X: x, Y: y})
 	}
 	for j, src := range srcList {
 		ctrl := ctrlList[jPrev]
@@ -1897,7 +1897,7 @@ func Test_CreateTemplate(t *testing.T) {
 	pdf := NewDocPdfTest()
 	pdf.SetCompression(false)
 	// pdf.SetFont("Times", "", 12)
-	template := pdf.CreateTemplate(func(tpl *docpdf.Tpl) {
+	template := pdf.CreateTemplate(func(tpl *tinypdf.Tpl) {
 		tpl.Image(ImageFile("logo.png"), 6, 6, 30, 0, false, "", 0, "")
 		tpl.SetFont("Arial", "B", 16)
 		tpl.Text(40, 20, "Template says hello")
@@ -1909,9 +1909,9 @@ func Test_CreateTemplate(t *testing.T) {
 	// fmt.Println("Size:", tplSize)
 	// fmt.Println("Scaled:", tplSize.ScaleBy(1.5))
 
-	template2 := pdf.CreateTemplate(func(tpl *docpdf.Tpl) {
+	template2 := pdf.CreateTemplate(func(tpl *tinypdf.Tpl) {
 		tpl.UseTemplate(template)
-		subtemplate := tpl.CreateTemplate(func(tpl2 *docpdf.Tpl) {
+		subtemplate := tpl.CreateTemplate(func(tpl2 *tinypdf.Tpl) {
 			tpl2.Image(ImageFile("logo.png"), 6, 86, 30, 0, false, "", 0, "")
 			tpl2.SetFont("Arial", "B", 16)
 			tpl2.Text(40, 100, "Subtemplate says hello")
@@ -1928,17 +1928,17 @@ func Test_CreateTemplate(t *testing.T) {
 
 	// serialize and deserialize template
 	b, _ := template2.Serialize()
-	template3, _ := docpdf.DeserializeTemplate(b)
+	template3, _ := tinypdf.DeserializeTemplate(b)
 
 	pdf.AddPage()
 	pdf.UseTemplate(template3)
-	pdf.UseTemplateScaled(template3, docpdf.PointType{X: 0, Y: 30}, tplSize)
+	pdf.UseTemplateScaled(template3, tinypdf.PointType{X: 0, Y: 30}, tplSize)
 	pdf.Line(40, 210, 60, 210)
 	pdf.Text(40, 200, "Template example page 1")
 
 	pdf.AddPage()
 	pdf.UseTemplate(template2)
-	pdf.UseTemplateScaled(template3, docpdf.PointType{X: 0, Y: 30}, tplSize.ScaleBy(1.4))
+	pdf.UseTemplateScaled(template3, tinypdf.PointType{X: 0, Y: 30}, tplSize.ScaleBy(1.4))
 	pdf.Line(60, 210, 80, 210)
 	pdf.Text(40, 200, "Template example page 2")
 
@@ -2157,12 +2157,12 @@ func Test_Grid(t *testing.T) {
 	pdf.SetFont("Arial", "", 12)
 	pdf.AddPage()
 
-	gr := docpdf.NewGrid(13, 10, 187, 130)
+	gr := tinypdf.NewGrid(13, 10, 187, 130)
 	gr.TickmarksExtentX(0, 10, 4)
 	gr.TickmarksExtentY(0, 10, 3)
 	gr.Grid(pdf)
 
-	gr = docpdf.NewGrid(13, 154, 187, 128)
+	gr = tinypdf.NewGrid(13, 154, 187, 128)
 	gr.XLabelRotate = true
 	gr.TickmarksExtentX(0, 1, 12)
 	gr.XDiv = 5
@@ -2193,7 +2193,7 @@ func Test_Grid(t *testing.T) {
 	pdf.Write(0, "Solar energy (MWh) per month, 2016")
 	pdf.AddPage()
 
-	gr = docpdf.NewGrid(13, 10, 187, 274)
+	gr = tinypdf.NewGrid(13, 10, 187, 274)
 	gr.TickmarksContainX(2.3, 3.4)
 	gr.TickmarksContainY(10.4, 56.8)
 	gr.Grid(pdf)
@@ -2300,7 +2300,7 @@ func Test_SubWrite(t *testing.T) {
 // generation to be deferred until all pages have been added.
 func Test_SetPage(t *testing.T) {
 	rnd := rand.New(rand.NewSource(0)) // Make reproducible documents
-	pdf := docpdf.New(docpdf.CM, "A4", "")
+	pdf := tinypdf.New(tinypdf.CM, "A4", "")
 	pdf.SetFont("Times", "", 12)
 
 	var time []float64
@@ -2318,7 +2318,7 @@ func Test_SetPage(t *testing.T) {
 			temperaturesFromSensors[j] = sensor
 		}
 	}
-	var graphs []docpdf.GridType
+	var graphs []tinypdf.GridType
 	var pageNums []int
 	xMax := time[len(time)-1]
 	for i := range temperaturesFromSensors {
@@ -2328,7 +2328,7 @@ func Test_SetPage(t *testing.T) {
 		//Custom label per sensor
 		pdf.WriteAligned(0, 0, "Temperature Sensor "+strconv.Itoa(i+1)+" (C) vs Time (min)", "C")
 		pdf.Ln(0.5)
-		graph := docpdf.NewGrid(pdf.GetX(), pdf.GetY(), 20, 10)
+		graph := tinypdf.NewGrid(pdf.GetX(), pdf.GetY(), 20, 10)
 		graph.TickmarksContainX(0, xMax)
 		//Custom Y axis
 		graph.TickmarksContainY(0, maxs[i])
@@ -2483,7 +2483,7 @@ func Test_UTF8CutFont(t *testing.T) {
 	fullFont, err = os.ReadFile(fullFontFileStr)
 	if err == nil {
 		subFontFileStr = "calligra_abcde.ttf"
-		subFont = docpdf.UTF8CutFont(fullFont, "abcde")
+		subFont = tinypdf.UTF8CutFont(fullFont, "abcde")
 		err = os.WriteFile(subFontFileStr, subFont, 0600)
 		if err == nil {
 			y := 24.0
@@ -2701,13 +2701,13 @@ func Test_SetAttachments(t *testing.T) {
 	if err != nil {
 		pdf.SetError(err)
 	}
-	a1 := docpdf.Attachment{Content: file, Filename: "grid.go"}
+	a1 := tinypdf.Attachment{Content: file, Filename: "grid.go"}
 	file, err = os.ReadFile("LICENSE")
 	if err != nil {
 		pdf.SetError(err)
 	}
-	a2 := docpdf.Attachment{Content: file, Filename: "License"}
-	pdf.SetAttachments([]docpdf.Attachment{a1, a2})
+	a2 := tinypdf.Attachment{Content: file, Filename: "License"}
+	pdf.SetAttachments([]tinypdf.Attachment{a1, a2})
 
 	fileStr := Filename("Test_EmbeddedFiles")
 	err = pdf.OutputFileAndClose(fileStr)
@@ -2726,7 +2726,7 @@ func Test_AddAttachmentAnnotation(t *testing.T) {
 	if err != nil {
 		pdf.SetError(err)
 	}
-	a := docpdf.Attachment{Content: file, Filename: "grid.go", Description: "Some amazing code !"}
+	a := tinypdf.Attachment{Content: file, Filename: "grid.go", Description: "Some amazing code !"}
 
 	pdf.SetXY(5, 10)
 	pdf.Rect(2, 10, 50, 15, "D")
@@ -2785,39 +2785,39 @@ func Test_SetXmpMetadata(t *testing.T) {
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="XMP Core 5.6">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 
-    <!-- Standard PDF Metadata -->
-    <rdf:Description rdf:about=""
-      xmlns:dc="http://purl.org/dc/elements/1.1/"
-      xmlns:xmp="http://ns.adobe.com/xap/1.0/"
-      xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
-      xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
+	<!-- Standard PDF Metadata -->
+	<rdf:Description rdf:about=""
+	  xmlns:dc="http://purl.org/dc/elements/1.1/"
+	  xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+	  xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
+	  xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
 
-      <!-- Document Title -->
-      <dc:title>
-        <rdf:Alt>
-          <rdf:li xml:lang="x-default">XMP metadata example</rdf:li>
-        </rdf:Alt>
-      </dc:title>
+	  <!-- Document Title -->
+	  <dc:title>
+		<rdf:Alt>
+		  <rdf:li xml:lang="x-default">XMP metadata example</rdf:li>
+		</rdf:Alt>
+	  </dc:title>
 
-      <!-- Author(s) -->
-      <dc:creator>
-        <rdf:Seq>
-          <rdf:li>Kurt Jung</rdf:li>
+	  <!-- Author(s) -->
+	  <dc:creator>
+		<rdf:Seq>
+		  <rdf:li>Kurt Jung</rdf:li>
 					<rdf:li>The go-pdf Authors</rdf:li>
-        </rdf:Seq>
-      </dc:creator>
+		</rdf:Seq>
+	  </dc:creator>
 
-      <!-- Subject/Description -->
-      <dc:description>
-        <rdf:Alt>
-          <rdf:li xml:lang="x-default">Example PDF that embeds custom XMP metadata</rdf:li>
-        </rdf:Alt>
-      </dc:description>
+	  <!-- Subject/Description -->
+	  <dc:description>
+		<rdf:Alt>
+		  <rdf:li xml:lang="x-default">Example PDF that embeds custom XMP metadata</rdf:li>
+		</rdf:Alt>
+	  </dc:description>
 
-      <!-- PDF Version -->
-      <pdf:PDFVersion>1.3</pdf:PDFVersion>
+	  <!-- PDF Version -->
+	  <pdf:PDFVersion>1.3</pdf:PDFVersion>
 
-    </rdf:Description>
+	</rdf:Description>
 
   </rdf:RDF>
 </x:xmpmeta>
@@ -2848,8 +2848,8 @@ func Test_AddOutputIntent(t *testing.T) {
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "Hello World!")
-	pdf.AddOutputIntent(docpdf.OutputIntentType{
-		SubtypeIdent:              docpdf.OutputIntent_GTS_PDFA1,
+	pdf.AddOutputIntent(tinypdf.OutputIntentType{
+		SubtypeIdent:              tinypdf.OutputIntent_GTS_PDFA1,
 		OutputConditionIdentifier: "sRGB RGB",
 		ICCProfile:                iccBytes,
 	})

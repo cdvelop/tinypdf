@@ -11,7 +11,7 @@ package gofpdi
 import (
 	"io"
 
-	realgofpdi "github.com/cdvelop/docpdf/gofpdi"
+	realgofpdi "github.com/cdvelop/tinypdf/gofpdi"
 )
 
 // gofpdiPdf is a partial interface that only implements the functions we need

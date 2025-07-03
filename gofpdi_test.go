@@ -1,4 +1,4 @@
-package docpdf_test
+package tinypdf_test
 
 import (
 	"bytes"
@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cdvelop/docpdf"
-	"github.com/cdvelop/docpdf/contrib/gofpdi"
+	"github.com/cdvelop/tinypdf"
+	"github.com/cdvelop/tinypdf/contrib/gofpdi"
 )
 
 func ExampleNewImporter() {
@@ -64,7 +64,7 @@ func TestGofpdiConcurrent(t *testing.T) {
 }
 
 func getTemplatePdf() (io.ReadSeeker, error) {
-	tpdf := docpdf.New(docpdf.PT, "A4", "")
+	tpdf := tinypdf.New(tinypdf.PT, "A4", "")
 	tpdf.AddPage()
 	tpdf.SetFont("Arial", "", 12)
 	tpdf.Text(20, 20, "Example Page 1")

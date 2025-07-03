@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cdvelop/docpdf"
+	"github.com/cdvelop/tinypdf"
 )
 
 func errPrintf(fmtStr string, args ...interface{}) {
@@ -41,7 +41,7 @@ func main() {
 		args := flag.Args()
 		if len(args) > 0 {
 			for _, fileStr := range args {
-				err = docpdf.MakeFont(fileStr, encodingFileStr, dstDirStr, os.Stderr, embed)
+				err = tinypdf.MakeFont(fileStr, encodingFileStr, dstDirStr, os.Stderr, embed)
 				if err != nil {
 					errPrintf("%s\n", err)
 				}

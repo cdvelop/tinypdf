@@ -12,7 +12,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cdvelop/docpdf/errs"
+	"github.com/cdvelop/tinypdf/errs"
 )
 
 type PdfReader struct {
@@ -1141,7 +1141,7 @@ func (this *PdfReader) readXref() error {
 			// Since the XREF table is read from newest to oldest, make sure an xref entry does not already exist for an object.
 			// If it already exists, that means a newer version of the object has already been added to the table.
 			// Replacing it would be using the old version of the object.
-			// https://github.com/cdvelop/docpdf/gofpdi/issues/71
+			// https://github.com/cdvelop/tinypdf/gofpdi/issues/71
 			_, ok := this.xref[i]
 			if !ok {
 				// Append map[int]int

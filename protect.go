@@ -21,7 +21,7 @@
 // PDF protection is adapted from the work of Klemen VODOPIVEC for the docpdf
 // product.
 
-package docpdf
+package tinypdf
 
 import (
 	"crypto/md5"

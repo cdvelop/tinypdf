@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package docpdf
+package tinypdf
 
 // Utility to parse TTF font files
 // Version:    1.0

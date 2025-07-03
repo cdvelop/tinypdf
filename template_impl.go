@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package docpdf
+package tinypdf
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"github.com/cdvelop/docpdf/errs"
+	"github.com/cdvelop/tinypdf/errs"
 )
 
 // newTpl creates a template, copying graphics settings from a template if one is given

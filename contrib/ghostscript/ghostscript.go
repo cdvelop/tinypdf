@@ -9,7 +9,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/cdvelop/docpdf"
+	"github.com/cdvelop/tinypdf"
 )
 
 func report(fileStr string, err error) {
@@ -26,8 +26,8 @@ func report(fileStr string, err error) {
 	}
 }
 
-func newPdf() (pdf *docpdf.DocPDF) {
-	pdf = docpdf.New("mm", "A4", "../../font")
+func newPdf() (pdf *tinypdf.DocPDF) {
+	pdf = tinypdf.New("mm", "A4", "../../font")
 	pdf.SetCompression(false)
 	pdf.AddFont("Calligrapher", "", "calligra.json")
 	pdf.AddPage()

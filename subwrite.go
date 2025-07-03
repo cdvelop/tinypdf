@@ -2,9 +2,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package docpdf
+package tinypdf
 
-// Adapted from http://www.docpdf.org/en/script/script61.php by Wirus and released with the FPDF license.
+// Adapted from http://www.tinypdf.org/en/script/script61.php by Wirus and released with the FPDF license.
 
 // SubWrite prints text from the current position in the same way as Write().
 // ht is the line height in the unit of measure specified in New(). str
