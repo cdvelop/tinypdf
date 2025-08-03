@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 func matchTail(str, tailStr string) (match bool, headStr string) {
@@ -39,14 +39,14 @@ func main() {
 			name = filepath.Base(path)
 			ok, name = matchTail(name, ".pdf")
 			if ok {
-				name = strings.Replace(name, "_", " ", -1)
+				name = Convert(name).Replace("_", " ").String()
 				ok, showStr = matchHead(name, "DocPDF ")
 				if ok {
-					fmt.Printf("[%s](%s)\n", showStr, path)
+					println(Fmt("[%s](%s)", showStr, path))
 				} else {
 					ok, showStr = matchHead(name, "contrib ")
 					if ok {
-						fmt.Printf("[%s](%s)\n", showStr, path)
+						println(Fmt("[%s](%s)", showStr, path))
 					}
 				}
 			}
@@ -54,6 +54,6 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		fmt.Println(err)
+		println(err)
 	}
 }

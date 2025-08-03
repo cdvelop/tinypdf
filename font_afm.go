@@ -2,11 +2,10 @@ package tinypdf
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"math"
-	"strconv"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 type afmParser struct {
@@ -34,7 +33,7 @@ loop:
 		case "FontName":
 			fnt.FontName = p.readStr(1)
 		case "Weight":
-			weight := strings.ToLower(p.readStr(1))
+			weight := Convert(p.readStr(1)).Low().String()
 			fnt.Bold = weight == "bold" || weight == "black"
 		case "FontBBox":
 			fnt.Desc.FontBBox.Xmin = p.readFixed(1)
@@ -58,7 +57,7 @@ loop:
 		case "StartCharMetrics":
 			err := p.parseCharMetrics(fnt, p.readInt(1))
 			if err != nil {
-				return fmt.Errorf("could not scan AFM CharMetrics section: %w", err)
+				return Errf("could not scan AFM CharMetrics section: %w", err)
 			}
 		case "EndFontMetrics":
 			break loop
@@ -68,11 +67,11 @@ loop:
 	}
 
 	if p.err != nil {
-		return fmt.Errorf("could not parse AFM file: %w", p.err)
+		return Errf("could not parse AFM file: %w", p.err)
 	}
 
 	if err := p.s.Err(); err != nil {
-		return fmt.Errorf("could not parse AFM file: %w", p.err)
+		return Errf("could not parse AFM file: %w", p.err)
 	}
 
 	return nil
@@ -84,7 +83,7 @@ func (p *afmParser) scan() bool {
 	}
 	p.line++
 	ok := p.s.Scan()
-	p.toks = strings.Fields(strings.TrimSpace(p.s.Text()))
+	p.toks = Convert(p.s.Text()).Trim().Split()
 	if ok && len(p.toks) == 0 {
 		// skip empty lines.
 		return p.scan()
@@ -103,7 +102,7 @@ func (p *afmParser) parseCharMetrics(fnt *fontInfoType, n int) error {
 		case "C":
 			err := p.parseCharMetric(fnt)
 			if err != nil {
-				return fmt.Errorf("could not parse CharMetric entry: %w", err)
+				return Errf("could not parse CharMetric entry: %w", err)
 			}
 		case "CH",
 			"WX", "W0X", "W1X",
@@ -115,7 +114,7 @@ func (p *afmParser) parseCharMetrics(fnt *fontInfoType, n int) error {
 			"L":
 			// ignore.
 		default:
-			return fmt.Errorf("invalid CharMetrics token %q", p.toks[0])
+			return Errf("invalid CharMetrics token %q", p.toks[0])
 		}
 	}
 	return p.err
@@ -127,12 +126,12 @@ func (p *afmParser) parseCharMetric(fnt *fontInfoType) error {
 		Wd   int
 	}
 	var ch metric
-	for _, v := range strings.Split(p.s.Text(), ";") {
-		v = strings.TrimSpace(v)
+	for _, v := range Convert(p.s.Text()).Split(";") {
+		v = Convert(v).Trim().String()
 		if v == "" {
 			continue
 		}
-		p.toks = strings.Fields(v)
+		p.toks = Convert(v).Split()
 		switch p.toks[0] {
 		case "C":
 			// ignore.
@@ -186,7 +185,7 @@ func (p *afmParser) readFixed(i int) int {
 }
 
 func fixedFrom(v string) int {
-	v = strings.Replace(v, ",", ".", 1)
+	v = Convert(v).Replace(",", ".").String()
 	o, err := parseInt16_16(v)
 	if err != nil {
 		panic(err)
@@ -196,7 +195,7 @@ func fixedFrom(v string) int {
 }
 
 func atoi(s string) int {
-	v, err := strconv.Atoi(s)
+	v, err := Convert(s).Int()
 	if err != nil {
 		panic(err)
 	}
@@ -204,7 +203,7 @@ func atoi(s string) int {
 }
 
 func parseInt16_16(s string) (float64, error) {
-	f, err := strconv.ParseFloat(s, 32)
+	f, err := Convert(s).Float64()
 	if err != nil {
 		return 0, err
 	}

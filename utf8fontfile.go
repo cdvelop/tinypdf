@@ -23,9 +23,10 @@ package tinypdf
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"math"
 	"sort"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // flags
@@ -107,13 +108,13 @@ func (utf *utf8FontFile) parseFile() error {
 	utf.Descent = 0
 	codeType := uint32(utf.readUint32())
 	if codeType == 0x4F54544F {
-		return fmt.Errorf("not supported\n ")
+		return Errf("not supported\n ")
 	}
 	if codeType == 0x74746366 {
-		return fmt.Errorf("not supported\n ")
+		return Errf("not supported\n ")
 	}
 	if codeType != 0x00010000 && codeType != 0x74727565 {
-		return fmt.Errorf("not a TrueType font: codeType=%v\n ", codeType)
+		return Errf("not a TrueType font: codeType=%v\n ", codeType)
 	}
 	utf.generateTableDescriptions()
 	utf.parseTables()
@@ -284,7 +285,7 @@ func (utf *utf8FontFile) parseNAMETable() int {
 	namePosition := utf.SeekTable("name")
 	format := utf.readUint16()
 	if format != 0 {
-		fmt.Printf("Illegal format %d\n", format)
+		println(Fmt("Illegal format %d", format))
 		return format
 	}
 	nameCount := utf.readUint16()
@@ -307,7 +308,7 @@ func (utf *utf8FontFile) parseNAMETable() int {
 			oldPos := utf.fileReader.readerPosition
 			utf.seek(stringDataPosition + position)
 			if size%2 != 0 {
-				fmt.Printf("name is not binar byte format\n")
+				println("name is not binar byte format")
 				return format
 			}
 			size /= 2
@@ -351,7 +352,7 @@ func (utf *utf8FontFile) parseHEADTable() {
 	_ = utf.readUint16()
 	symbolDataFormat := utf.readUint16()
 	if symbolDataFormat != 0 {
-		fmt.Printf("Unknown symbol data format %d\n", symbolDataFormat)
+		println(Fmt("Unknown symbol data format %d", symbolDataFormat))
 		return
 	}
 }
@@ -369,12 +370,12 @@ func (utf *utf8FontFile) parseHHEATable() int {
 		utf.skip(24)
 		metricDataFormat := utf.readUint16()
 		if metricDataFormat != 0 {
-			fmt.Printf("Unknown horizontal metric data format %d\n", metricDataFormat)
+			println(Fmt("Unknown horizontal metric data format %d", metricDataFormat))
 			return 0
 		}
 		metricsCount = utf.readUint16()
 		if metricsCount == 0 {
-			fmt.Printf("Number of horizontal metrics is 0\n")
+			println("Number of horizontal metrics is 0")
 			return 0
 		}
 	}
@@ -392,7 +393,7 @@ func (utf *utf8FontFile) parseOS2Table() int {
 		utf.skip(2)
 		fsType := utf.readUint16()
 		if fsType == 0x0002 || (fsType&0x0300) != 0 {
-			fmt.Printf("ERROR - copyright restrictions.\n")
+			println("ERROR - copyright restrictions.")
 			return 0
 		}
 		utf.skip(20)
@@ -472,7 +473,7 @@ func (utf *utf8FontFile) parseCMAPTable(format int) int {
 		utf.seek(int(oldReaderPosition))
 	}
 	if cidCMAPPosition == 0 {
-		fmt.Printf("Font does not have cmap for Unicode\n")
+		println("Font does not have cmap for Unicode")
 		return cidCMAPPosition
 	}
 	return cidCMAPPosition
@@ -519,7 +520,7 @@ func (utf *utf8FontFile) generateCMAP() map[int][]int {
 	}
 
 	if runeCmapPosition == 0 {
-		fmt.Printf("Font does not have cmap for Unicode\n")
+		println("Font does not have cmap for Unicode")
 		return nil
 	}
 
@@ -916,7 +917,7 @@ func (utf *utf8FontFile) parseLOCATable(format, numSymbols int) {
 			utf.symbolPosition = append(utf.symbolPosition, arr[n+1])
 		}
 	} else {
-		fmt.Printf("Unknown loca table format %d\n", format)
+		println(Fmt("Unknown loca table format %d", format))
 		return
 	}
 }

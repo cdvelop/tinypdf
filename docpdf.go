@@ -2,7 +2,6 @@ package tinypdf
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/color"
 	"image/gif"
@@ -11,9 +10,9 @@ import (
 	"io"
 	"math"
 	"os"
-	"strconv"
-	"strings"
 	"time"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 var gl struct {
@@ -28,7 +27,7 @@ type fmtBuffer struct {
 }
 
 func (b *fmtBuffer) printf(fmtStr string, args ...any) {
-	b.Buffer.WriteString(fmt.Sprintf(fmtStr, args...))
+	b.Buffer.WriteString(Fmt(fmtStr, args...))
 }
 
 func New(options ...any) (f *DocPDF) {
@@ -136,7 +135,7 @@ func New(options ...any) (f *DocPDF) {
 	case IN:
 		f.k = 72.0
 	default:
-		f.err = fmt.Errorf("incorrect unit %s", f.unitType)
+		f.err = Err(D.Invalid, D.Format)
 		return
 	}
 	f.stdPageSizes = make(map[string]PageSize)
@@ -180,7 +179,7 @@ func New(options ...any) (f *DocPDF) {
 		f.w = f.defPageSize.Ht / f.k
 		f.h = f.defPageSize.Wd / f.k
 	default:
-		f.err = fmt.Errorf("incorrect orientation: %s", f.defOrientation)
+		f.err = Err(D.Invalid, D.Format)
 		return
 	}
 	f.curOrientation = f.defOrientation
@@ -255,7 +254,7 @@ func (f *DocPDF) ClearError() {
 // about fmtStr and args.
 func (f *DocPDF) SetErrorf(fmtStr string, args ...interface{}) {
 	if f.err == nil {
-		f.err = fmt.Errorf(fmtStr, args...)
+		f.err = Errf(fmtStr, args...)
 	}
 }
 
@@ -459,9 +458,9 @@ func (f *DocPDF) open() {
 func (f *DocPDF) Close() {
 	if f.err == nil {
 		if f.clipNest > 0 {
-			f.err = fmt.Errorf("clip procedure must be explicitly ended")
+			f.err = Errf("clip procedure must be explicitly ended")
 		} else if f.transformNest > 0 {
-			f.err = fmt.Errorf("transformation procedure must be explicitly ended")
+			f.err = Errf("transformation procedure must be explicitly ended")
 		}
 	}
 	if f.err != nil {
@@ -686,11 +685,11 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 	}
 
 	if f.currentFont.Name == "" {
-		f.err = fmt.Errorf("font has not been set; unable to render text")
+		f.err = Errf("font has not been set; unable to render text")
 		return
 	}
 
-	borderStr = strings.ToUpper(borderStr)
+	borderStr = Convert(borderStr).Up().String()
 	k := f.k
 	if f.y+h > f.pageBreakTrigger && !f.inHeader && !f.inFooter && f.acceptPageBreak() {
 		// Automatic page break
@@ -742,16 +741,16 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 		top := (f.h - y) * k
 		right := (x + w) * k
 		bottom := (f.h - (y + h)) * k
-		if strings.Contains(borderStr, "L") {
+		if Contains(borderStr, "L") {
 			s.printf("%.2f %.2f m %.2f %.2f l S ", left, top, left, bottom)
 		}
-		if strings.Contains(borderStr, "T") {
+		if Contains(borderStr, "T") {
 			s.printf("%.2f %.2f m %.2f %.2f l S ", left, top, right, top)
 		}
-		if strings.Contains(borderStr, "R") {
+		if Contains(borderStr, "R") {
 			s.printf("%.2f %.2f m %.2f %.2f l S ", right, top, right, bottom)
 		}
-		if strings.Contains(borderStr, "B") {
+		if Contains(borderStr, "B") {
 			s.printf("%.2f %.2f m %.2f %.2f l S ", left, bottom, right, bottom)
 		}
 	}
@@ -759,9 +758,9 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 		var dx, dy float64
 		// Horizontal alignment
 		switch {
-		case strings.Contains(alignStr, "R"):
+		case Contains(alignStr, "R"):
 			dx = w - f.cMargin - f.GetStringWidth(txtStr)
-		case strings.Contains(alignStr, "C"):
+		case Contains(alignStr, "C"):
 			dx = (w - f.GetStringWidth(txtStr)) / 2
 		default:
 			dx = f.cMargin
@@ -769,11 +768,11 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 
 		// Vertical alignment
 		switch {
-		case strings.Contains(alignStr, "T"):
+		case Contains(alignStr, "T"):
 			dy = (f.fontSize - h) / 2.0
-		case strings.Contains(alignStr, "B"):
+		case Contains(alignStr, "B"):
 			dy = (h - f.fontSize) / 2.0
-		case strings.Contains(alignStr, "A"):
+		case Contains(alignStr, "A"):
 			var descent float64
 			d := f.currentFont.Desc
 			if d.Descent == 0 {
@@ -801,7 +800,7 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 			space := f.escape(utf8toutf16(" ", false))
 			strSize := f.GetStringSymbolWidth(txtStr)
 			s.printf("BT 0 Tw %.2f %.2f Td [", (f.x+dx)*k, (f.h-(f.y+.5*h+.3*f.fontSize))*k)
-			t := strings.Split(txtStr, " ")
+			t := Convert(txtStr).Split(" ")
 			shift := float64((wmax - strSize)) / float64(len(t)-1)
 			numt := len(t)
 			for i := 0; i < numt; i++ {
@@ -825,9 +824,7 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 				}
 			} else {
 
-				txt2 = strings.Replace(txtStr, "\\", "\\\\", -1)
-				txt2 = strings.Replace(txt2, "(", "\\(", -1)
-				txt2 = strings.Replace(txt2, ")", "\\)", -1)
+				txt2 = Convert(txtStr).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)").String()
 			}
 			bt := (f.x + dx) * k
 			td := (f.h - (f.y + dy + .5*h + .3*f.fontSize)) * k
@@ -903,7 +900,7 @@ func (f *DocPDF) SplitLines(txt []byte, w float64) [][]byte {
 	lines := [][]byte{}
 	cw := f.currentFont.Cw
 	wmax := int(math.Ceil((w - 2*f.cMargin) * 1000 / f.fontSize))
-	s := bytes.Replace(txt, []byte("\r"), []byte{}, -1)
+	s := []byte(Convert(string(txt)).Replace("\r", "").String())
 	nb := len(s)
 	for nb > 0 && s[nb-1] == '\n' {
 		nb--
@@ -963,7 +960,7 @@ func (f *DocPDF) SplitLines(txt []byte, w float64) [][]byte {
 // only the last is removed. In the next major module version, the UTF-8 logic
 // will be changed to match the non-UTF-8 logic. To prepare for that change,
 // applications that use UTF-8 fonts and depend on having all trailing newlines
-// removed should call strings.TrimRight(txtStr, "\r\n") before calling this
+// removed should call TrimRight(txtStr, "\r\n") before calling this
 // method.
 func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill bool) {
 	if f.err != nil {
@@ -978,7 +975,7 @@ func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fil
 		w = f.w - f.rMargin - f.x
 	}
 	wmax := int(math.Ceil((w - 2*f.cMargin) * 1000 / f.fontSize))
-	s := strings.Replace(txtStr, "\r", "", -1)
+	s := Convert(txtStr).Replace("\r", "").String()
 	srune := []rune(s)
 
 	// remove extra line breaks
@@ -1015,13 +1012,13 @@ func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fil
 			b2 = "LR"
 		} else {
 			b2 = ""
-			if strings.Contains(borderStr, "L") {
+			if Contains(borderStr, "L") {
 				b2 += "L"
 			}
-			if strings.Contains(borderStr, "R") {
+			if Contains(borderStr, "R") {
 				b2 += "R"
 			}
-			if strings.Contains(borderStr, "T") {
+			if Contains(borderStr, "T") {
 				b = b2 + "T"
 			} else {
 				b = b2
@@ -1080,7 +1077,7 @@ func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fil
 			ns++
 		}
 		if int(c) >= len(cw) {
-			f.err = fmt.Errorf("character outside the supported range: %s", string(c))
+			f.err = Errf("character outside the supported range: %s", string(c))
 			return
 		}
 		if cw[int(c)] == 0 { //Marker width 0 used for missing symbols
@@ -1138,7 +1135,7 @@ func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fil
 		f.ws = 0
 		f.out("0 Tw")
 	}
-	if len(borderStr) > 0 && strings.Contains(borderStr, "B") {
+	if len(borderStr) > 0 && Contains(borderStr, "B") {
 		b += "B"
 	}
 	if f.isCurrentUTF8 {
@@ -1162,7 +1159,7 @@ func (f *DocPDF) write(h float64, txtStr string, link int, linkStr string) {
 	cw := f.currentFont.Cw
 	w := f.w - f.rMargin - f.x
 	wmax := (w - 2*f.cMargin) * 1000 / f.fontSize
-	s := strings.Replace(txtStr, "\r", "", -1)
+	s := Convert(txtStr).Replace("\r", "").String()
 	var nb int
 	if f.isCurrentUTF8 {
 		nb = len([]rune(s))
@@ -1553,10 +1550,10 @@ func (f *DocPDF) RegisterImageOptionsReader(imgName string, options ImageOptions
 
 	// First use of this image, get info
 	if options.ImageType == "" {
-		f.err = fmt.Errorf("image type should be specified if reading from custom reader")
+		f.err = Errf("image type should be specified if reading from custom reader")
 		return
 	}
-	options.ImageType = strings.ToLower(options.ImageType)
+	options.ImageType = Convert(options.ImageType).Low().String()
 	if options.ImageType == "jpeg" {
 		options.ImageType = "jpg"
 	}
@@ -1568,7 +1565,7 @@ func (f *DocPDF) RegisterImageOptionsReader(imgName string, options ImageOptions
 	case "gif":
 		info = f.parsegif(r)
 	default:
-		f.err = fmt.Errorf("unsupported image type: %s", options.ImageType)
+		f.err = Errf("unsupported image type: %s", options.ImageType)
 	}
 	if f.err != nil {
 		return
@@ -1617,9 +1614,9 @@ func (f *DocPDF) RegisterImageOptions(fileStr string, options ImageOptions) (inf
 
 	// First use of this image, get info
 	if options.ImageType == "" {
-		pos := strings.LastIndex(fileStr, ".")
+		pos := LastIndex(fileStr, ".")
 		if pos < 0 {
-			f.err = fmt.Errorf("image file has no extension and no type was specified: %s", fileStr)
+			f.err = Errf("image file has no extension and no type was specified: %s", fileStr)
 			return
 		}
 		options.ImageType = fileStr[pos+1:]
@@ -1681,7 +1678,7 @@ func (f *DocPDF) putImportedTemplates() {
 
 		for pos, h := range f.importedObjPos[hash] {
 			// Convert object id into a 40 character string padded with spaces
-			objIDPadded := fmt.Sprintf("%40s", fmt.Sprintf("%d", hashToObjID[h]))
+			objIDPadded := Fmt("%40s", Convert(hashToObjID[h]).String())
 
 			// Convert objIDPadded into []byte
 			objIDBytes := []byte(objIDPadded)
@@ -1732,10 +1729,8 @@ func (f *DocPDF) SetHomeXY() {
 
 // Escape special characters in strings
 func (f *DocPDF) escape(s string) string {
-	s = strings.Replace(s, "\\", "\\\\", -1)
-	s = strings.Replace(s, "(", "\\(", -1)
-	s = strings.Replace(s, ")", "\\)", -1)
-	s = strings.Replace(s, "\r", "\\r", -1)
+	// Usar tinystring para reemplazos encadenados
+	s = Convert(s).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)").Replace("\r", "\\r").String()
 	return s
 }
 
@@ -1824,7 +1819,7 @@ func (f *DocPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
 	case color.CMYKModel:
 		info.cs = "DeviceCMYK"
 	default:
-		f.err = fmt.Errorf("image JPEG buffer has unsupported color space (%v)", config.ColorModel)
+		f.err = Errf("image JPEG buffer has unsupported color space (%v)", config.ColorModel)
 		return
 	}
 	return
@@ -1940,7 +1935,8 @@ func (f *DocPDF) putF64(v float64, prec int) {
 
 // fmtF64 converts the floating-point number f to a string with precision prec.
 func (f *DocPDF) fmtF64(v float64, prec int) string {
-	return string(strconv.AppendFloat(f.fmt.buf[:0], v, 'f', prec, 64))
+	// Usar tinystring para formatear float con precisión
+	return Convert(v).Round(prec).String()
 }
 
 func (f *DocPDF) putInt(v int) {
@@ -1948,7 +1944,8 @@ func (f *DocPDF) putInt(v int) {
 }
 
 func (f *DocPDF) fmtInt(v int) string {
-	return string(strconv.AppendInt(f.fmt.buf[:0], int64(v), 10))
+	// Usar tinystring para convertir int a string
+	return Convert(v).String()
 }
 
 // SetDefaultCatalogSort sets the default value of the catalog sort flag that
@@ -1976,7 +1973,7 @@ func (f *DocPDF) SetCatalogSort(flag bool) {
 // ExampleFpdf_RegisterAlias_utf8() in fpdf_test.go demonstrate this method.
 func (f *DocPDF) RegisterAlias(alias, replacement string) {
 	// Note: map[string]string assignments embed literal escape ("\00") sequences
-	// into utf16 key and value strings. Consequently, subsequent search/replace
+	// into utf16 key and value  Consequently, subsequent search/replace
 	// operations will fail unexpectedly if utf8toutf16() conversions take place
 	// here. Instead, conversions are deferred until the actual search/replace
 	// operation takes place when the PDF output is generated.
@@ -1992,8 +1989,8 @@ func (f *DocPDF) replaceAliases() {
 			}
 			for n := 1; n <= f.page; n++ {
 				s := f.pages[n].String()
-				if strings.Contains(s, alias) {
-					s = strings.Replace(s, alias, replacement, -1)
+				if Contains(s, alias) {
+					s = Convert(s).Replace(alias, replacement).String()
 					f.pages[n].Truncate(0)
 					f.pages[n].WriteString(s)
 				}

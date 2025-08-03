@@ -2,11 +2,11 @@ package tinypdf
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"sort"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // PageSize returns the width and height of the specified page in the units
@@ -180,7 +180,7 @@ func (f *DocPDF) GetPageSize() (width, height float64) {
 // art and artbox box types are case insensitive. See SetPageBox() for a method
 // that specifies the coordinates and extent of the page box individually.
 func (f *DocPDF) SetPageBoxRec(t string, pb PageBox) {
-	switch strings.ToLower(t) {
+	switch Convert(t).Low().String() {
 	case "trim":
 		fallthrough
 	case "trimbox":
@@ -198,7 +198,7 @@ func (f *DocPDF) SetPageBoxRec(t string, pb PageBox) {
 	case "artbox":
 		t = "ArtBox"
 	default:
-		f.err = fmt.Errorf("%s is not a valid page box type", t)
+		f.err = Errf("%s is not a valid page box type", t)
 		return
 	}
 
@@ -400,7 +400,7 @@ func (f *DocPDF) OutputAndClose(w io.WriteCloser) error {
 	_ = f.Output(w)
 	err := w.Close()
 	if err != nil {
-		return fmt.Errorf("could not close writer: %w", err)
+		return Errf("could not close writer: %v", err)
 	}
 	return f.err
 }
@@ -425,7 +425,7 @@ func (f *DocPDF) OutputFileAndClose(fileStr string) error {
 
 	err = pdfFile.Close()
 	if err != nil {
-		return fmt.Errorf("could not close output file: %w", err)
+		return Errf("could not close output file: %v", err)
 	}
 
 	return f.err
@@ -454,7 +454,7 @@ func (f *DocPDF) getpagesizestr(sizeStr string) (size PageSize) {
 	if f.err != nil {
 		return
 	}
-	sizeStr = strings.ToLower(sizeStr)
+	sizeStr = Convert(sizeStr).Low().String()
 	// dbg("Size [%s]", sizeStr)
 	var ok bool
 	size, ok = f.stdPageSizes[sizeStr]
@@ -464,7 +464,7 @@ func (f *DocPDF) getpagesizestr(sizeStr string) (size PageSize) {
 		size.Ht /= f.k
 
 	} else {
-		f.err = fmt.Errorf("unknown page size %s", sizeStr)
+		f.err = Errf("unknown page size %s", sizeStr)
 	}
 	return
 }
@@ -1066,7 +1066,7 @@ func (f *DocPDF) putOutputIntents() {
 	for index, oi := range f.outputIntents {
 		infoSegment := ""
 		if oi.Info != "" {
-			infoSegment = fmt.Sprintf("/Info (%s) ", oi.Info)
+			infoSegment = Fmt("/Info (%s) ", oi.Info)
 		}
 		f.outf(
 			`<< /Type /OutputIntent /S /%s /OutputConditionIdentifier (%s) %s/DestOutputProfile %d 0 R >>`,
@@ -1180,7 +1180,7 @@ func (f *DocPDF) SetDisplayMode(zoomStr, layoutStr string) {
 	case "fullpage", "fullwidth", "real", "default":
 		f.zoomMode = zoomStr
 	default:
-		f.err = fmt.Errorf("incorrect zoom display mode: %s", zoomStr)
+		f.err = Errf("incorrect zoom display mode: %s", zoomStr)
 		return
 	}
 	switch layoutStr {
@@ -1188,7 +1188,7 @@ func (f *DocPDF) SetDisplayMode(zoomStr, layoutStr string) {
 		"TwoColumnLeft", "TwoColumnRight", "TwoPageLeft", "TwoPageRight":
 		f.layoutMode = layoutStr
 	default:
-		f.err = fmt.Errorf("incorrect layout display mode: %s", layoutStr)
+		f.err = Errf("incorrect layout display mode: %s", layoutStr)
 		return
 	}
 }

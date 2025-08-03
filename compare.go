@@ -2,10 +2,11 @@ package tinypdf
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"sort"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 type sortType struct {
@@ -33,30 +34,31 @@ func gensort(Len int, Less func(int, int) bool, Swap func(int, int)) {
 func writeBytes(leadStr string, startPos int, sl []byte) {
 	var pos, max int
 	var b byte
-	fmt.Printf("%s %07x", leadStr, startPos)
+	out := Fmt("%s %07x", leadStr, startPos)
 	max = len(sl)
 	for pos < max {
-		fmt.Printf(" ")
+		out += " "
 		for k := 0; k < 8; k++ {
 			if pos < max {
-				fmt.Printf(" %02x", sl[pos])
+				out += Fmt(" %02x", sl[pos])
 			} else {
-				fmt.Printf("   ")
+				out += "   "
 			}
 			pos++
 		}
 	}
-	fmt.Printf("  |")
+	out += "  |"
 	pos = 0
 	for pos < max {
 		b = sl[pos]
 		if b < 32 || b >= 128 {
 			b = '.'
 		}
-		fmt.Printf("%c", b)
+		out += Fmt("%c", b)
 		pos++
 	}
-	fmt.Printf("|\n")
+	out += "|"
+	println(out)
 }
 
 func checkBytes(pos int, sl1, sl2 []byte, printDiff bool) (eq bool) {
@@ -97,7 +99,7 @@ func CompareBytes(sl1, sl2 []byte, printDiff bool) (err error) {
 		posStart = posEnd
 	}
 	if diffs {
-		err = fmt.Errorf("documents are different")
+		err = Err("documents are different")
 	}
 	return
 }

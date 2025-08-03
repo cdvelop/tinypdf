@@ -1,22 +1,15 @@
 package tinypdf
 
-// Utility to generate font definition files
-
-// Version: 1.2
-// Date:    2011-06-18
-// Author:  Olivier PLATHEY
-// Port to Go: Kurt Jung, 2013-07-15
-
 import (
 	"bufio"
 	"compress/zlib"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 func baseNoExt(fileStr string) string {
@@ -44,12 +37,12 @@ func loadMap(encodingFileStr string) (encList encListType, err error) {
 		var pos int
 		for scanner.Scan() {
 			// "!3F U+003F question"
-			_, err = fmt.Sscanf(scanner.Text(), "!%x U+%x %s", &pos, &enc.uv, &enc.name)
+			_, err = Sscanf(scanner.Text(), "!%x U+%x %s", &pos, &enc.uv, &enc.name)
 			if err == nil {
 				if pos < 256 {
 					encList[pos] = enc
 				} else {
-					err = fmt.Errorf("map position 0x%2X exceeds 0xFF", pos)
+					err = Errf("map position 0x%2X exceeds 0xFF", pos)
 					return
 				}
 			} else {
@@ -73,7 +66,7 @@ func getInfoFromTrueType(fileStr string, msgWriter io.Writer, embed bool, encLis
 	}
 	if embed {
 		if !ttf.Embeddable {
-			err = fmt.Errorf("font license does not allow embedding")
+			err = Errf("font license does not allow embedding")
 			return
 		}
 		info.Data, err = os.ReadFile(fileStr)
@@ -110,7 +103,7 @@ func getInfoFromTrueType(fileStr string, msgWriter io.Writer, embed bool, encLis
 			if ok {
 				wd = round(k * float64(ttf.Widths[pos]))
 			} else {
-				fmt.Fprintf(msgWriter, "Character %s is missing\n", encList[j].name)
+				Fprintf(msgWriter, "Character %s is missing\n", encList[j].name)
 			}
 		}
 		info.Widths[j] = wd
@@ -132,7 +125,7 @@ func segmentRead(r io.Reader) (s segmentType, err error) {
 		return
 	}
 	if s.marker != 128 {
-		err = fmt.Errorf("font file is not a valid binary Type1")
+		err = Errf("font file is not a valid binary Type1")
 		return
 	}
 	if err = binary.Read(r, binary.LittleEndian, &s.tp); err != nil {
@@ -177,10 +170,10 @@ func getInfoFromType1(fileStr string, msgWriter io.Writer, embed bool, encList e
 	afmFileStr := fileStr[0:len(fileStr)-3] + "afm"
 	size, ok := fileSize(afmFileStr)
 	if !ok {
-		err = fmt.Errorf("font file (ATM) %s not found", afmFileStr)
+		err = Errf("font file (ATM) %s not found", afmFileStr)
 		return
 	} else if size == 0 {
-		err = fmt.Errorf("font file (AFM) %s empty or not readable", afmFileStr)
+		err = Errf("font file (AFM) %s empty or not readable", afmFileStr)
 		return
 	}
 
@@ -197,7 +190,7 @@ func getInfoFromType1(fileStr string, msgWriter io.Writer, embed bool, encList e
 	}
 
 	if info.FontName == "" {
-		err = fmt.Errorf("the field FontName missing in AFM file %s", afmFileStr)
+		err = Errf("the field FontName missing in AFM file %s", afmFileStr)
 		return
 	}
 	var (
@@ -218,7 +211,7 @@ func getInfoFromType1(fileStr string, msgWriter io.Writer, embed bool, encList e
 			if ok {
 				info.Widths[j] = wd
 			} else {
-				fmt.Fprintf(msgWriter, "Character %s is missing\n", name)
+				Fprintf(msgWriter, "Character %s is missing\n", name)
 			}
 		}
 	}
@@ -266,7 +259,7 @@ func makeFontEncoding(encList encListType, refEncFileStr string) (diffStr string
 			buf.printf("/%s ", encList[j].name)
 		}
 	}
-	diffStr = strings.TrimSpace(buf.String())
+	diffStr = Convert(buf.String()).Trim().String()
 	return
 }
 
@@ -346,9 +339,9 @@ func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Write
 		msgWriter = io.Discard
 	}
 	if !fileExist(fontFileStr) {
-		return fmt.Errorf("font file not found: %s", fontFileStr)
+		return Errf("font file not found: %s", fontFileStr)
 	}
-	extStr := strings.ToLower(fontFileStr[len(fontFileStr)-3:])
+	extStr := Convert(fontFileStr[len(fontFileStr)-3:]).Low().String()
 	// printf("Font file extension [%s]\n", extStr)
 	var tpStr string
 	switch extStr {
@@ -359,7 +352,7 @@ func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Write
 	case "pfb":
 		tpStr = "Type1"
 	default:
-		return fmt.Errorf("unrecognized font file extension: %s", extStr)
+		return Errf("unrecognized font file extension: %s", extStr)
 	}
 
 	var info fontInfoType
@@ -400,13 +393,13 @@ func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Write
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(msgWriter, "Font file compressed: %s\n", zFileStr)
+		Fprintf(msgWriter, "Font file compressed: %s\n", zFileStr)
 	}
 	defFileStr := filepath.Join(dstDirStr, baseStr+".json")
 	err = makeDefinitionFile(defFileStr, tpStr, encodingFileStr, embed, encList, info)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(msgWriter, "Font definition file successfully generated: %s\n", defFileStr)
+	Fprintf(msgWriter, "Font definition file successfully generated: %s\n", defFileStr)
 	return nil
 }

@@ -2,10 +2,9 @@ package tinypdf
 
 import (
 	"bytes"
-	"fmt"
 	"math"
-	"strconv"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // GetXY returns the abscissa and ordinate of the current position.
@@ -502,7 +501,7 @@ func (f *DocPDF) Line(x1, y1, x2, y2 float64) {
 
 // fillDrawOp corrects path painting operators
 func fillDrawOp(styleStr string) (opStr string) {
-	switch strings.ToUpper(styleStr) {
+	switch Convert(styleStr).Up().String() {
 	case "", "D":
 		// Stroke the path.
 		opStr = "S"
@@ -558,16 +557,16 @@ func (f *DocPDF) Rect(x, y, w, h float64, styleStr string) {
 func (f *DocPDF) RoundedRect(x, y, w, h, r float64, corners string, stylestr string) {
 	// This routine was adapted by Brigham Thompson from a script by Christophe Prugnaud
 	var rTL, rTR, rBR, rBL float64 // zero means no rounded corner
-	if strings.Contains(corners, "1") {
+	if Contains(corners, "1") {
 		rTL = r
 	}
-	if strings.Contains(corners, "2") {
+	if Contains(corners, "2") {
 		rTR = r
 	}
-	if strings.Contains(corners, "3") {
+	if Contains(corners, "3") {
 		rBR = r
 	}
-	if strings.Contains(corners, "4") {
+	if Contains(corners, "4") {
 		rBL = r
 	}
 	f.RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL, stylestr)
@@ -826,11 +825,11 @@ func (f *DocPDF) SetAlpha(alpha float64, blendModeStr string) {
 	case "":
 		bl.modeStr = "Normal"
 	default:
-		f.err = fmt.Errorf("unrecognized blend mode \"%s\"", blendModeStr)
+		f.err = Errf("unrecognized blend mode \"%s\"", blendModeStr)
 		return
 	}
 	if alpha < 0.0 || alpha > 1.0 {
-		f.err = fmt.Errorf("alpha value (0.0 - 1.0) is out of range: %.3f", alpha)
+		f.err = Errf("alpha value (0.0 - 1.0) is out of range: %.3f", alpha)
 		return
 	}
 	f.alpha = alpha
@@ -1225,7 +1224,7 @@ func (f *DocPDF) ClipEnd() {
 			f.clipNest--
 			f.out("Q")
 		} else {
-			f.err = fmt.Errorf("error attempting to end clip operation out of sequence")
+			f.err = Errf("error attempting to end clip operation out of sequence")
 		}
 	}
 }
@@ -1260,10 +1259,10 @@ func (f *DocPDF) outputDashPattern() {
 		if i > 0 {
 			buf.WriteByte(' ')
 		}
-		buf.WriteString(strconv.FormatFloat(value, 'f', 2, 64))
+		buf.WriteString(Convert(value).Round(2).String())
 	}
 	buf.WriteString("] ")
-	buf.WriteString(strconv.FormatFloat(f.dashPhase, 'f', 2, 64))
+	buf.WriteString(Convert(f.dashPhase).Round(2).String())
 	buf.WriteString(" d")
 	f.outbuf(&buf)
 }

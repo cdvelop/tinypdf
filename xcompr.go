@@ -3,8 +3,9 @@ package tinypdf
 import (
 	"bytes"
 	"compress/zlib"
-	"fmt"
 	"sync"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 var xmem = xmempool{
@@ -25,16 +26,16 @@ func (pool *xmempool) compress(data []byte) *membuffer {
 
 	zw, err := zlib.NewWriterLevel(buf, zlib.BestSpeed)
 	if err != nil {
-		panic(fmt.Errorf("could not create zlib writer: %w", err))
+		panic(Errf("could not create zlib writer: %v", err))
 	}
 	_, err = zw.Write(data)
 	if err != nil {
-		panic(fmt.Errorf("could not zlib-compress slice: %w", err))
+		panic(Errf("could not zlib-compress slice: %v", err))
 	}
 
 	err = zw.Close()
 	if err != nil {
-		panic(fmt.Errorf("could not close zlib writer: %w", err))
+		panic(Errf("could not close zlib writer: %v", err))
 	}
 	return mem
 }

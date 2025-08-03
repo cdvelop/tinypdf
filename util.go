@@ -3,12 +3,13 @@ package tinypdf
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"math"
 	"os"
 	"path/filepath"
 	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 func must(n int, err error) {
@@ -31,7 +32,7 @@ func round(f float64) int {
 }
 
 func sprintf(fmtStr string, args ...interface{}) string {
-	return fmt.Sprintf(fmtStr, args...)
+	return Fmt(fmtStr, args...)
 }
 
 // fileExist returns true if the specified normal file exists
@@ -164,16 +165,22 @@ func repClosure(m map[rune]byte) func(string) string {
 func UnicodeTranslator(r io.Reader) (f func(string) string, err error) {
 	m := make(map[rune]byte)
 	var uPos, cPos uint32
-	var lineStr, nameStr string
+	var lineStr string
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		lineStr = sc.Text()
-		lineStr = strings.TrimSpace(lineStr)
+		lineStr = Convert(lineStr).Trim().String()
 		if len(lineStr) > 0 {
-			_, err = fmt.Sscanf(lineStr, "!%2X U+%4X %s", &cPos, &uPos, &nameStr)
-			if err == nil {
-				if cPos >= 0x80 {
-					m[rune(uPos)] = byte(cPos)
+			parts := Convert(lineStr).Split()
+			if len(parts) >= 3 && Contains(parts[0], "!") && Contains(parts[1], "U+") {
+				cPosInt, err1 := Convert(parts[0][1:]).Uint()
+				uPosInt, err2 := Convert(parts[1][2:]).Uint()
+				if err1 == nil && err2 == nil {
+					cPos = uint32(cPosInt)
+					uPos = uint32(uPosInt)
+					if cPos >= 0x80 {
+						m[rune(uPos)] = byte(cPos)
+					}
 				}
 			}
 		}

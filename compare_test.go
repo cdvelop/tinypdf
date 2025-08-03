@@ -96,15 +96,15 @@ func TestCompareBytes(t *testing.T) {
 
 			if tt.wantErr {
 				if err == nil {
-					t.Errorf("CompareBytes() expected error, got nil")
+					t.Fatalf("CompareBytes() expected error, got nil")
 					return
 				}
 				if tt.errMsg != "" && err.Error() != tt.errMsg {
-					t.Errorf("CompareBytes() error = %v, want %v", err.Error(), tt.errMsg)
+					t.Fatalf("CompareBytes() error = %v, want %v", err.Error(), tt.errMsg)
 				}
 			} else {
 				if err != nil {
-					t.Errorf("CompareBytes() unexpected error = %v", err)
+					t.Fatalf("CompareBytes() unexpected error = %v", err)
 				}
 			}
 		})

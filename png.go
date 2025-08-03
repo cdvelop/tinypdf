@@ -1,28 +1,7 @@
-// Copyright ©2023 The go-pdf Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
-
-/*
- * Copyright (c) 2013-2016 Kurt Jung (Gmail: kurt.w.jung)
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package tinypdf
 
 import (
-	"fmt"
-	"strings"
+	. "github.com/cdvelop/tinystring"
 )
 
 func (f *DocPDF) pngColorSpace(ct byte) (colspace string, colorVal int) {
@@ -36,7 +15,7 @@ func (f *DocPDF) pngColorSpace(ct byte) (colspace string, colorVal int) {
 	case 3:
 		colspace = "Indexed"
 	default:
-		f.err = fmt.Errorf("unknown color type in PNG buffer: %d", ct)
+		f.err = Errf("unknown color type in PNG buffer: %d", ct)
 	}
 	return
 }
@@ -45,13 +24,13 @@ func (f *DocPDF) parsepngstream(r *rbuffer, readdpi bool) (info *ImageInfoType) 
 	info = f.newImageInfo()
 	// 	Check signature
 	if string(r.Next(8)) != "\x89PNG\x0d\x0a\x1a\x0a" {
-		f.err = fmt.Errorf("not a PNG buffer")
+		f.err = Errf("not a PNG buffer")
 		return
 	}
 	// Read header chunk
 	_ = r.Next(4)
 	if string(r.Next(4)) != "IHDR" {
-		f.err = fmt.Errorf("incorrect PNG buffer")
+		f.err = Errf("incorrect PNG buffer")
 		return
 	}
 	w := r.i32()
@@ -70,15 +49,15 @@ func (f *DocPDF) parsepngstream(r *rbuffer, readdpi bool) (info *ImageInfoType) 
 		return
 	}
 	if r.u8() != 0 {
-		f.err = fmt.Errorf("'unknown compression method in PNG buffer")
+		f.err = Errf("'unknown compression method in PNG buffer")
 		return
 	}
 	if r.u8() != 0 {
-		f.err = fmt.Errorf("'unknown filter method in PNG buffer")
+		f.err = Errf("'unknown filter method in PNG buffer")
 		return
 	}
 	if r.u8() != 0 {
-		f.err = fmt.Errorf("interlacing not supported in PNG buffer")
+		f.err = Errf("interlacing not supported in PNG buffer")
 		return
 	}
 	_ = r.Next(4)
@@ -110,7 +89,7 @@ func (f *DocPDF) parsepngstream(r *rbuffer, readdpi bool) (info *ImageInfoType) 
 			case 2:
 				trns = []int{int(t[1]), int(t[3]), int(t[5])} // array(ord(substr($t,1,1)), ord(substr($t,3,1)), ord(substr($t,5,1)));
 			default:
-				pos := strings.Index(string(t), "\x00")
+				pos := Index(string(t), "\x00")
 				if pos >= 0 {
 					trns = []int{pos} // array($pos);
 				}
@@ -155,7 +134,7 @@ func (f *DocPDF) parsepngstream(r *rbuffer, readdpi bool) (info *ImageInfoType) 
 		}
 	}
 	if colspace == "Indexed" && len(pal) == 0 {
-		f.err = fmt.Errorf("missing palette in PNG buffer")
+		f.err = Errf("missing palette in PNG buffer")
 	}
 	info.w = float64(w)
 	info.h = float64(h)

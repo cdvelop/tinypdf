@@ -3,14 +3,13 @@ package tinypdf
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
-	"strconv"
-	"strings"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // AddFontFromBytes imports a TrueType, OpenType or Type1 font from static
@@ -78,7 +77,7 @@ func (f *DocPDF) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFi
 
 		err := utf8File.parseFile()
 		if err != nil {
-			fmt.Printf("get metrics Error: %e\n", err)
+			println(Fmt("get metrics Error: %v", err))
 			return
 		}
 		desc := FontDescType{
@@ -171,8 +170,8 @@ func (f *DocPDF) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFi
 
 // getFontKey is used by AddFontFromReader and GetFontDesc
 func getFontKey(familyStr, styleStr string) string {
-	familyStr = strings.ToLower(familyStr)
-	styleStr = strings.ToUpper(styleStr)
+	familyStr = Convert(familyStr).Low().String()
+	styleStr = Convert(styleStr).Up().String()
 	if styleStr == "IB" {
 		styleStr = "BI"
 	}
@@ -276,16 +275,16 @@ func (f *DocPDF) SetFont(familyStr, styleStr string, size float64) {
 	if familyStr == "" {
 		familyStr = f.fontFamily
 	} else {
-		familyStr = strings.ToLower(familyStr)
+		familyStr = Convert(familyStr).Low().String()
 	}
-	styleStr = strings.ToUpper(styleStr)
-	f.underline = strings.Contains(styleStr, "U")
+	styleStr = Convert(styleStr).Up().String()
+	f.underline = Contains(styleStr, "U")
 	if f.underline {
-		styleStr = strings.Replace(styleStr, "U", "", -1)
+		styleStr = Convert(styleStr).Replace("U", "").String()
 	}
-	f.strikeout = strings.Contains(styleStr, "S")
+	f.strikeout = Contains(styleStr, "S")
 	if f.strikeout {
-		styleStr = strings.Replace(styleStr, "S", "", -1)
+		styleStr = Convert(styleStr).Replace("S", "").String()
 	}
 	if styleStr == "IB" {
 		styleStr = "BI"
@@ -323,7 +322,7 @@ func (f *DocPDF) SetFont(familyStr, styleStr string, size float64) {
 				}
 			}
 		} else {
-			f.err = fmt.Errorf("undefined font: %s %s", familyStr, styleStr)
+			f.err = Errf("undefined font: %s %s", familyStr, styleStr)
 			return
 		}
 	}
@@ -460,9 +459,9 @@ func (f *DocPDF) AddUTF8Font(familyStr, styleStr, fileStr string) {
 func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 	if fileStr == "" {
 		if isUTF8 {
-			fileStr = strings.Replace(familyStr, " ", "", -1) + strings.ToLower(styleStr) + ".ttf"
+			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).Low().String() + ".ttf"
 		} else {
-			fileStr = strings.Replace(familyStr, " ", "", -1) + strings.ToLower(styleStr) + ".json"
+			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).Low().String() + ".json"
 		}
 	}
 	if isUTF8 {
@@ -741,20 +740,20 @@ func (f *DocPDF) putfonts() {
 				delete(CodeSignDictionary, 0)
 
 				f.newobj()
-				f.out(fmt.Sprintf("<</Type /Font\n/Subtype /Type0\n/BaseFont /%s\n/Encoding /Identity-H\n/DescendantFonts [%d 0 R]\n/ToUnicode %d 0 R>>\n"+"endobj", fontName, f.n+1, f.n+2))
+				f.out(Fmt("<</Type /Font\n/Subtype /Type0\n/BaseFont /%s\n/Encoding /Identity-H\n/DescendantFonts [%d 0 R]\n/ToUnicode %d 0 R>>\nendobj", fontName, f.n+1, f.n+2))
 
 				f.newobj()
 				f.out("<</Type /Font\n/Subtype /CIDFontType2\n/BaseFont /" + fontName + "\n" +
-					"/CIDSystemInfo " + strconv.Itoa(f.n+2) + " 0 R\n/FontDescriptor " + strconv.Itoa(f.n+3) + " 0 R")
+					"/CIDSystemInfo " + Convert(f.n+2).String() + " 0 R\n/FontDescriptor " + Convert(f.n+3).String() + " 0 R")
 				if font.Desc.MissingWidth != 0 {
-					f.out("/DW " + strconv.Itoa(font.Desc.MissingWidth))
+					f.out("/DW " + Convert(font.Desc.MissingWidth).String())
 				}
 				f.generateCIDFontMap(&font, font.utf8File.LastRune)
-				f.out("/CIDToGIDMap " + strconv.Itoa(f.n+4) + " 0 R>>")
+				f.out("/CIDToGIDMap " + Convert(f.n+4).String() + " 0 R>>")
 				f.out("endobj")
 
 				f.newobj()
-				f.out("<</Length " + strconv.Itoa(len(toUnicode)) + ">>")
+				f.out("<</Length " + Convert(len(toUnicode)).String() + ">>")
 				f.putstream([]byte(toUnicode))
 				f.out("endobj")
 
@@ -794,7 +793,7 @@ func (f *DocPDF) putfonts() {
 				mem := xmem.compress(cidToGidMap)
 				cidToGidMap = mem.bytes()
 				f.newobj()
-				f.out("<</Length " + strconv.Itoa(len(cidToGidMap)) + "/Filter /FlateDecode>>")
+				f.out("<</Length " + Convert(len(cidToGidMap)).String() + "/Filter /FlateDecode>>")
 				f.putstream(cidToGidMap)
 				f.out("endobj")
 				mem.release()
@@ -803,15 +802,15 @@ func (f *DocPDF) putfonts() {
 				mem = xmem.compress(utf8FontStream)
 				compressedFontStream := mem.bytes()
 				f.newobj()
-				f.out("<</Length " + strconv.Itoa(len(compressedFontStream)))
+				f.out("<</Length " + Convert(len(compressedFontStream)).String())
 				f.out("/Filter /FlateDecode")
-				f.out("/Length1 " + strconv.Itoa(utf8FontSize))
+				f.out("/Length1 " + Convert(utf8FontSize).String())
 				f.out(">>")
 				f.putstream(compressedFontStream)
 				f.out("endobj")
 				mem.release()
 			default:
-				f.err = fmt.Errorf("unsupported font type: %s", tp)
+				f.err = Errf("unsupported font type: %s", tp)
 				return
 			}
 		}

@@ -1,28 +1,7 @@
-// Copyright ©2023 The go-pdf Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
-
-// Copyright (c) Kurt Jung (Gmail: kurt.w.jung)
-//
-// Permission to use, copy, modify, and distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-// SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
-// OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-// CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-// Adapted from http://www.tinypdf.org/en/script/script89.php by Olivier PLATHEY
-
 package tinypdf
 
 import (
-	"fmt"
-	"strings"
+	. "github.com/cdvelop/tinystring"
 )
 
 func byteBound(v byte) byte {
@@ -52,7 +31,7 @@ func (f *DocPDF) AddSpotColor(nameStr string, c, m, y, k byte) {
 				},
 			}
 		} else {
-			f.err = fmt.Errorf("name \"%s\" is already associated with a spot color", nameStr)
+			f.err = Errf("name \"%s\" is already associated with a spot color", nameStr)
 		}
 	}
 }
@@ -61,7 +40,7 @@ func (f *DocPDF) getSpotColor(nameStr string) (clr spotColorType, ok bool) {
 	if f.err == nil {
 		clr, ok = f.spotColorMap[nameStr]
 		if !ok {
-			f.err = fmt.Errorf("spot color name \"%s\" is not registered", nameStr)
+			f.err = Errf("spot color name \"%s\" is not registered", nameStr)
 		}
 	}
 	return
@@ -167,7 +146,7 @@ func (f *DocPDF) GetFillSpotColor() (name string, c, m, y, k byte) {
 func (f *DocPDF) putSpotColors() {
 	for k, v := range f.spotColorMap {
 		f.newobj()
-		f.outf("[/Separation /%s", strings.Replace(k, " ", "#20", -1))
+		f.outf("[/Separation /%s", Convert(k).Replace(" ", "#20", -1))
 		f.out("/DeviceCMYK <<")
 		f.out("/Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] ")
 		f.outf("/C1 [%.3f %.3f %.3f %.3f] ", float64(v.val.c)/100, float64(v.val.m)/100,

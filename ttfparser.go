@@ -1,38 +1,11 @@
-// Copyright ©2023 The go-pdf Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
-
-/*
- * Copyright (c) 2013 Kurt Jung (Gmail: kurt.w.jung)
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package tinypdf
-
-// Utility to parse TTF font files
-// Version:    1.0
-// Date:       2011-06-18
-// Author:     Olivier PLATHEY
-// Port to Go: Kurt Jung, 2013-07-15
 
 import (
 	"encoding/binary"
-	"fmt"
+	. "github.com/cdvelop/tinystring"
 	"io"
 	"os"
 	"regexp"
-	"strings"
 )
 
 // TtfType contains metrics of a TrueType font.
@@ -73,11 +46,11 @@ func TtfParse(fileStr string) (TtfRec TtfType, err error) {
 		return
 	}
 	if version == "OTTO" {
-		err = fmt.Errorf("fonts based on PostScript outlines are not supported")
+		err = Errf("fonts based on PostScript outlines are not supported")
 		return
 	}
 	if version != "\x00\x01\x00\x00" {
-		err = fmt.Errorf("unrecognized file format")
+		err = Errf("unrecognized file format")
 		return
 	}
 	numTables := int(t.ReadUShort())
@@ -134,7 +107,7 @@ func (t *ttfParser) ParseHead() (err error) {
 	t.Skip(3 * 4) // version, fontRevision, checkSumAdjustment
 	magicNumber := t.ReadULong()
 	if magicNumber != 0x5F0F3CF5 {
-		err = fmt.Errorf("incorrect magic number")
+		err = Errf("incorrect magic number")
 		return
 	}
 	t.Skip(2) // flags
@@ -200,7 +173,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 		}
 	}
 	if offset31 == 0 {
-		err = fmt.Errorf("no Unicode encoding found")
+		err = Errf("no Unicode encoding found")
 		return
 	}
 	startCount := make([]uint16, 0, 8)
@@ -210,12 +183,12 @@ func (t *ttfParser) ParseCmap() (err error) {
 	t.rec.Chars = make(map[uint16]uint16)
 	_, err = t.f.Seek(int64(t.tables["cmap"])+offset31, io.SeekStart)
 	if err != nil {
-		err = fmt.Errorf("could not seek to cmap table: %w", err)
+		err = Errf("could not seek to cmap table: %w", err)
 		return
 	}
 	format := t.ReadUShort()
 	if format != 4 {
-		err = fmt.Errorf("unexpected subtable format: %d", format)
+		err = Errf("unexpected subtable format: %d", format)
 		return
 	}
 	t.Skip(2 * 2) // length, language
@@ -243,7 +216,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 		if ro > 0 {
 			_, err = t.f.Seek(offset+2*int64(j)+int64(ro), io.SeekStart)
 			if err != nil {
-				return fmt.Errorf("could not seek to id range offset: %w", err)
+				return Errf("could not seek to id range offset: %w", err)
 			}
 		}
 		for c := c1; c <= c2; c++ {
@@ -294,7 +267,7 @@ func (t *ttfParser) ParseName() (err error) {
 				if err != nil {
 					return
 				}
-				s = strings.Replace(s, "\x00", "", -1)
+				s = Convert(s).Replace("\x00", "", -1).String()
 				var re *regexp.Regexp
 				if re, err = regexp.Compile(`[(){}<> /%[\]]`); err != nil {
 					return
@@ -303,7 +276,7 @@ func (t *ttfParser) ParseName() (err error) {
 			}
 		}
 		if t.rec.PostScriptName == "" {
-			err = fmt.Errorf("the name PostScript was not found")
+			err = Errf("the name PostScript was not found")
 		}
 	}
 	return
@@ -348,12 +321,12 @@ func (t *ttfParser) ParsePost() (err error) {
 func (t *ttfParser) Seek(tag string) (err error) {
 	ofs, ok := t.tables[tag]
 	if !ok {
-		return fmt.Errorf("table not found: %s", tag)
+		return Errf("table not found: %s", tag)
 	}
 
 	_, err = t.f.Seek(int64(ofs), io.SeekStart)
 	if err != nil {
-		return fmt.Errorf("could not seek to table %q: %w", tag, err)
+		return Errf("could not seek to table %q: %w", tag, err)
 	}
 	return
 }
@@ -361,7 +334,7 @@ func (t *ttfParser) Seek(tag string) (err error) {
 func (t *ttfParser) Skip(n int) {
 	_, err := t.f.Seek(int64(n), io.SeekCurrent)
 	if err != nil {
-		panic(fmt.Errorf("could not skip %d bytes: %w", n, err))
+		panic(Errf("could not skip %d bytes: %w", n, err))
 	}
 }
 
@@ -373,7 +346,7 @@ func (t *ttfParser) ReadStr(length int) (str string, err error) {
 		if n == length {
 			str = string(buf)
 		} else {
-			err = fmt.Errorf("unable to read %d bytes", length)
+			err = Errf("unable to read %d bytes", length)
 		}
 	}
 	return
@@ -382,7 +355,7 @@ func (t *ttfParser) ReadStr(length int) (str string, err error) {
 func (t *ttfParser) ReadUShort() (val uint16) {
 	err := binary.Read(t.f, binary.BigEndian, &val)
 	if err != nil {
-		panic(fmt.Errorf("could not read u16: %w", err))
+		panic(Errf("could not read u16: %w", err))
 	}
 	return
 }
@@ -390,7 +363,7 @@ func (t *ttfParser) ReadUShort() (val uint16) {
 func (t *ttfParser) ReadShort() (val int16) {
 	err := binary.Read(t.f, binary.BigEndian, &val)
 	if err != nil {
-		panic(fmt.Errorf("could not read i16: %w", err))
+		panic(Errf("could not read i16: %w", err))
 	}
 	return
 }
@@ -398,7 +371,7 @@ func (t *ttfParser) ReadShort() (val int16) {
 func (t *ttfParser) ReadULong() (val uint32) {
 	err := binary.Read(t.f, binary.BigEndian, &val)
 	if err != nil {
-		panic(fmt.Errorf("could not read u32: %w", err))
+		panic(Errf("could not read u32: %w", err))
 	}
 	return
 }
