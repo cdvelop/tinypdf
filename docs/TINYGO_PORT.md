@@ -23,6 +23,17 @@ TinyPDF currently imports standard library packages that significantly increase 
 - [x] `font_afm.go` (6 instances)
 - [x] `utf8fontfile.go` (2 instances)
 - [x] `fonts.go` (2 instances)
+- [ ] `svgbasic.go` 
+- [ ] `htmlbasic.go` 
+- [ ] `grid.go` 
+- [ ] `embedded.go` 
+- [ ] `makefont.go` 
+- [ ] `gofpdi/helper.go` 
+- [ ] `gofpdi/importer.go` 
+- [ ] `gofpdi/writer.go` 
+
+
+
 
 **Migration Pattern:**
 ```go

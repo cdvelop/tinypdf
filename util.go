@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 
 	. "github.com/cdvelop/tinystring"
 )
@@ -413,7 +412,7 @@ func isChinese(rune2 rune) bool {
 // Condition font family string to PDF name compliance. See section 5.3 (Names)
 // in https://resources.infosecinstitute.com/pdf-file-format-basic-structure/
 func fontFamilyEscape(familyStr string) (escStr string) {
-	escStr = strings.Replace(familyStr, " ", "#20", -1)
+	escStr = Convert(familyStr).Replace(" ", "#20", -1).String()
 	// Additional replacements can take place here
 	return
 }
