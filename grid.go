@@ -29,7 +29,7 @@ type StateType struct {
 }
 
 // StateGet returns a variable that contains common state values.
-func StateGet(pdf *DocPDF) (st StateType) {
+func StateGet(pdf *TinyPDF) (st StateType) {
 	st.clrDraw.R, st.clrDraw.G, st.clrDraw.B = pdf.GetDrawColor()
 	st.clrFill.R, st.clrFill.G, st.clrFill.B = pdf.GetFillColor()
 	st.clrText.R, st.clrText.G, st.clrText.B = pdf.GetTextColor()
@@ -42,7 +42,7 @@ func StateGet(pdf *DocPDF) (st StateType) {
 
 // Put sets the common state values contained in the state structure
 // specified by st.
-func (st StateType) Put(pdf *DocPDF) {
+func (st StateType) Put(pdf *TinyPDF) {
 	pdf.SetDrawColor(st.clrDraw.R, st.clrDraw.G, st.clrDraw.B)
 	pdf.SetFillColor(st.clrFill.R, st.clrFill.G, st.clrFill.B)
 	pdf.SetTextColor(st.clrText.R, st.clrText.G, st.clrText.B)
@@ -283,14 +283,14 @@ func (g *GridType) TickmarksExtentY(min, div float64, count int) {
 // 	g.ym, g.yb = linear(dataTp, paperTp, dataBt, paperBt)
 // }
 
-func lineAttr(pdf *DocPDF, clr RGBAType, lineWd float64) {
+func lineAttr(pdf *TinyPDF, clr RGBAType, lineWd float64) {
 	pdf.SetLineWidth(lineWd)
 	pdf.SetAlpha(clr.Alpha, "Normal")
 	pdf.SetDrawColor(clr.R, clr.G, clr.B)
 }
 
 // Grid generates a graph-paperlike set of grid lines on the current page.
-func (g GridType) Grid(pdf *DocPDF) {
+func (g GridType) Grid(pdf *TinyPDF) {
 	var st StateType
 	var yLen, xLen int
 	var textSz, halfTextSz, yMin, yMax, xMin, xMax, yDiv, xDiv float64
@@ -421,7 +421,7 @@ func (g GridType) Grid(pdf *DocPDF) {
 // Plot plots a series of count line segments from xMin to xMax. It repeatedly
 // calls fnc(x) to retrieve the y value associate with x. The currently
 // selected line drawing attributes are used.
-func (g GridType) Plot(pdf *DocPDF, xMin, xMax float64, count int, fnc func(x float64) (y float64)) {
+func (g GridType) Plot(pdf *TinyPDF, xMin, xMax float64, count int, fnc func(x float64) (y float64)) {
 	if count > 0 {
 		var x, delta, drawX0, drawY0, drawX1, drawY1 float64
 		delta = (xMax - xMin) / float64(count)

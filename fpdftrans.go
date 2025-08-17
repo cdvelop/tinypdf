@@ -1,8 +1,9 @@
 package tinypdf
 
 import (
-	. "github.com/cdvelop/tinystring"
 	"math"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // Routines in this file are translated from the work of Moritz Wagner and
@@ -20,7 +21,7 @@ type TransformMatrix struct {
 // TransformScale(), TransformSkew(), etc. This is followed by text, drawing or
 // image output and finally a call to TransformEnd(). All transformation
 // contexts must be properly ended prior to outputting the document.
-func (f *DocPDF) TransformBegin() {
+func (f *TinyPDF) TransformBegin() {
 	f.transformNest++
 	f.out("q")
 }
@@ -29,7 +30,7 @@ func (f *DocPDF) TransformBegin() {
 // scaleWd is the percentage scaling factor. (x, y) is center of scaling.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformScaleX(scaleWd, x, y float64) {
+func (f *TinyPDF) TransformScaleX(scaleWd, x, y float64) {
 	f.TransformScale(scaleWd, 100, x, y)
 }
 
@@ -38,7 +39,7 @@ func (f *DocPDF) TransformScaleX(scaleWd, x, y float64) {
 // scaling.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformScaleY(scaleHt, x, y float64) {
+func (f *TinyPDF) TransformScaleY(scaleHt, x, y float64) {
 	f.TransformScale(100, scaleHt, x, y)
 }
 
@@ -47,7 +48,7 @@ func (f *DocPDF) TransformScaleY(scaleHt, x, y float64) {
 // and height. (x, y) is center of scaling.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformScaleXY(s, x, y float64) {
+func (f *TinyPDF) TransformScaleXY(s, x, y float64) {
 	f.TransformScale(s, s, x, y)
 }
 
@@ -56,7 +57,7 @@ func (f *DocPDF) TransformScaleXY(s, x, y float64) {
 // (x, y) is center of scaling.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformScale(scaleWd, scaleHt, x, y float64) {
+func (f *TinyPDF) TransformScale(scaleWd, scaleHt, x, y float64) {
 	if scaleWd == 0 || scaleHt == 0 {
 		f.err = Errf("scale factor cannot be zero")
 		return
@@ -73,7 +74,7 @@ func (f *DocPDF) TransformScale(scaleWd, scaleHt, x, y float64) {
 // and images. x is the axis of reflection.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformMirrorHorizontal(x float64) {
+func (f *TinyPDF) TransformMirrorHorizontal(x float64) {
 	f.TransformScale(-100, 100, x, f.y)
 }
 
@@ -81,7 +82,7 @@ func (f *DocPDF) TransformMirrorHorizontal(x float64) {
 // images. y is the axis of reflection.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformMirrorVertical(y float64) {
+func (f *TinyPDF) TransformMirrorVertical(y float64) {
 	f.TransformScale(100, -100, f.x, y)
 }
 
@@ -89,7 +90,7 @@ func (f *DocPDF) TransformMirrorVertical(y float64) {
 // images on the point specified by (x, y).
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformMirrorPoint(x, y float64) {
+func (f *TinyPDF) TransformMirrorPoint(x, y float64) {
 	f.TransformScale(-100, -100, x, y)
 }
 
@@ -99,7 +100,7 @@ func (f *DocPDF) TransformMirrorPoint(x, y float64) {
 // position.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformMirrorLine(angle, x, y float64) {
+func (f *TinyPDF) TransformMirrorLine(angle, x, y float64) {
 	f.TransformScale(-100, 100, x, y)
 	f.TransformRotate(-2*(angle-90), x, y)
 }
@@ -108,7 +109,7 @@ func (f *DocPDF) TransformMirrorLine(angle, x, y float64) {
 // horizontally by the amount specified by tx.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformTranslateX(tx float64) {
+func (f *TinyPDF) TransformTranslateX(tx float64) {
 	f.TransformTranslate(tx, 0)
 }
 
@@ -116,7 +117,7 @@ func (f *DocPDF) TransformTranslateX(tx float64) {
 // by the amount specified by ty.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformTranslateY(ty float64) {
+func (f *TinyPDF) TransformTranslateY(ty float64) {
 	f.TransformTranslate(0, ty)
 }
 
@@ -124,7 +125,7 @@ func (f *DocPDF) TransformTranslateY(ty float64) {
 // horizontally and vertically by the amounts specified by tx and ty.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformTranslate(tx, ty float64) {
+func (f *TinyPDF) TransformTranslate(tx, ty float64) {
 	f.Transform(TransformMatrix{1, 0, 0, 1, tx * f.k, -ty * f.k})
 }
 
@@ -133,7 +134,7 @@ func (f *DocPDF) TransformTranslate(tx, ty float64) {
 // counter-clockwise from the 3 o'clock position.
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformRotate(angle, x, y float64) {
+func (f *TinyPDF) TransformRotate(angle, x, y float64) {
 	y = (f.h - y) * f.k
 	x *= f.k
 	angle = angle * math.Pi / 180
@@ -152,7 +153,7 @@ func (f *DocPDF) TransformRotate(angle, x, y float64) {
 // the left) to 90 degrees (skew to the right).
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformSkewX(angleX, x, y float64) {
+func (f *TinyPDF) TransformSkewX(angleX, x, y float64) {
 	f.TransformSkew(angleX, 0, x, y)
 }
 
@@ -161,7 +162,7 @@ func (f *DocPDF) TransformSkewX(angleX, x, y float64) {
 // the bottom) to 90 degrees (skew to the top).
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformSkewY(angleY, x, y float64) {
+func (f *TinyPDF) TransformSkewY(angleY, x, y float64) {
 	f.TransformSkew(0, angleY, x, y)
 }
 
@@ -171,7 +172,7 @@ func (f *DocPDF) TransformSkewY(angleY, x, y float64) {
 // (skew to the bottom) to 90 degrees (skew to the top).
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformSkew(angleX, angleY, x, y float64) {
+func (f *TinyPDF) TransformSkew(angleX, angleY, x, y float64) {
 	if angleX <= -90 || angleX >= 90 || angleY <= -90 || angleY >= 90 {
 		f.err = Errf("skew values must be between -90° and 90°")
 		return
@@ -191,7 +192,7 @@ func (f *DocPDF) TransformSkew(angleX, angleY, x, y float64) {
 // Transform generally transforms the following text, drawings and images
 // according to the specified matrix. It is typically easier to use the various
 // methods such as TransformRotate() and TransformMirrorVertical() instead.
-func (f *DocPDF) Transform(tm TransformMatrix) {
+func (f *TinyPDF) Transform(tm TransformMatrix) {
 	if f.transformNest > 0 {
 		f.outf("%.5f %.5f %.5f %.5f %.5f %.5f cm",
 			tm.A, tm.B, tm.C, tm.D, tm.E, tm.F)
@@ -203,7 +204,7 @@ func (f *DocPDF) Transform(tm TransformMatrix) {
 // TransformEnd applies a transformation that was begun with a call to TransformBegin().
 //
 // The TransformBegin() example demonstrates this method.
-func (f *DocPDF) TransformEnd() {
+func (f *TinyPDF) TransformEnd() {
 	if f.transformNest > 0 {
 		f.transformNest--
 		f.out("Q")

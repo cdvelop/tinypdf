@@ -9,7 +9,7 @@ import (
 )
 
 // newTpl creates a template, copying graphics settings from a template if one is given
-func newTpl(corner PointType, size SizeType, orientationStr orientationType, unitType unit, fontsDirName FontsDirName, fn func(*Tpl), copyFrom *DocPDF) Template {
+func newTpl(corner PointType, size SizeType, orientationStr orientationType, unitType unit, fontsDirName FontsDirName, fn func(*Tpl), copyFrom *TinyPDF) Template {
 	pageSize := PageSize{Wd: size.Wd, Ht: size.Ht, AutoHt: false}
 
 	docpdf := New(unitType, orientationStr, pageSize, fontsDirName)
@@ -17,22 +17,22 @@ func newTpl(corner PointType, size SizeType, orientationStr orientationType, uni
 	if copyFrom != nil {
 		tpl.loadParamsFromFpdf(copyFrom)
 	}
-	tpl.DocPDF.AddPage()
+	tpl.TinyPDF.AddPage()
 	fn(&tpl)
 
-	bytes := make([][]byte, len(tpl.DocPDF.pages))
+	bytes := make([][]byte, len(tpl.TinyPDF.pages))
 	// skip the first page as it will always be empty
 	for x := 1; x < len(bytes); x++ {
-		bytes[x] = tpl.DocPDF.pages[x].Bytes()
+		bytes[x] = tpl.TinyPDF.pages[x].Bytes()
 	}
 
-	templates := make([]Template, 0, len(tpl.DocPDF.templates))
-	for _, key := range templateKeyList(tpl.DocPDF.templates, true) {
-		templates = append(templates, tpl.DocPDF.templates[key])
+	templates := make([]Template, 0, len(tpl.TinyPDF.templates))
+	for _, key := range templateKeyList(tpl.TinyPDF.templates, true) {
+		templates = append(templates, tpl.TinyPDF.templates[key])
 	}
-	images := tpl.DocPDF.images
+	images := tpl.TinyPDF.images
 
-	template := FpdfTpl{corner, size, bytes, images, templates, tpl.DocPDF.page}
+	template := FpdfTpl{corner, size, bytes, images, templates, tpl.TinyPDF.page}
 	return &template
 }
 
@@ -251,36 +251,36 @@ func (t *FpdfTpl) GobDecode(buf []byte) error {
 	return err
 }
 
-// Tpl is an DocPDF used for writing a template. It has most of the facilities of
-// an DocPDF, but cannot add more pages. Tpl is used directly only during the
+// Tpl is an TinyPDF used for writing a template. It has most of the facilities of
+// an TinyPDF, but cannot add more pages. Tpl is used directly only during the
 // limited time a template is writable.
 type Tpl struct {
-	DocPDF
+	TinyPDF
 }
 
-func (t *Tpl) loadParamsFromFpdf(f *DocPDF) {
-	t.DocPDF.compress = false
+func (t *Tpl) loadParamsFromFpdf(f *TinyPDF) {
+	t.TinyPDF.compress = false
 
-	t.DocPDF.k = f.k
-	t.DocPDF.x = f.x
-	t.DocPDF.y = f.y
-	t.DocPDF.lineWidth = f.lineWidth
-	t.DocPDF.capStyle = f.capStyle
-	t.DocPDF.joinStyle = f.joinStyle
+	t.TinyPDF.k = f.k
+	t.TinyPDF.x = f.x
+	t.TinyPDF.y = f.y
+	t.TinyPDF.lineWidth = f.lineWidth
+	t.TinyPDF.capStyle = f.capStyle
+	t.TinyPDF.joinStyle = f.joinStyle
 
-	t.DocPDF.color.draw = f.color.draw
-	t.DocPDF.color.fill = f.color.fill
-	t.DocPDF.color.text = f.color.text
+	t.TinyPDF.color.draw = f.color.draw
+	t.TinyPDF.color.fill = f.color.fill
+	t.TinyPDF.color.text = f.color.text
 
-	t.DocPDF.fonts = f.fonts
-	t.DocPDF.currentFont = f.currentFont
-	t.DocPDF.fontFamily = f.fontFamily
-	t.DocPDF.fontSize = f.fontSize
-	t.DocPDF.fontSizePt = f.fontSizePt
-	t.DocPDF.fontStyle = f.fontStyle
-	t.DocPDF.ws = f.ws
+	t.TinyPDF.fonts = f.fonts
+	t.TinyPDF.currentFont = f.currentFont
+	t.TinyPDF.fontFamily = f.fontFamily
+	t.TinyPDF.fontSize = f.fontSize
+	t.TinyPDF.fontSizePt = f.fontSizePt
+	t.TinyPDF.fontStyle = f.fontStyle
+	t.TinyPDF.ws = f.ws
 
 	for key, value := range f.images {
-		t.DocPDF.images[key] = value
+		t.TinyPDF.images[key] = value
 	}
 }

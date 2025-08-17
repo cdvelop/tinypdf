@@ -6,12 +6,12 @@ import (
 )
 
 // CreateTemplate defines a new template using the current page size.
-func (f *DocPDF) CreateTemplate(fn func(*Tpl)) Template {
+func (f *TinyPDF) CreateTemplate(fn func(*Tpl)) Template {
 	return newTpl(PointType{0, 0}, f.curPageSize.ToSizeType(), f.defOrientation, f.unitType, f.fontsDirName, fn, f)
 }
 
 // CreateTemplateCustom starts a template, using the given bounds.
-func (f *DocPDF) CreateTemplateCustom(corner PointType, size SizeType, fn func(*Tpl)) Template {
+func (f *TinyPDF) CreateTemplateCustom(corner PointType, size SizeType, fn func(*Tpl)) Template {
 	return newTpl(corner, size, f.defOrientation, f.unitType, f.fontsDirName, fn, f)
 }
 
@@ -38,7 +38,7 @@ func CreateTpl(corner PointType, size SizeType, orientationStr orientationType, 
 
 // UseTemplate adds a template to the current page or another template,
 // using the size and position at which it was originally written.
-func (f *DocPDF) UseTemplate(t Template) {
+func (f *TinyPDF) UseTemplate(t Template) {
 	if t == nil {
 		f.SetErrorf("template is nil")
 		return
@@ -49,7 +49,7 @@ func (f *DocPDF) UseTemplate(t Template) {
 
 // UseTemplateScaled adds a template to the current page or another template,
 // using the given page coordinates.
-func (f *DocPDF) UseTemplateScaled(t Template, corner PointType, size SizeType) {
+func (f *TinyPDF) UseTemplateScaled(t Template, corner PointType, size SizeType) {
 	if t == nil {
 		f.SetErrorf("template is nil")
 		return
@@ -109,7 +109,7 @@ type Template interface {
 	gob.GobEncoder
 }
 
-func (f *DocPDF) templateFontCatalog() {
+func (f *TinyPDF) templateFontCatalog() {
 	var keyList []string
 	var font fontDefType
 	var key string
@@ -128,7 +128,7 @@ func (f *DocPDF) templateFontCatalog() {
 }
 
 // putTemplates writes the templates to the PDF
-func (f *DocPDF) putTemplates() {
+func (f *TinyPDF) putTemplates() {
 	filter := ""
 	if f.compress {
 		filter = "/Filter /FlateDecode "

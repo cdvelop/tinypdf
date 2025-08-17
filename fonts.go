@@ -27,7 +27,7 @@ import (
 // jsonFileBytes contain all bytes of JSON file.
 //
 // zFileBytes contain all bytes of Z file.
-func (f *DocPDF) AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes []byte) {
+func (f *TinyPDF) AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes []byte) {
 	f.addFontFromBytes(fontFamilyEscape(familyStr), styleStr, jsonFileBytes, zFileBytes, nil)
 }
 
@@ -46,11 +46,11 @@ func (f *DocPDF) AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFi
 // jsonFileBytes contain all bytes of JSON file.
 //
 // zFileBytes contain all bytes of Z file.
-func (f *DocPDF) AddUTF8FontFromBytes(familyStr, styleStr string, utf8Bytes []byte) {
+func (f *TinyPDF) AddUTF8FontFromBytes(familyStr, styleStr string, utf8Bytes []byte) {
 	f.addFontFromBytes(fontFamilyEscape(familyStr), styleStr, nil, nil, utf8Bytes)
 }
 
-func (f *DocPDF) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes, utf8Bytes []byte) {
+func (f *TinyPDF) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes, utf8Bytes []byte) {
 	if f.err != nil {
 		return
 	}
@@ -181,7 +181,7 @@ func getFontKey(familyStr, styleStr string) string {
 // AddFontFromReader imports a TrueType, OpenType or Type1 font and makes it
 // available using a reader that satisifies the io.Reader interface. See
 // AddFont for details about familyStr and styleStr.
-func (f *DocPDF) AddFontFromReader(familyStr, styleStr string, r io.Reader) {
+func (f *TinyPDF) AddFontFromReader(familyStr, styleStr string, r io.Reader) {
 	if f.err != nil {
 		return
 	}
@@ -229,7 +229,7 @@ func (f *DocPDF) AddFontFromReader(familyStr, styleStr string, r io.Reader) {
 // current font descriptor will be returned.
 // See FontDescType for documentation about the font descriptor.
 // See AddFont for details about familyStr and styleStr.
-func (f *DocPDF) GetFontDesc(familyStr, styleStr string) FontDescType {
+func (f *TinyPDF) GetFontDesc(familyStr, styleStr string) FontDescType {
 	if familyStr == "" {
 		return f.currentFont.Desc
 	}
@@ -263,7 +263,7 @@ func (f *DocPDF) GetFontDesc(familyStr, styleStr string) FontDescType {
 // size is the font size measured in points. The default value is the current
 // size. If no size has been specified since the beginning of the document, the
 // value taken is 12.
-func (f *DocPDF) SetFont(familyStr, styleStr string, size float64) {
+func (f *TinyPDF) SetFont(familyStr, styleStr string, size float64) {
 	// dbg("SetFont x %.2f, lMargin %.2f", f.x, f.lMargin)
 
 	if f.err != nil {
@@ -343,12 +343,12 @@ func (f *DocPDF) SetFont(familyStr, styleStr string, size float64) {
 }
 
 // GetFontFamily returns the family of the current font. See SetFont() for details.
-func (f *DocPDF) GetFontFamily() string {
+func (f *TinyPDF) GetFontFamily() string {
 	return f.fontFamily
 }
 
 // GetFontStyle returns the style of the current font. See SetFont() for details.
-func (f *DocPDF) GetFontStyle() string {
+func (f *TinyPDF) GetFontStyle() string {
 	styleStr := f.fontStyle
 
 	if f.underline {
@@ -362,13 +362,13 @@ func (f *DocPDF) GetFontStyle() string {
 }
 
 // SetFontStyle sets the style of the current font. See also SetFont()
-func (f *DocPDF) SetFontStyle(styleStr string) {
+func (f *TinyPDF) SetFontStyle(styleStr string) {
 	f.SetFont(f.fontFamily, styleStr, f.fontSizePt)
 }
 
 // SetFontSize defines the size of the current font. Size is specified in
 // points (1/ 72 inch). See also SetFontUnitSize().
-func (f *DocPDF) SetFontSize(size float64) {
+func (f *TinyPDF) SetFontSize(size float64) {
 	f.fontSizePt = size
 	f.fontSize = size / f.k
 	if f.page > 0 {
@@ -378,7 +378,7 @@ func (f *DocPDF) SetFontSize(size float64) {
 
 // SetFontUnitSize defines the size of the current font. Size is specified in
 // the unit of measure specified in New(). See also SetFontSize().
-func (f *DocPDF) SetFontUnitSize(size float64) {
+func (f *TinyPDF) SetFontUnitSize(size float64) {
 	f.fontSizePt = size * f.k
 	f.fontSize = size
 	if f.page > 0 {
@@ -389,13 +389,13 @@ func (f *DocPDF) SetFontUnitSize(size float64) {
 // GetFontSize returns the size of the current font in points followed by the
 // size in the unit of measure specified in New(). The second value can be used
 // as a line height value in drawing operations.
-func (f *DocPDF) GetFontSize() (ptSize, unitSize float64) {
+func (f *TinyPDF) GetFontSize() (ptSize, unitSize float64) {
 	return f.fontSizePt, f.fontSize
 }
 
 // GetFontLoader returns the loader used to read font files (.json and .z) from
 // an arbitrary source.
-func (f *DocPDF) GetFontLoader() FontLoader {
+func (f *TinyPDF) GetFontLoader() FontLoader {
 	return f.fontLoader
 }
 
@@ -404,7 +404,7 @@ func (f *DocPDF) GetFontLoader() FontLoader {
 // the named font resources when AddFont() is called. If this operation fails,
 // an attempt is made to load the resources from the configured font directory
 // (see SetFontLocation()).
-func (f *DocPDF) SetFontLoader(loader FontLoader) {
+func (f *TinyPDF) SetFontLoader(loader FontLoader) {
 	f.fontLoader = loader
 }
 
@@ -428,7 +428,7 @@ func (f *DocPDF) SetFontLoader(loader FontLoader) {
 // fileStr specifies the base name with ".json" extension of the font
 // definition file to be added. The file will be loaded from the font directory
 // specified in the call to New() or SetFontLocation().
-func (f *DocPDF) AddFont(familyStr, styleStr, fileStr string) {
+func (f *TinyPDF) AddFont(familyStr, styleStr, fileStr string) {
 	f.addFont(fontFamilyEscape(familyStr), styleStr, fileStr, false)
 }
 
@@ -452,11 +452,11 @@ func (f *DocPDF) AddFont(familyStr, styleStr, fileStr string) {
 // fileStr specifies the base name with ".json" extension of the font
 // definition file to be added. The file will be loaded from the font directory
 // specified in the call to New() or SetFontLocation().
-func (f *DocPDF) AddUTF8Font(familyStr, styleStr, fileStr string) {
+func (f *TinyPDF) AddUTF8Font(familyStr, styleStr, fileStr string) {
 	f.addFont(fontFamilyEscape(familyStr), styleStr, fileStr, true)
 }
 
-func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
+func (f *TinyPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 	if fileStr == "" {
 		if isUTF8 {
 			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).ToLower().String() + ".ttf"
@@ -565,17 +565,17 @@ func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 
 // GetFontLocation returns the location in the file system of the font and font
 // definition files.
-func (f *DocPDF) GetFontLocation() string {
+func (f *TinyPDF) GetFontLocation() string {
 	return f.fontsPath
 }
 
 // SetFontLocation sets the location in the file system of the font and font
 // definition files.
-func (f *DocPDF) SetFontLocation(fontDirStr string) {
+func (f *TinyPDF) SetFontLocation(fontDirStr string) {
 	f.fontsPath = fontDirStr
 }
 
-func (f *DocPDF) loadFontFile(name string) ([]byte, error) {
+func (f *TinyPDF) loadFontFile(name string) ([]byte, error) {
 	if f.fontLoader != nil {
 		reader, err := f.fontLoader.Open(name)
 		if err == nil {
@@ -593,7 +593,7 @@ func isAbsolutePath(p string) bool {
 	return filepath.IsAbs(p)
 }
 
-func (f *DocPDF) putfonts() {
+func (f *TinyPDF) putfonts() {
 	if f.err != nil {
 		return
 	}
@@ -817,7 +817,7 @@ func (f *DocPDF) putfonts() {
 	}
 }
 
-func (f *DocPDF) generateCIDFontMap(font *fontDefType, LastRune int) {
+func (f *TinyPDF) generateCIDFontMap(font *fontDefType, LastRune int) {
 	rangeID := 0
 	cidArray := make(map[int]*untypedKeyMap)
 	cidArrayKeys := make([]int, 0)
@@ -935,7 +935,7 @@ func (f *DocPDF) generateCIDFontMap(font *fontDefType, LastRune int) {
 }
 
 // Load a font definition file from the given Reader
-func (f *DocPDF) loadfont(r io.Reader) (def fontDefType) {
+func (f *TinyPDF) loadfont(r io.Reader) (def fontDefType) {
 	if f.err != nil {
 		return
 	}

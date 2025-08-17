@@ -12,7 +12,7 @@ package tinypdf
 // precedence over linkStr.
 //
 // The SubWrite example demonstrates this method.
-func (f *DocPDF) SubWrite(ht float64, str string, subFontSize, subOffset float64, link int, linkStr string) {
+func (f *TinyPDF) SubWrite(ht float64, str string, subFontSize, subOffset float64, link int, linkStr string) {
 	if f.err != nil {
 		return
 	}

@@ -13,7 +13,7 @@ import (
 // cell margin. To account for this, you may need to either add the value
 // returned by GetCellMargin() to it or call SetCellMargin(0) to remove the
 // cell margin.
-func (f *DocPDF) GetXY() (float64, float64) {
+func (f *TinyPDF) GetXY() (float64, float64) {
 	return f.x, f.y
 }
 
@@ -22,13 +22,13 @@ func (f *DocPDF) GetXY() (float64, float64) {
 // Note: the value returned will be affected by the current cell margin. To
 // account for this, you may need to either add the value returned by
 // GetCellMargin() to it or call SetCellMargin(0) to remove the cell margin.
-func (f *DocPDF) GetX() float64 {
+func (f *TinyPDF) GetX() float64 {
 	return f.x
 }
 
 // SetX defines the abscissa of the current position. If the passed value is
 // negative, it is relative to the right of the page.
-func (f *DocPDF) SetX(x float64) {
+func (f *TinyPDF) SetX(x float64) {
 	if x >= 0 {
 		f.x = x
 	} else {
@@ -37,14 +37,14 @@ func (f *DocPDF) SetX(x float64) {
 }
 
 // GetY returns the ordinate of the current position.
-func (f *DocPDF) GetY() float64 {
+func (f *TinyPDF) GetY() float64 {
 	return f.y
 }
 
 // SetY moves the current abscissa back to the left margin and sets the
 // ordinate. If the passed value is negative, it is relative to the bottom of
 // the page.
-func (f *DocPDF) SetY(y float64) {
+func (f *TinyPDF) SetY(y float64) {
 	// dbg("SetY x %.2f, lMargin %.2f", f.x, f.lMargin)
 	f.x = f.lMargin
 	if y >= 0 {
@@ -57,7 +57,7 @@ func (f *DocPDF) SetY(y float64) {
 // SetXY defines the abscissa and ordinate of the current position. If the
 // passed values are negative, they are relative respectively to the right and
 // bottom of the page.
-func (f *DocPDF) SetXY(x, y float64) {
+func (f *TinyPDF) SetXY(x, y float64) {
 	f.SetY(y)
 	f.SetX(x)
 }
@@ -66,11 +66,11 @@ func (f *DocPDF) SetXY(x, y float64) {
 // rectangles and cell borders). It is expressed in RGB components (0 - 255).
 // The method can be called before the first page is created. The value is
 // retained from page to page.
-func (f *DocPDF) SetDrawColor(r, g, b int) {
+func (f *TinyPDF) SetDrawColor(r, g, b int) {
 	f.setDrawColor(r, g, b)
 }
 
-func (f *DocPDF) setDrawColor(r, g, b int) {
+func (f *TinyPDF) setDrawColor(r, g, b int) {
 	f.color.draw = f.rgbColorValue(r, g, b, "G", "RG")
 	if f.page > 0 {
 		f.out(f.color.draw.str)
@@ -80,7 +80,7 @@ func (f *DocPDF) setDrawColor(r, g, b int) {
 // GetDrawColor returns the most recently set draw color as RGB components (0 -
 // 255). This will not be the current value if a draw color of some other type
 // (for example, spot) has been more recently set.
-func (f *DocPDF) GetDrawColor() (int, int, int) {
+func (f *TinyPDF) GetDrawColor() (int, int, int) {
 	return f.color.draw.ir, f.color.draw.ig, f.color.draw.ib
 }
 
@@ -88,11 +88,11 @@ func (f *DocPDF) GetDrawColor() (int, int, int) {
 // rectangles and cell backgrounds). It is expressed in RGB components (0
 // -255). The method can be called before the first page is created and the
 // value is retained from page to page.
-func (f *DocPDF) SetFillColor(r, g, b int) {
+func (f *TinyPDF) SetFillColor(r, g, b int) {
 	f.setFillColor(r, g, b)
 }
 
-func (f *DocPDF) setFillColor(r, g, b int) {
+func (f *TinyPDF) setFillColor(r, g, b int) {
 	f.color.fill = f.rgbColorValue(r, g, b, "g", "rg")
 	f.colorFlag = f.color.fill.str != f.color.text.str
 	if f.page > 0 {
@@ -103,18 +103,18 @@ func (f *DocPDF) setFillColor(r, g, b int) {
 // GetFillColor returns the most recently set fill color as RGB components (0 -
 // 255). This will not be the current value if a fill color of some other type
 // (for example, spot) has been more recently set.
-func (f *DocPDF) GetFillColor() (int, int, int) {
+func (f *TinyPDF) GetFillColor() (int, int, int) {
 	return f.color.fill.ir, f.color.fill.ig, f.color.fill.ib
 }
 
 // SetTextColor defines the color used for text. It is expressed in RGB
 // components (0 - 255). The method can be called before the first page is
 // created. The value is retained from page to page.
-func (f *DocPDF) SetTextColor(r, g, b int) {
+func (f *TinyPDF) SetTextColor(r, g, b int) {
 	f.setTextColor(r, g, b)
 }
 
-func (f *DocPDF) setTextColor(r, g, b int) {
+func (f *TinyPDF) setTextColor(r, g, b int) {
 	f.color.text = f.rgbColorValue(r, g, b, "g", "rg")
 	f.colorFlag = f.color.fill.str != f.color.text.str
 }
@@ -122,13 +122,13 @@ func (f *DocPDF) setTextColor(r, g, b int) {
 // GetTextColor returns the most recently set text color as RGB components (0 -
 // 255). This will not be the current value if a text color of some other type
 // (for example, spot) has been more recently set.
-func (f *DocPDF) GetTextColor() (int, int, int) {
+func (f *TinyPDF) GetTextColor() (int, int, int) {
 	return f.color.text.ir, f.color.text.ig, f.color.text.ib
 }
 
 // GetStringWidth returns the length of a string in user units. A font must be
 // currently selected.
-func (f *DocPDF) GetStringWidth(s string) float64 {
+func (f *TinyPDF) GetStringWidth(s string) float64 {
 	if f.err != nil {
 		return 0
 	}
@@ -138,7 +138,7 @@ func (f *DocPDF) GetStringWidth(s string) float64 {
 
 // GetStringSymbolWidth returns the length of a string in glyf units. A font must be
 // currently selected.
-func (f *DocPDF) GetStringSymbolWidth(s string) int {
+func (f *TinyPDF) GetStringSymbolWidth(s string) int {
 	if f.err != nil {
 		return 0
 	}
@@ -170,11 +170,11 @@ func (f *DocPDF) GetStringSymbolWidth(s string) int {
 // SetLineWidth defines the line width. By default, the value equals 0.2 mm.
 // The method can be called before the first page is created. The value is
 // retained from page to page.
-func (f *DocPDF) SetLineWidth(width float64) {
+func (f *TinyPDF) SetLineWidth(width float64) {
 	f.setLineWidth(width)
 }
 
-func (f *DocPDF) setLineWidth(width float64) {
+func (f *TinyPDF) setLineWidth(width float64) {
 	f.lineWidth = width
 	if f.page > 0 {
 		f.out(f.fmtF64(width*f.k, 2) + " w")
@@ -182,12 +182,12 @@ func (f *DocPDF) setLineWidth(width float64) {
 }
 
 // GetLineWidth returns the current line thickness.
-func (f *DocPDF) GetLineWidth() float64 {
+func (f *TinyPDF) GetLineWidth() float64 {
 	return f.lineWidth
 }
 
 // GetLineCapStyle returns the current line cap style.
-func (f *DocPDF) GetLineCapStyle() string {
+func (f *TinyPDF) GetLineCapStyle() string {
 	switch f.capStyle {
 	case 1:
 		return "round"
@@ -202,7 +202,7 @@ func (f *DocPDF) GetLineCapStyle() string {
 // "round" or "square". A square style projects from the end of the line. The
 // method can be called before the first page is created. The value is
 // retained from page to page.
-func (f *DocPDF) SetLineCapStyle(styleStr string) {
+func (f *TinyPDF) SetLineCapStyle(styleStr string) {
 	var capStyle int
 	switch styleStr {
 	case "round":
@@ -219,7 +219,7 @@ func (f *DocPDF) SetLineCapStyle(styleStr string) {
 }
 
 // GetLineJoinStyle returns the current line join style.
-func (f *DocPDF) GetLineJoinStyle() string {
+func (f *TinyPDF) GetLineJoinStyle() string {
 	switch f.joinStyle {
 	case 1:
 		return "round"
@@ -233,7 +233,7 @@ func (f *DocPDF) GetLineJoinStyle() string {
 // SetLineJoinStyle defines the line cap style. styleStr should be "miter",
 // "round" or "bevel". The method can be called before the first page
 // is created. The value is retained from page to page.
-func (f *DocPDF) SetLineJoinStyle(styleStr string) {
+func (f *TinyPDF) SetLineJoinStyle(styleStr string) {
 	var joinStyle int
 	switch styleStr {
 	case "round":
@@ -258,10 +258,10 @@ func (f *DocPDF) SetLineJoinStyle(styleStr string) {
 // Create a "path" by moving a virtual stylus around the page (with
 // MoveTo, LineTo, CurveTo, CurveBezierCubicTo, ArcTo & ClosePath)
 // then draw it or  fill it in (with DrawPath). The main advantage of
-// using the path drawing routines rather than multiple DocPDF.Line is
+// using the path drawing routines rather than multiple TinyPDF.Line is
 // that PDF creates nice line joins at the angles, rather than just
 // overlaying the lines.
-func (f *DocPDF) MoveTo(x, y float64) {
+func (f *TinyPDF) MoveTo(x, y float64) {
 	f.point(x, y)
 	f.x, f.y = x, y
 }
@@ -271,7 +271,7 @@ func (f *DocPDF) MoveTo(x, y float64) {
 // the path; it does not actually draw the line on the page.
 //
 // The MoveTo() example demonstrates this method.
-func (f *DocPDF) LineTo(x, y float64) {
+func (f *TinyPDF) LineTo(x, y float64) {
 	// f.outf("%.2f %.2f l", x*f.k, (f.h-y)*f.k)
 	const prec = 2
 	f.putF64(x*f.k, prec)
@@ -291,7 +291,7 @@ func (f *DocPDF) LineTo(x, y float64) {
 // the end point and the control point.
 //
 // The MoveTo() example demonstrates this method.
-func (f *DocPDF) CurveTo(cx, cy, x, y float64) {
+func (f *TinyPDF) CurveTo(cx, cy, x, y float64) {
 	// f.outf("%.5f %.5f %.5f %.5f v", cx*f.k, (f.h-cy)*f.k, x*f.k, (f.h-y)*f.k)
 	const prec = 5
 	f.putF64(cx*f.k, prec)
@@ -314,7 +314,7 @@ func (f *DocPDF) CurveTo(cx, cy, x, y float64) {
 // control point (cx1, cy1).
 //
 // The MoveTo() example demonstrates this method.
-func (f *DocPDF) CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64) {
+func (f *TinyPDF) CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64) {
 	f.curve(cx0, cy0, cx1, cy1, x, y)
 	f.x, f.y = x, y
 }
@@ -324,7 +324,7 @@ func (f *DocPDF) CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64) {
 // join nicely.
 //
 // The MoveTo() example demonstrates this method.
-func (f *DocPDF) ClosePath() {
+func (f *TinyPDF) ClosePath() {
 	f.outf("h")
 }
 
@@ -346,7 +346,7 @@ func (f *DocPDF) ClosePath() {
 // path. Filling uses the current fill color.
 //
 // The MoveTo() example demonstrates this method.
-func (f *DocPDF) DrawPath(styleStr string) {
+func (f *TinyPDF) DrawPath(styleStr string) {
 	f.outf("%s", fillDrawOp(styleStr))
 }
 
@@ -365,11 +365,11 @@ func (f *DocPDF) DrawPath(styleStr string) {
 // path. Filling uses the current fill color.
 //
 // The MoveTo() example demonstrates this method.
-func (f *DocPDF) ArcTo(x, y, rx, ry, degRotate, degStart, degEnd float64) {
+func (f *TinyPDF) ArcTo(x, y, rx, ry, degRotate, degStart, degEnd float64) {
 	f.arc(x, y, rx, ry, degRotate, degStart, degEnd, "", true)
 }
 
-func (f *DocPDF) arc(x, y, rx, ry, degRotate, degStart, degEnd float64,
+func (f *TinyPDF) arc(x, y, rx, ry, degRotate, degStart, degEnd float64,
 	styleStr string, path bool) {
 	x *= f.k
 	y = (f.h - y) * f.k
@@ -457,7 +457,7 @@ func (f *DocPDF) arc(x, y, rx, ry, degRotate, degStart, degEnd float64,
 // first character at the baseline. This method permits a string to be placed
 // precisely on the page, but it is usually easier to use Cell(), MultiCell()
 // or Write() which are the standard methods to print text.
-func (f *DocPDF) Text(x, y float64, txtStr string) {
+func (f *TinyPDF) Text(x, y float64, txtStr string) {
 	var txt2 string
 	if f.isCurrentUTF8 {
 		if f.isRTL {
@@ -486,7 +486,7 @@ func (f *DocPDF) Text(x, y float64, txtStr string) {
 
 // Line draws a line between points (x1, y1) and (x2, y2) using the current
 // draw color, line width and cap style.
-func (f *DocPDF) Line(x1, y1, x2, y2 float64) {
+func (f *TinyPDF) Line(x1, y1, x2, y2 float64) {
 	// f.outf("%.2f %.2f m %.2f %.2f l S", x1*f.k, (f.h-y1)*f.k, x2*f.k, (f.h-y2)*f.k)
 	const prec = 2
 	f.putF64(x1*f.k, prec)
@@ -531,7 +531,7 @@ func fillDrawOp(styleStr string) (opStr string) {
 // filled. An empty string will be replaced with "D". Drawing uses the current
 // draw color and line width centered on the rectangle's perimeter. Filling
 // uses the current fill color.
-func (f *DocPDF) Rect(x, y, w, h float64, styleStr string) {
+func (f *TinyPDF) Rect(x, y, w, h float64, styleStr string) {
 	// f.outf("%.2f %.2f %.2f %.2f re %s", x*f.k, (f.h-y)*f.k, w*f.k, -h*f.k, fillDrawOp(styleStr))
 	const prec = 2
 	f.putF64(x*f.k, prec)
@@ -554,7 +554,7 @@ func (f *DocPDF) Rect(x, y, w, h float64, styleStr string) {
 // string that includes "1" to round the upper left corner, "2" to round the
 // upper right corner, "3" to round the lower right corner, and "4" to round
 // the lower left corner. The RoundedRect example demonstrates this method.
-func (f *DocPDF) RoundedRect(x, y, w, h, r float64, corners string, stylestr string) {
+func (f *TinyPDF) RoundedRect(x, y, w, h, r float64, corners string, stylestr string) {
 	// This routine was adapted by Brigham Thompson from a script by Christophe Prugnaud
 	var rTL, rTR, rBR, rBL float64 // zero means no rounded corner
 	if Contains(corners, "1") {
@@ -576,7 +576,7 @@ func (f *DocPDF) RoundedRect(x, y, w, h, r float64, corners string, stylestr str
 // radius for each corner. A zero radius means squared corner. See
 // RoundedRect() for more details. This method is demonstrated in the
 // RoundedRect() example.
-func (f *DocPDF) RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, stylestr string) {
+func (f *TinyPDF) RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, stylestr string) {
 	f.roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL)
 	f.out(fillDrawOp(stylestr))
 	f.out("Q")
@@ -588,7 +588,7 @@ func (f *DocPDF) RoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, stylestr
 // outlined and filled. An empty string will be replaced with "D". Drawing uses
 // the current draw color and line width centered on the circle's perimeter.
 // Filling uses the current fill color.
-func (f *DocPDF) Circle(x, y, r float64, styleStr string) {
+func (f *TinyPDF) Circle(x, y, r float64, styleStr string) {
 	f.Ellipse(x, y, r, r, 0, styleStr)
 }
 
@@ -604,7 +604,7 @@ func (f *DocPDF) Circle(x, y, r float64, styleStr string) {
 // Filling uses the current fill color.
 //
 // The Circle() example demonstrates this method.
-func (f *DocPDF) Ellipse(x, y, rx, ry, degRotate float64, styleStr string) {
+func (f *TinyPDF) Ellipse(x, y, rx, ry, degRotate float64, styleStr string) {
 	f.arc(x, y, rx, ry, degRotate, 0, 360, styleStr, false)
 }
 
@@ -617,7 +617,7 @@ func (f *DocPDF) Ellipse(x, y, rx, ry, degRotate float64, styleStr string) {
 // outlined and filled. An empty string will be replaced with "D". Drawing uses
 // the current draw color and line width centered on the ellipse's perimeter.
 // Filling uses the current fill color.
-func (f *DocPDF) Polygon(points []PointType, styleStr string) {
+func (f *TinyPDF) Polygon(points []PointType, styleStr string) {
 	if len(points) > 2 {
 		const prec = 5
 		for j, pt := range points {
@@ -651,7 +651,7 @@ func (f *DocPDF) Polygon(points []PointType, styleStr string) {
 // outlined and filled. An empty string will be replaced with "D". Drawing uses
 // the current draw color and line width centered on the ellipse's perimeter.
 // Filling uses the current fill color.
-func (f *DocPDF) Beziergon(points []PointType, styleStr string) {
+func (f *TinyPDF) Beziergon(points []PointType, styleStr string) {
 
 	// Thanks, Robert Lillack, for contributing this function.
 
@@ -673,7 +673,7 @@ func (f *DocPDF) Beziergon(points []PointType, styleStr string) {
 }
 
 // point outputs current point
-func (f *DocPDF) point(x, y float64) {
+func (f *TinyPDF) point(x, y float64) {
 	// f.outf("%.2f %.2f m", x*f.k, (f.h-y)*f.k)
 	f.putF64(x*f.k, 2)
 	f.put(" ")
@@ -682,7 +682,7 @@ func (f *DocPDF) point(x, y float64) {
 }
 
 // curve outputs a single cubic Bézier curve segment from current point
-func (f *DocPDF) curve(cx0, cy0, cx1, cy1, x, y float64) {
+func (f *TinyPDF) curve(cx0, cy0, cx1, cy1, x, y float64) {
 	// Thanks, Robert Lillack, for straightening this out
 	// f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c", cx0*f.k, (f.h-cy0)*f.k, cx1*f.k,
 	// 	(f.h-cy1)*f.k, x*f.k, (f.h-y)*f.k)
@@ -714,7 +714,7 @@ func (f *DocPDF) curve(cx0, cy0, cx1, cy1, x, y float64) {
 // path. Filling uses the current fill color.
 //
 // The Circle() example demonstrates this method.
-func (f *DocPDF) Curve(x0, y0, cx, cy, x1, y1 float64, styleStr string) {
+func (f *TinyPDF) Curve(x0, y0, cx, cy, x1, y1 float64, styleStr string) {
 	f.point(x0, y0)
 	// f.outf("%.5f %.5f %.5f %.5f v %s", cx*f.k, (f.h-cy)*f.k, x1*f.k, (f.h-y1)*f.k,
 	// 	fillDrawOp(styleStr))
@@ -732,7 +732,7 @@ func (f *DocPDF) Curve(x0, y0, cx, cy, x1, y1 float64, styleStr string) {
 // CurveCubic draws a single-segment cubic Bézier curve. This routine performs
 // the same function as CurveBezierCubic() but has a nonstandard argument order.
 // It is retained to preserve backward compatibility.
-func (f *DocPDF) CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr string) {
+func (f *TinyPDF) CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr string) {
 	// f.point(x0, y0)
 	// f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c %s", cx0*f.k, (f.h-cy0)*f.k,
 	// cx1*f.k, (f.h-cy1)*f.k, x1*f.k, (f.h-y1)*f.k, fillDrawOp(styleStr))
@@ -755,7 +755,7 @@ func (f *DocPDF) CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr
 // argument order.
 //
 // The Circle() example demonstrates this method.
-func (f *DocPDF) CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, styleStr string) {
+func (f *TinyPDF) CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, styleStr string) {
 	f.point(x0, y0)
 	//	f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c %s", cx0*f.k, (f.h-cy0)*f.k,
 	//		cx1*f.k, (f.h-cy1)*f.k, x1*f.k, (f.h-y1)*f.k, fillDrawOp(styleStr))
@@ -788,14 +788,14 @@ func (f *DocPDF) CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, st
 // path. Filling uses the current fill color.
 //
 // The Circle() example demonstrates this method.
-func (f *DocPDF) Arc(x, y, rx, ry, degRotate, degStart, degEnd float64, styleStr string) {
+func (f *TinyPDF) Arc(x, y, rx, ry, degRotate, degStart, degEnd float64, styleStr string) {
 	f.arc(x, y, rx, ry, degRotate, degStart, degEnd, styleStr, false)
 }
 
 // GetAlpha returns the alpha blending channel, which consists of the
 // alpha transparency value and the blend mode. See SetAlpha for more
 // details.
-func (f *DocPDF) GetAlpha() (alpha float64, blendModeStr string) {
+func (f *TinyPDF) GetAlpha() (alpha float64, blendModeStr string) {
 	return f.alpha, f.blendMode
 }
 
@@ -812,7 +812,7 @@ func (f *DocPDF) GetAlpha() (alpha float64, blendModeStr string) {
 //
 // To reset normal rendering after applying a blending mode, call this method
 // with alpha set to 1.0 and blendModeStr set to "Normal".
-func (f *DocPDF) SetAlpha(alpha float64, blendModeStr string) {
+func (f *TinyPDF) SetAlpha(alpha float64, blendModeStr string) {
 	if f.err != nil {
 		return
 	}
@@ -848,7 +848,7 @@ func (f *DocPDF) SetAlpha(alpha float64, blendModeStr string) {
 	f.outf("/GS%d gs", pos)
 }
 
-func (f *DocPDF) gradientClipStart(x, y, w, h float64) {
+func (f *TinyPDF) gradientClipStart(x, y, w, h float64) {
 	{
 		const prec = 2
 		// Save current graphic state and set clipping area
@@ -878,12 +878,12 @@ func (f *DocPDF) gradientClipStart(x, y, w, h float64) {
 	}
 }
 
-func (f *DocPDF) gradientClipEnd() {
+func (f *TinyPDF) gradientClipEnd() {
 	// Restore previous graphic state
 	f.out("Q")
 }
 
-func (f *DocPDF) gradient(tp, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
+func (f *TinyPDF) gradient(tp, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
 	pos := len(f.gradientList)
 	clr1 := f.rgbColorValue(r1, g1, b1, "", "")
 	clr2 := f.rgbColorValue(r2, g2, b2, "", "")
@@ -908,7 +908,7 @@ func (f *DocPDF) gradient(tp, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r floa
 // anchored on the rectangle edge. Color 1 is used up to the origin of the
 // vector and color 2 is used beyond the vector's end point. Between the points
 // the colors are gradually blended.
-func (f *DocPDF) LinearGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2 float64) {
+func (f *TinyPDF) LinearGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2 float64) {
 	f.gradientClipStart(x, y, w, h)
 	f.gradient(2, r1, g1, b1, r2, g2, b2, x1, y1, x2, y2, 0)
 	f.gradientClipEnd()
@@ -932,7 +932,7 @@ func (f *DocPDF) LinearGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, 
 // the circle to avoid rendering problems.
 //
 // The LinearGradient() example demonstrates this method.
-func (f *DocPDF) RadialGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
+func (f *TinyPDF) RadialGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, x1, y1, x2, y2, r float64) {
 	f.gradientClipStart(x, y, w, h)
 	f.gradient(3, r1, g1, b1, r2, g2, b2, x1, y1, x2, y2, r)
 	f.gradientClipEnd()
@@ -947,7 +947,7 @@ func (f *DocPDF) RadialGradient(x, y, w, h float64, r1, g1, b1, r2, g2, b2 int, 
 // Call ClipEnd() to restore unclipped operations.
 //
 // This ClipText() example demonstrates this method.
-func (f *DocPDF) ClipRect(x, y, w, h float64, outline bool) {
+func (f *TinyPDF) ClipRect(x, y, w, h float64, outline bool) {
 	f.clipNest++
 	// f.outf("q %.2f %.2f %.2f %.2f re W %s", x*f.k, (f.h-y)*f.k, w*f.k, -h*f.k, strIf(outline, "S", "n"))
 	const prec = 2
@@ -970,7 +970,7 @@ func (f *DocPDF) ClipRect(x, y, w, h float64, outline bool) {
 // will be shown. After calling this method, all rendering operations (for
 // example, Image(), LinearGradient(), etc) will be clipped. Call ClipEnd() to
 // restore unclipped operations.
-func (f *DocPDF) ClipText(x, y float64, txtStr string, outline bool) {
+func (f *TinyPDF) ClipText(x, y float64, txtStr string, outline bool) {
 	f.clipNest++
 	// f.outf("q BT %.5f %.5f Td %d Tr (%s) Tj ET", x*f.k, (f.h-y)*f.k, intIf(outline, 5, 7), f.escape(txtStr))
 	const prec = 5
@@ -985,7 +985,7 @@ func (f *DocPDF) ClipText(x, y float64, txtStr string, outline bool) {
 	f.put(") Tj ET\n")
 }
 
-func (f *DocPDF) clipArc(x1, y1, x2, y2, x3, y3 float64) {
+func (f *TinyPDF) clipArc(x1, y1, x2, y2, x3, y3 float64) {
 	h := f.h
 	// f.outf("%.5f %.5f %.5f %.5f %.5f %.5f c ", x1*f.k, (h-y1)*f.k,
 	// 	x2*f.k, (h-y2)*f.k, x3*f.k, (h-y3)*f.k)
@@ -1014,7 +1014,7 @@ func (f *DocPDF) clipArc(x1, y1, x2, y2, x3, y3 float64) {
 // ClipEnd() to restore unclipped operations.
 //
 // This ClipText() example demonstrates this method.
-func (f *DocPDF) ClipRoundedRect(x, y, w, h, r float64, outline bool) {
+func (f *TinyPDF) ClipRoundedRect(x, y, w, h, r float64, outline bool) {
 	f.ClipRoundedRectExt(x, y, w, h, r, r, r, r, outline)
 }
 
@@ -1022,7 +1022,7 @@ func (f *DocPDF) ClipRoundedRect(x, y, w, h, r float64, outline bool) {
 // different radius for each corner, given by rTL (top-left), rTR (top-right)
 // rBR (bottom-right), rBL (bottom-left). See ClipRoundedRect() for more
 // details. This method is demonstrated in the ClipText() example.
-func (f *DocPDF) ClipRoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, outline bool) {
+func (f *TinyPDF) ClipRoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, outline bool) {
 	f.clipNest++
 	f.roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL)
 	f.outf(" W %s", strIf(outline, "S", "n"))
@@ -1031,7 +1031,7 @@ func (f *DocPDF) ClipRoundedRectExt(x, y, w, h, rTL, rTR, rBR, rBL float64, outl
 // add a rectangle path with rounded corners.
 // routine shared by RoundedRect() and ClipRoundedRect(), which add the
 // drawing operation
-func (f *DocPDF) roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL float64) {
+func (f *TinyPDF) roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL float64) {
 	k := f.k
 	hp := f.h
 	myArc := (4.0 / 3.0) * (math.Sqrt2 - 1.0)
@@ -1093,7 +1093,7 @@ func (f *DocPDF) roundedRectPath(x, y, w, h, rTL, rTR, rBR, rBL float64) {
 // Call ClipEnd() to restore unclipped operations.
 //
 // This ClipText() example demonstrates this method.
-func (f *DocPDF) ClipEllipse(x, y, rx, ry float64, outline bool) {
+func (f *TinyPDF) ClipEllipse(x, y, rx, ry float64, outline bool) {
 	f.clipNest++
 	lx := (4.0 / 3.0) * rx * (math.Sqrt2 - 1)
 	ly := (4.0 / 3.0) * ry * (math.Sqrt2 - 1)
@@ -1184,7 +1184,7 @@ func (f *DocPDF) ClipEllipse(x, y, rx, ry float64, outline bool) {
 // the specified circle. Call ClipEnd() to restore unclipped operations.
 //
 // The ClipText() example demonstrates this method.
-func (f *DocPDF) ClipCircle(x, y, r float64, outline bool) {
+func (f *TinyPDF) ClipCircle(x, y, r float64, outline bool) {
 	f.ClipEllipse(x, y, r, r, outline)
 }
 
@@ -1199,7 +1199,7 @@ func (f *DocPDF) ClipCircle(x, y, r float64, outline bool) {
 // ClipEnd() to restore unclipped operations.
 //
 // The ClipText() example demonstrates this method.
-func (f *DocPDF) ClipPolygon(points []PointType, outline bool) {
+func (f *TinyPDF) ClipPolygon(points []PointType, outline bool) {
 	f.clipNest++
 	var s fmtBuffer
 	h := f.h
@@ -1218,7 +1218,7 @@ func (f *DocPDF) ClipPolygon(points []PointType, outline bool) {
 // successfully output while a clipping operation is active.
 //
 // The ClipText() example demonstrates this method.
-func (f *DocPDF) ClipEnd() {
+func (f *TinyPDF) ClipEnd() {
 	if f.err == nil {
 		if f.clipNest > 0 {
 			f.clipNest--
@@ -1237,7 +1237,7 @@ func (f *DocPDF) ClipEnd() {
 // array to restore solid line drawing.
 //
 // The Beziergon() example demonstrates this method.
-func (f *DocPDF) SetDashPattern(dashArray []float64, dashPhase float64) {
+func (f *TinyPDF) SetDashPattern(dashArray []float64, dashPhase float64) {
 	scaled := make([]float64, len(dashArray))
 	for i, value := range dashArray {
 		scaled[i] = value * f.k
@@ -1252,7 +1252,7 @@ func (f *DocPDF) SetDashPattern(dashArray []float64, dashPhase float64) {
 
 }
 
-func (f *DocPDF) outputDashPattern() {
+func (f *TinyPDF) outputDashPattern() {
 	var buf bytes.Buffer
 	buf.WriteByte('[')
 	for i, value := range f.dashArray {

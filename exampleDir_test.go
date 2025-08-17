@@ -25,7 +25,7 @@ func init() {
 }
 
 // default docpdf init for testing
-func NewDocPdfTest(options ...any) *tinypdf.DocPDF {
+func NewDocPdfTest(options ...any) *tinypdf.TinyPDF {
 
 	// add root directory to the options
 	options = append(options, rootTestDir)

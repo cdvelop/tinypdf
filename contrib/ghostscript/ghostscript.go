@@ -26,7 +26,7 @@ func report(fileStr string, err error) {
 	}
 }
 
-func newPdf() (pdf *tinypdf.DocPDF) {
+func newPdf() (pdf *tinypdf.TinyPDF) {
 	pdf = tinypdf.New("mm", "A4", "../../font")
 	pdf.SetCompression(false)
 	pdf.AddFont("Calligrapher", "", "calligra.json")

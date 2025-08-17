@@ -323,37 +323,37 @@ func (info *ImageInfoType) GobDecode(buf []byte) (err error) {
 
 // PointConvert returns the value of pt, expressed in points (1/72 inch), as a
 // value expressed in the unit of measure specified in New(). Since font
-// management in DocPDF uses points, this method can help with line height
+// management in TinyPDF uses points, this method can help with line height
 // calculations and other methods that require user units.
-func (f *DocPDF) PointConvert(pt float64) (u float64) {
+func (f *TinyPDF) PointConvert(pt float64) (u float64) {
 	return pt / f.k
 }
 
 // PointToUnitConvert is an alias for PointConvert.
-func (f *DocPDF) PointToUnitConvert(pt float64) (u float64) {
+func (f *TinyPDF) PointToUnitConvert(pt float64) (u float64) {
 	return pt / f.k
 }
 
 // UnitToPointConvert returns the value of u, expressed in the unit of measure
 // specified in New(), as a value expressed in points (1/72 inch). Since font
-// management in DocPDF uses points, this method can help with setting font sizes
+// management in TinyPDF uses points, this method can help with setting font sizes
 // based on the sizes of other non-font page elements.
-func (f *DocPDF) UnitToPointConvert(u float64) (pt float64) {
+func (f *TinyPDF) UnitToPointConvert(u float64) (pt float64) {
 	return u * f.k
 }
 
-// Extent returns the width and height of the image in the units of the DocPDF
+// Extent returns the width and height of the image in the units of the TinyPDF
 // object.
 func (info *ImageInfoType) Extent() (wd, ht float64) {
 	return info.Width(), info.Height()
 }
 
-// Width returns the width of the image in the units of the DocPDF object.
+// Width returns the width of the image in the units of the TinyPDF object.
 func (info *ImageInfoType) Width() float64 {
 	return info.w / (info.scale * info.dpi / 72)
 }
 
-// Height returns the height of the image in the units of the DocPDF object.
+// Height returns the height of the image in the units of the TinyPDF object.
 func (info *ImageInfoType) Height() float64 {
 	return info.h / (info.scale * info.dpi / 72)
 }
@@ -393,7 +393,7 @@ type outlineType struct {
 	p                                      int
 }
 
-// InitType is used with NewCustom() to customize an DocPDF instance.
+// InitType is used with NewCustom() to customize an TinyPDF instance.
 // OrientationStr, UnitType correspond to the arguments accepted by New().
 // If the Wd and Ht fields of Size are each greater than zero, Size will be used
 // to set the default page size. Wd and Ht are specified in the units of measure
@@ -641,8 +641,8 @@ type PageBox struct {
 	PointType
 }
 
-// DocPDF is the principal structure for creating a single PDF document
-type DocPDF struct {
+// TinyPDF is the principal structure for creating a single PDF document
+type TinyPDF struct {
 	isCurrentUTF8    bool                       // is current font used in utf-8 mode
 	isRTL            bool                       // is is right to left mode enabled
 	page             int                        // current page number

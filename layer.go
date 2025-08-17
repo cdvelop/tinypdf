@@ -15,7 +15,7 @@ type layerRecType struct {
 	openLayerPane bool
 }
 
-func (f *DocPDF) layerInit() {
+func (f *TinyPDF) layerInit() {
 	f.layer.list = make([]layerType, 0)
 	f.layer.currentLayer = -1
 	f.layer.openLayerPane = false
@@ -26,7 +26,7 @@ func (f *DocPDF) layerInit() {
 // display in the layer list. visible specifies whether the layer will be
 // initially visible. The return value is an integer ID that is used in a call
 // to BeginLayer().
-func (f *DocPDF) AddLayer(name string, visible bool) (layerID int) {
+func (f *TinyPDF) AddLayer(name string, visible bool) (layerID int) {
 	layerID = len(f.layer.list)
 	f.layer.list = append(f.layer.list, layerType{name: name, visible: visible})
 	return
@@ -36,7 +36,7 @@ func (f *DocPDF) AddLayer(name string, visible bool) (layerID int) {
 // content added to the page between a call to BeginLayer and a call to
 // EndLayer is added to the layer specified by id. See AddLayer for more
 // details.
-func (f *DocPDF) BeginLayer(id int) {
+func (f *TinyPDF) BeginLayer(id int) {
 	f.EndLayer()
 	if id >= 0 && id < len(f.layer.list) {
 		f.outf("/OC /OC%d BDC", id)
@@ -46,7 +46,7 @@ func (f *DocPDF) BeginLayer(id int) {
 
 // EndLayer is called to stop adding content to the currently active layer. See
 // BeginLayer for more details.
-func (f *DocPDF) EndLayer() {
+func (f *TinyPDF) EndLayer() {
 	if f.layer.currentLayer >= 0 {
 		f.out("EMC")
 		f.layer.currentLayer = -1
@@ -55,11 +55,11 @@ func (f *DocPDF) EndLayer() {
 
 // OpenLayerPane advises the document reader to open the layer pane when the
 // document is initially displayed.
-func (f *DocPDF) OpenLayerPane() {
+func (f *TinyPDF) OpenLayerPane() {
 	f.layer.openLayerPane = true
 }
 
-func (f *DocPDF) layerEndDoc() {
+func (f *TinyPDF) layerEndDoc() {
 	if len(f.layer.list) == 0 {
 		return
 	}
@@ -68,7 +68,7 @@ func (f *DocPDF) layerEndDoc() {
 	}
 }
 
-func (f *DocPDF) layerPutLayers() {
+func (f *TinyPDF) layerPutLayers() {
 	for j, l := range f.layer.list {
 		f.newobj()
 		f.layer.list[j].objNum = f.n
@@ -77,7 +77,7 @@ func (f *DocPDF) layerPutLayers() {
 	}
 }
 
-func (f *DocPDF) layerPutResourceDict() {
+func (f *TinyPDF) layerPutResourceDict() {
 	if len(f.layer.list) > 0 {
 		f.out("/Properties <<")
 		for j, layer := range f.layer.list {
@@ -88,7 +88,7 @@ func (f *DocPDF) layerPutResourceDict() {
 
 }
 
-func (f *DocPDF) layerPutCatalog() {
+func (f *TinyPDF) layerPutCatalog() {
 	if len(f.layer.list) > 0 {
 		onStr := ""
 		offStr := ""

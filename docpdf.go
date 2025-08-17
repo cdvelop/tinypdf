@@ -30,8 +30,8 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 	b.Buffer.WriteString(Fmt(fmtStr, args...))
 }
 
-func New(options ...any) (f *DocPDF) {
-	f = new(DocPDF)
+func New(options ...any) (f *TinyPDF) {
+	f = new(TinyPDF)
 
 	var size = PageSize{0, 0, false}
 	var initType *InitType
@@ -229,65 +229,65 @@ func New(options ...any) (f *DocPDF) {
 }
 
 // Ok returns true if no processing errors have occurred.
-func (f *DocPDF) Ok() bool {
+func (f *TinyPDF) Ok() bool {
 	return f.err == nil
 }
 
 // Err returns true if a processing error has occurred.
-func (f *DocPDF) Err() bool {
+func (f *TinyPDF) Err() bool {
 	return f.err != nil
 }
 
-// ClearError unsets the internal DocPDF error. This method should be used with
+// ClearError unsets the internal TinyPDF error. This method should be used with
 // care, as an internal error condition usually indicates an unrecoverable
 // problem with the generation of a document. It is intended to deal with cases
 // in which an error is used to select an alternate form of the document.
-func (f *DocPDF) ClearError() {
+func (f *TinyPDF) ClearError() {
 	f.err = nil
 }
 
-// SetErrorf sets the internal DocPDF error with formatted text to halt PDF
+// SetErrorf sets the internal TinyPDF error with formatted text to halt PDF
 // generation; this may facilitate error handling by application. If an error
 // condition is already set, this call is ignored.
 //
 // See the documentation for printing in the standard fmt package for details
 // about fmtStr and args.
-func (f *DocPDF) SetErrorf(fmtStr string, args ...interface{}) {
+func (f *TinyPDF) SetErrorf(fmtStr string, args ...interface{}) {
 	if f.err == nil {
 		f.err = Errf(fmtStr, args...)
 	}
 }
 
-// String satisfies the fmt.Stringer interface and summarizes the DocPDF
+// String satisfies the fmt.Stringer interface and summarizes the TinyPDF
 // instance.
-func (f *DocPDF) String() string {
-	return "DocPDF " + cnFpdfVersion
+func (f *TinyPDF) String() string {
+	return "TinyPDF " + cnFpdfVersion
 }
 
 // SetError sets an error to halt PDF generation. This may facilitate error
 // handling by application. See also Ok(), Err() and Error().
-func (f *DocPDF) SetError(err error) {
+func (f *TinyPDF) SetError(err error) {
 	if f.err == nil && err != nil {
 		f.err = err
 	}
 }
 
-// Error returns the internal DocPDF error; this will be nil if no error has occurred.
-func (f *DocPDF) Error() error {
+// Error returns the internal TinyPDF error; this will be nil if no error has occurred.
+func (f *TinyPDF) Error() error {
 	return f.err
 }
 
 // GetCellMargin returns the cell margin. This is the amount of space before
 // and after the text within a cell that's left blank, and is in units passed
 // to New(). It defaults to 1mm.
-func (f *DocPDF) GetCellMargin() float64 {
+func (f *TinyPDF) GetCellMargin() float64 {
 	return f.cMargin
 }
 
 // SetCellMargin sets the cell margin. This is the amount of space before and
 // after the text within a cell that's left blank, and is in units passed to
 // New().
-func (f *DocPDF) SetCellMargin(margin float64) {
+func (f *TinyPDF) SetCellMargin(margin float64) {
 	f.cMargin = margin
 }
 
@@ -299,7 +299,7 @@ func SetDefaultCompression(compress bool) {
 }
 
 // GetCompression returns whether page compression is enabled.
-func (f *DocPDF) GetCompression() bool {
+func (f *TinyPDF) GetCompression() bool {
 	return f.compress
 }
 
@@ -307,18 +307,18 @@ func (f *DocPDF) GetCompression() bool {
 // activated, the internal representation of each page is compressed, which
 // leads to a compression ratio of about 2 for the resulting document.
 // Compression is on by default.
-func (f *DocPDF) SetCompression(compress bool) {
+func (f *TinyPDF) SetCompression(compress bool) {
 	f.compress = compress
 }
 
 // GetProducer returns the producer of the document as ISO-8859-1 or UTF-16BE.
-func (f *DocPDF) GetProducer() string {
+func (f *TinyPDF) GetProducer() string {
 	return f.producer
 }
 
 // SetProducer defines the producer of the document. isUTF8 indicates if the string
 // is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *DocPDF) SetProducer(producerStr string, isUTF8 bool) {
+func (f *TinyPDF) SetProducer(producerStr string, isUTF8 bool) {
 	if isUTF8 {
 		producerStr = utf8toutf16(producerStr)
 	}
@@ -326,13 +326,13 @@ func (f *DocPDF) SetProducer(producerStr string, isUTF8 bool) {
 }
 
 // GetTitle returns the title of the document as ISO-8859-1 or UTF-16BE.
-func (f *DocPDF) GetTitle() string {
+func (f *TinyPDF) GetTitle() string {
 	return f.title
 }
 
 // SetTitle defines the title of the document. isUTF8 indicates if the string
 // is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *DocPDF) SetTitle(titleStr string, isUTF8 bool) {
+func (f *TinyPDF) SetTitle(titleStr string, isUTF8 bool) {
 	if isUTF8 {
 		titleStr = utf8toutf16(titleStr)
 	}
@@ -340,13 +340,13 @@ func (f *DocPDF) SetTitle(titleStr string, isUTF8 bool) {
 }
 
 // GetSubject returns the subject of the document as ISO-8859-1 or UTF-16BE.
-func (f *DocPDF) GetSubject() string {
+func (f *TinyPDF) GetSubject() string {
 	return f.subject
 }
 
 // SetSubject defines the subject of the document. isUTF8 indicates if the
 // string is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *DocPDF) SetSubject(subjectStr string, isUTF8 bool) {
+func (f *TinyPDF) SetSubject(subjectStr string, isUTF8 bool) {
 	if isUTF8 {
 		subjectStr = utf8toutf16(subjectStr)
 	}
@@ -354,13 +354,13 @@ func (f *DocPDF) SetSubject(subjectStr string, isUTF8 bool) {
 }
 
 // GetAuthor returns the author of the document as ISO-8859-1 or UTF-16BE.
-func (f *DocPDF) GetAuthor() string {
+func (f *TinyPDF) GetAuthor() string {
 	return f.author
 }
 
 // SetAuthor defines the author of the document. isUTF8 indicates if the string
 // is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *DocPDF) SetAuthor(authorStr string, isUTF8 bool) {
+func (f *TinyPDF) SetAuthor(authorStr string, isUTF8 bool) {
 	if isUTF8 {
 		authorStr = utf8toutf16(authorStr)
 	}
@@ -368,24 +368,24 @@ func (f *DocPDF) SetAuthor(authorStr string, isUTF8 bool) {
 }
 
 // GetLang returns the natural language of the document (e.g. "de-CH").
-func (f *DocPDF) GetLang() string {
+func (f *TinyPDF) GetLang() string {
 	return f.lang
 }
 
 // SetLang defines the natural language of the document (e.g. "de-CH").
-func (f *DocPDF) SetLang(lang string) {
+func (f *TinyPDF) SetLang(lang string) {
 	f.lang = lang
 }
 
 // GetKeywords returns the keywords of the document as ISO-8859-1 or UTF-16BE.
-func (f *DocPDF) GetKeywords() string {
+func (f *TinyPDF) GetKeywords() string {
 	return f.keywords
 }
 
 // SetKeywords defines the keywords of the document. keywordStr is a
 // space-delimited string, for example "invoice August". isUTF8 indicates if
 // the string is encoded
-func (f *DocPDF) SetKeywords(keywordsStr string, isUTF8 bool) {
+func (f *TinyPDF) SetKeywords(keywordsStr string, isUTF8 bool) {
 	if isUTF8 {
 		keywordsStr = utf8toutf16(keywordsStr)
 	}
@@ -393,13 +393,13 @@ func (f *DocPDF) SetKeywords(keywordsStr string, isUTF8 bool) {
 }
 
 // GetCreator returns the creator of the document as ISO-8859-1 or UTF-16BE.
-func (f *DocPDF) GetCreator() string {
+func (f *TinyPDF) GetCreator() string {
 	return f.creator
 }
 
 // SetCreator defines the creator of the document. isUTF8 indicates if the
 // string is encoded in ISO-8859-1 (false) or UTF-8 (true).
-func (f *DocPDF) SetCreator(creatorStr string, isUTF8 bool) {
+func (f *TinyPDF) SetCreator(creatorStr string, isUTF8 bool) {
 	if isUTF8 {
 		creatorStr = utf8toutf16(creatorStr)
 	}
@@ -407,17 +407,17 @@ func (f *DocPDF) SetCreator(creatorStr string, isUTF8 bool) {
 }
 
 // GetXmpMetadata returns the XMP metadata that will be embedded with the document.
-func (f *DocPDF) GetXmpMetadata() []byte {
+func (f *TinyPDF) GetXmpMetadata() []byte {
 	return []byte(string(f.xmp))
 }
 
 // SetXmpMetadata defines XMP metadata that will be embedded with the document.
-func (f *DocPDF) SetXmpMetadata(xmpStream []byte) {
+func (f *TinyPDF) SetXmpMetadata(xmpStream []byte) {
 	f.xmp = xmpStream
 }
 
 // AddOutputIntent adds an output intent with ICC color profile
-func (f *DocPDF) AddOutputIntent(outputIntent OutputIntentType) {
+func (f *TinyPDF) AddOutputIntent(outputIntent OutputIntentType) {
 	f.outputIntents = append(f.outputIntents, outputIntent)
 	if f.pdfVersion < pdfVers1_4 {
 		f.pdfVersion = pdfVers1_4
@@ -429,7 +429,7 @@ func (f *DocPDF) AddOutputIntent(outputIntent OutputIntentType) {
 // string "{nb}".
 //
 // See the example for AddPage() for a demonstration of this method.
-func (f *DocPDF) AliasNbPages(aliasStr string) {
+func (f *TinyPDF) AliasNbPages(aliasStr string) {
 	if aliasStr == "" {
 		aliasStr = "{nb}"
 	}
@@ -437,17 +437,17 @@ func (f *DocPDF) AliasNbPages(aliasStr string) {
 }
 
 // RTL enables right-to-left mode
-func (f *DocPDF) RTL() {
+func (f *TinyPDF) RTL() {
 	f.isRTL = true
 }
 
 // LTR disables right-to-left mode
-func (f *DocPDF) LTR() {
+func (f *TinyPDF) LTR() {
 	f.isRTL = false
 }
 
 // open begins a document
-func (f *DocPDF) open() {
+func (f *TinyPDF) open() {
 	f.state = 1
 }
 
@@ -455,7 +455,7 @@ func (f *DocPDF) open() {
 // explicitly because Output(), OutputAndClose() and OutputFileAndClose() do it
 // automatically. If the document contains no page, AddPage() is called to
 // prevent the generation of an invalid document.
-func (f *DocPDF) Close() {
+func (f *TinyPDF) Close() {
 	if f.err == nil {
 		if f.clipNest > 0 {
 			f.err = Errf("clip procedure must be explicitly ended")
@@ -499,7 +499,7 @@ func colorComp(v int) (int, float64) {
 	return v, float64(v) / 255.0
 }
 
-func (f *DocPDF) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr colorType) {
+func (f *TinyPDF) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr colorType) {
 	clr.ir, clr.r = colorComp(r)
 	clr.ig, clr.g = colorComp(g)
 	clr.ib, clr.b = colorComp(b)
@@ -551,13 +551,13 @@ func makeSubsetRange(end int) map[int]int {
 // link is a clickable area which directs to another place within the document.
 // The identifier can then be passed to Cell(), Write(), Image() or Link(). The
 // destination is defined with SetLink().
-func (f *DocPDF) AddLink() int {
+func (f *TinyPDF) AddLink() int {
 	f.links = append(f.links, intLinkType{})
 	return len(f.links) - 1
 }
 
 // SetLink defines the page and position a link points to. See AddLink().
-func (f *DocPDF) SetLink(link int, y float64, page int) {
+func (f *TinyPDF) SetLink(link int, y float64, page int) {
 	if y == -1 {
 		y = f.y
 	}
@@ -568,7 +568,7 @@ func (f *DocPDF) SetLink(link int, y float64, page int) {
 }
 
 // newLink adds a new clickable link on current page
-func (f *DocPDF) newLink(x, y, w, h float64, link int, linkStr string) {
+func (f *TinyPDF) newLink(x, y, w, h float64, link int, linkStr string) {
 	// linkList, ok := f.pageLinks[f.page]
 	// if !ok {
 	// linkList = make([]linkType, 0, 8)
@@ -582,7 +582,7 @@ func (f *DocPDF) newLink(x, y, w, h float64, link int, linkStr string) {
 // generally put via Cell(), Write() or Image(), but this method can be useful
 // for instance to define a clickable area inside an image. link is the value
 // returned by AddLink().
-func (f *DocPDF) Link(x, y, w, h float64, link int) {
+func (f *TinyPDF) Link(x, y, w, h float64, link int) {
 	f.newLink(x, y, w, h, link, "")
 }
 
@@ -590,7 +590,7 @@ func (f *DocPDF) Link(x, y, w, h float64, link int) {
 // links are generally put via Cell(), Write() or Image(), but this method can
 // be useful for instance to define a clickable area inside an image. linkStr
 // is the target URL.
-func (f *DocPDF) LinkString(x, y, w, h float64, linkStr string) {
+func (f *TinyPDF) LinkString(x, y, w, h float64, linkStr string) {
 	f.newLink(x, y, w, h, 0, linkStr)
 }
 
@@ -599,7 +599,7 @@ func (f *DocPDF) LinkString(x, y, w, h float64, linkStr string) {
 // the outline; 0 is the top level, 1 is just below, and so on. y specifies the
 // vertical position of the bookmark destination in the current page; -1
 // indicates the current position.
-func (f *DocPDF) Bookmark(txtStr string, level int, y float64) {
+func (f *TinyPDF) Bookmark(txtStr string, level int, y float64) {
 	if y == -1 {
 		y = f.y
 	}
@@ -610,13 +610,13 @@ func (f *DocPDF) Bookmark(txtStr string, level int, y float64) {
 }
 
 // GetWordSpacing returns the spacing between words of following text.
-func (f *DocPDF) GetWordSpacing() float64 {
+func (f *TinyPDF) GetWordSpacing() float64 {
 	return f.ws
 }
 
 // SetWordSpacing sets spacing between words of following text. See the
 // WriteAligned() example for a demonstration of its use.
-func (f *DocPDF) SetWordSpacing(space float64) {
+func (f *TinyPDF) SetWordSpacing(space float64) {
 	f.ws = space
 	f.out(sprintf("%.5f Tw", space*f.k))
 }
@@ -632,7 +632,7 @@ func (f *DocPDF) SetWordSpacing(space float64) {
 // 6: Fills then stroke text and add to path for clipping
 // 7: Add text to path for clipping
 // This method is demonstrated in the SetTextRenderingMode example.
-func (f *DocPDF) SetTextRenderingMode(mode int) {
+func (f *TinyPDF) SetTextRenderingMode(mode int) {
 	if mode >= 0 && mode <= 7 {
 		f.out(sprintf("%d Tr", mode))
 	}
@@ -677,7 +677,7 @@ func (f *DocPDF) SetTextRenderingMode(mode int) {
 //
 // linkStr is a target URL or empty for no external link. A non--zero value for
 // link takes precedence over linkStr.
-func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
+func (f *TinyPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 	alignStr string, fill bool, link int, linkStr string) {
 	// dbg("CellFormat. h = %.2f, borderStr = %s", h, borderStr)
 	if f.err != nil {
@@ -874,14 +874,14 @@ func reverseText(text string) string {
 
 // Cell is a simpler version of CellFormat with no fill, border, links or
 // special alignment. The Cell_strikeout() example demonstrates this method.
-func (f *DocPDF) Cell(w, h float64, txtStr string) {
+func (f *TinyPDF) Cell(w, h float64, txtStr string) {
 	f.CellFormat(w, h, txtStr, "", 0, "L", false, 0, "")
 }
 
 // Cellf is a simpler printf-style version of CellFormat with no fill, border,
 // links or special alignment. See documentation for the fmt package for
 // details on fmtStr and args.
-func (f *DocPDF) Cellf(w, h float64, fmtStr string, args ...interface{}) {
+func (f *TinyPDF) Cellf(w, h float64, fmtStr string, args ...interface{}) {
 	f.CellFormat(w, h, sprintf(fmtStr, args...), "", 0, "L", false, 0, "")
 }
 
@@ -895,7 +895,7 @@ func (f *DocPDF) Cellf(w, h float64, fmtStr string, args ...interface{}) {
 //
 // You can use MultiCell if you want to print a text on several lines in a
 // simple way.
-func (f *DocPDF) SplitLines(txt []byte, w float64) [][]byte {
+func (f *TinyPDF) SplitLines(txt []byte, w float64) [][]byte {
 	// Function contributed by Bruno Michel
 	lines := [][]byte{}
 	cw := f.currentFont.Cw
@@ -962,7 +962,7 @@ func (f *DocPDF) SplitLines(txt []byte, w float64) [][]byte {
 // applications that use UTF-8 fonts and depend on having all trailing newlines
 // removed should call TrimRight(txtStr, "\r\n") before calling this
 // method.
-func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill bool) {
+func (f *TinyPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill bool) {
 	if f.err != nil {
 		return
 	}
@@ -1154,7 +1154,7 @@ func (f *DocPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fil
 }
 
 // write outputs text in flowing mode
-func (f *DocPDF) write(h float64, txtStr string, link int, linkStr string) {
+func (f *TinyPDF) write(h float64, txtStr string, link int, linkStr string) {
 	// dbg("Write")
 	cw := f.currentFont.Cw
 	w := f.w - f.rMargin - f.x
@@ -1266,26 +1266,26 @@ func (f *DocPDF) write(h float64, txtStr string, link int, linkStr string) {
 // It is possible to put a link on the text.
 //
 // h indicates the line height in the unit of measure specified in New().
-func (f *DocPDF) Write(h float64, txtStr string) {
+func (f *TinyPDF) Write(h float64, txtStr string) {
 	f.write(h, txtStr, 0, "")
 }
 
 // Writef is like Write but uses printf-style formatting. See the documentation
 // for package fmt for more details on fmtStr and args.
-func (f *DocPDF) Writef(h float64, fmtStr string, args ...interface{}) {
+func (f *TinyPDF) Writef(h float64, fmtStr string, args ...interface{}) {
 	f.write(h, sprintf(fmtStr, args...), 0, "")
 }
 
 // WriteLinkString writes text that when clicked launches an external URL. See
 // Write() for argument details.
-func (f *DocPDF) WriteLinkString(h float64, displayStr, targetStr string) {
+func (f *TinyPDF) WriteLinkString(h float64, displayStr, targetStr string) {
 	f.write(h, displayStr, 0, targetStr)
 }
 
 // WriteLinkID writes text that when clicked jumps to another location in the
 // PDF. linkID is an identifier returned by AddLink(). See Write() for argument
 // details.
-func (f *DocPDF) WriteLinkID(h float64, displayStr string, linkID int) {
+func (f *TinyPDF) WriteLinkID(h float64, displayStr string, linkID int) {
 	f.write(h, displayStr, linkID, "")
 }
 
@@ -1301,7 +1301,7 @@ func (f *DocPDF) WriteLinkID(h float64, displayStr string, linkID int) {
 //
 // alignStr sees to horizontal alignment of the given textStr. The options are
 // "L", "C" and "R" (Left, Center, Right). The default is "L".
-func (f *DocPDF) WriteAligned(width, lineHeight float64, textStr, alignStr string) {
+func (f *TinyPDF) WriteAligned(width, lineHeight float64, textStr, alignStr string) {
 	lMargin, _, rMargin, _ := f.GetMargins()
 
 	pageWidth, _ := f.GetPageSize()
@@ -1345,7 +1345,7 @@ func (f *DocPDF) WriteAligned(width, lineHeight float64, textStr, alignStr strin
 // value of h indicates the height of the last printed cell.
 //
 // This method is demonstrated in the example for MultiCell.
-func (f *DocPDF) Ln(h float64) {
+func (f *TinyPDF) Ln(h float64) {
 	f.x = f.lMargin
 	if h < 0 {
 		f.y += f.lasth
@@ -1358,7 +1358,7 @@ func (f *DocPDF) Ln(h float64) {
 // functions (for example, Image()) that is associated with the specified MIME
 // type. For example, "jpg" is returned if mimeStr is "image/jpeg". An error is
 // set if the specified MIME type is not supported.
-func (f *DocPDF) ImageTypeFromMime(mimeStr string) (tp string) {
+func (f *TinyPDF) ImageTypeFromMime(mimeStr string) (tp string) {
 	switch mimeStr {
 	case "image/png":
 		tp = "png"
@@ -1374,7 +1374,7 @@ func (f *DocPDF) ImageTypeFromMime(mimeStr string) (tp string) {
 	return
 }
 
-func (f *DocPDF) imageOut(info *ImageInfoType, x, y, w, h float64, allowNegativeX, flow bool, link int, linkStr string) {
+func (f *TinyPDF) imageOut(info *ImageInfoType, x, y, w, h float64, allowNegativeX, flow bool, link int, linkStr string) {
 	// Automatic width and height calculation if needed
 	if w == 0 && h == 0 {
 		// Put image at 96 dpi
@@ -1444,7 +1444,7 @@ func (f *DocPDF) imageOut(info *ImageInfoType, x, y, w, h float64, allowNegative
 //
 // Deprecated in favor of ImageOptions -- see that function for
 // details on the behavior of arguments
-func (f *DocPDF) Image(imageNameStr string, x, y, w, h float64, flow bool, tp string, link int, linkStr string) {
+func (f *TinyPDF) Image(imageNameStr string, x, y, w, h float64, flow bool, tp string, link int, linkStr string) {
 	options := ImageOptions{
 		ReadDpi:   false,
 		ImageType: tp,
@@ -1488,7 +1488,7 @@ func (f *DocPDF) Image(imageNameStr string, x, y, w, h float64, flow bool, tp st
 // If link refers to an internal page anchor (that is, it is non-zero; see
 // AddLink()), the image will be a clickable internal link. Otherwise, if
 // linkStr specifies a URL, the image will be a clickable external link.
-func (f *DocPDF) ImageOptions(imageNameStr string, x, y, w, h float64, flow bool, options ImageOptions, link int, linkStr string) {
+func (f *TinyPDF) ImageOptions(imageNameStr string, x, y, w, h float64, flow bool, options ImageOptions, link int, linkStr string) {
 	if f.err != nil {
 		return
 	}
@@ -1503,7 +1503,7 @@ func (f *DocPDF) ImageOptions(imageNameStr string, x, y, w, h float64, flow bool
 // to the PDF file but not adding it to the page.
 //
 // This function is now deprecated in favor of RegisterImageOptionsReader
-func (f *DocPDF) RegisterImageReader(imgName, tp string, r io.Reader) (info *ImageInfoType) {
+func (f *TinyPDF) RegisterImageReader(imgName, tp string, r io.Reader) (info *ImageInfoType) {
 	options := ImageOptions{
 		ReadDpi:   false,
 		ImageType: tp,
@@ -1538,7 +1538,7 @@ type ImageOptions struct {
 // case.
 //
 // See Image() for restrictions on the image and the options parameters.
-func (f *DocPDF) RegisterImageOptionsReader(imgName string, options ImageOptions, r io.Reader) (info *ImageInfoType) {
+func (f *TinyPDF) RegisterImageOptionsReader(imgName string, options ImageOptions, r io.Reader) (info *ImageInfoType) {
 	// Thanks, Ivan Daniluk, for generalizing this code to use the Reader interface.
 	if f.err != nil {
 		return
@@ -1586,7 +1586,7 @@ func (f *DocPDF) RegisterImageOptionsReader(imgName string, options ImageOptions
 //
 // This function is now deprecated in favor of RegisterImageOptions.
 // See Image() for restrictions on the image and the "tp" parameters.
-func (f *DocPDF) RegisterImage(fileStr, tp string) (info *ImageInfoType) {
+func (f *TinyPDF) RegisterImage(fileStr, tp string) (info *ImageInfoType) {
 	options := ImageOptions{
 		ReadDpi:   false,
 		ImageType: tp,
@@ -1599,7 +1599,7 @@ func (f *DocPDF) RegisterImage(fileStr, tp string) (info *ImageInfoType) {
 // to the page. Note that Image() calls this function, so this function is only
 // necessary if you need information about the image before placing it. See
 // Image() for restrictions on the image and the "tp" parameters.
-func (f *DocPDF) RegisterImageOptions(fileStr string, options ImageOptions) (info *ImageInfoType) {
+func (f *TinyPDF) RegisterImageOptions(fileStr string, options ImageOptions) (info *ImageInfoType) {
 	info, ok := f.images[fileStr]
 	if ok {
 		return
@@ -1628,26 +1628,26 @@ func (f *DocPDF) RegisterImageOptions(fileStr string, options ImageOptions) (inf
 // GetImageInfo returns information about the registered image specified by
 // imageStr. If the image has not been registered, nil is returned. The
 // internal error is not modified by this method.
-func (f *DocPDF) GetImageInfo(imageStr string) (info *ImageInfoType) {
+func (f *TinyPDF) GetImageInfo(imageStr string) (info *ImageInfoType) {
 	return f.images[imageStr]
 }
 
 // ImportObjects imports objects from gofpdi into current document
-func (f *DocPDF) ImportObjects(objs map[string][]byte) {
+func (f *TinyPDF) ImportObjects(objs map[string][]byte) {
 	for k, v := range objs {
 		f.importedObjs[k] = v
 	}
 }
 
 // ImportObjPos imports object hash positions from gofpdi
-func (f *DocPDF) ImportObjPos(objPos map[string]map[int]string) {
+func (f *TinyPDF) ImportObjPos(objPos map[string]map[int]string) {
 	for k, v := range objPos {
 		f.importedObjPos[k] = v
 	}
 }
 
 // putImportedTemplates writes the imported template objects to the PDF
-func (f *DocPDF) putImportedTemplates() {
+func (f *TinyPDF) putImportedTemplates() {
 	nOffset := f.n + 1
 
 	// keep track of list of sha1 hashes (to be replaced with integers)
@@ -1702,13 +1702,13 @@ func (f *DocPDF) putImportedTemplates() {
 
 // UseImportedTemplate uses imported template from gofpdi. It draws imported
 // PDF page onto page.
-func (f *DocPDF) UseImportedTemplate(tplName string, scaleX float64, scaleY float64, tX float64, tY float64) {
+func (f *TinyPDF) UseImportedTemplate(tplName string, scaleX float64, scaleY float64, tX float64, tY float64) {
 	f.outf("q 0 J 1 w 0 j 0 G 0 g q %.4F 0 0 %.4F %.4F %.4F cm %s Do Q Q\n", scaleX*f.k, scaleY*f.k, tX*f.k, (tY+f.h)*f.k, tplName)
 }
 
 // ImportTemplates imports gofpdi template names into importedTplObjs for
 // inclusion in the procset dictionary
-func (f *DocPDF) ImportTemplates(tpls map[string]string) {
+func (f *TinyPDF) ImportTemplates(tpls map[string]string) {
 	for tplName, tplID := range tpls {
 		f.importedTplObjs[tplName] = tplID
 	}
@@ -1716,26 +1716,26 @@ func (f *DocPDF) ImportTemplates(tpls map[string]string) {
 
 // GetConversionRatio returns the conversion ratio based on the unit given when
 // creating the PDF.
-func (f *DocPDF) GetConversionRatio() float64 {
+func (f *TinyPDF) GetConversionRatio() float64 {
 	return f.k
 }
 
 // SetHomeXY is a convenience method that sets the current position to the left
 // and top margins.
-func (f *DocPDF) SetHomeXY() {
+func (f *TinyPDF) SetHomeXY() {
 	f.SetY(f.tMargin)
 	f.SetX(f.lMargin)
 }
 
 // Escape special characters in strings
-func (f *DocPDF) escape(s string) string {
+func (f *TinyPDF) escape(s string) string {
 	// Usar tinystring para reemplazos encadenados
 	s = Convert(s).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)").Replace("\r", "\\r").String()
 	return s
 }
 
 // textstring formats a text string
-func (f *DocPDF) textstring(s string) string {
+func (f *TinyPDF) textstring(s string) string {
 	if f.protect.encrypted {
 		b := []byte(s)
 		f.protect.rc4(uint32(f.n), &b)
@@ -1755,18 +1755,18 @@ func blankCount(str string) (count int) {
 }
 
 // GetUnderlineThickness returns the current text underline thickness multiplier.
-func (f *DocPDF) GetUnderlineThickness() float64 {
+func (f *TinyPDF) GetUnderlineThickness() float64 {
 	return f.userUnderlineThickness
 }
 
 // SetUnderlineThickness accepts a multiplier for adjusting the text underline
 // thickness, defaulting to 1. See SetUnderlineThickness example.
-func (f *DocPDF) SetUnderlineThickness(thickness float64) {
+func (f *TinyPDF) SetUnderlineThickness(thickness float64) {
 	f.userUnderlineThickness = thickness
 }
 
 // Underline text
-func (f *DocPDF) dounderline(x, y float64, txt string) string {
+func (f *TinyPDF) dounderline(x, y float64, txt string) string {
 	up := float64(f.currentFont.Up)
 	ut := float64(f.currentFont.Ut) * f.userUnderlineThickness
 	w := f.GetStringWidth(txt) + f.ws*float64(blankCount(txt))
@@ -1774,7 +1774,7 @@ func (f *DocPDF) dounderline(x, y float64, txt string) string {
 		(f.h-(y-up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.fontSizePt)
 }
 
-func (f *DocPDF) dostrikeout(x, y float64, txt string) string {
+func (f *TinyPDF) dostrikeout(x, y float64, txt string) string {
 	up := float64(f.currentFont.Up)
 	ut := float64(f.currentFont.Ut)
 	w := f.GetStringWidth(txt) + f.ws*float64(blankCount(txt))
@@ -1782,14 +1782,14 @@ func (f *DocPDF) dostrikeout(x, y float64, txt string) string {
 		(f.h-(y+4*up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.fontSizePt)
 }
 
-func (f *DocPDF) newImageInfo() *ImageInfoType {
+func (f *TinyPDF) newImageInfo() *ImageInfoType {
 	// default dpi to 72 unless told otherwise
 	return &ImageInfoType{scale: f.k, dpi: 72}
 }
 
 // parsejpg extracts info from io.Reader with JPEG data
 // Thank you, Bruno Michel, for providing this code.
-func (f *DocPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
+func (f *TinyPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
 	info = f.newImageInfo()
 	var (
 		data bytes.Buffer
@@ -1826,7 +1826,7 @@ func (f *DocPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
 }
 
 // parsepng extracts info from a PNG data
-func (f *DocPDF) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
+func (f *TinyPDF) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
 	buf, err := newRBuffer(r)
 	if err != nil {
 		f.err = err
@@ -1836,7 +1836,7 @@ func (f *DocPDF) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
 }
 
 // parsegif extracts info from a GIF data (via PNG conversion)
-func (f *DocPDF) parsegif(r io.Reader) (info *ImageInfoType) {
+func (f *TinyPDF) parsegif(r io.Reader) (info *ImageInfoType) {
 	data, err := newRBuffer(r)
 	if err != nil {
 		f.err = err
@@ -1858,7 +1858,7 @@ func (f *DocPDF) parsegif(r io.Reader) (info *ImageInfoType) {
 }
 
 // newobj begins a new object
-func (f *DocPDF) newobj() {
+func (f *TinyPDF) newobj() {
 	// dbg("newobj")
 	f.n++
 	for j := len(f.offsets); j <= f.n; j++ {
@@ -1868,7 +1868,7 @@ func (f *DocPDF) newobj() {
 	f.outf("%d 0 obj", f.n)
 }
 
-func (f *DocPDF) putstream(b []byte) {
+func (f *TinyPDF) putstream(b []byte) {
 	// dbg("putstream")
 	if f.protect.encrypted {
 		f.protect.rc4(uint32(f.n), &b)
@@ -1879,7 +1879,7 @@ func (f *DocPDF) putstream(b []byte) {
 }
 
 // out; Add a line to the document
-func (f *DocPDF) out(s string) {
+func (f *TinyPDF) out(s string) {
 	if f.state == 2 {
 		must(f.pages[f.page].WriteString(s))
 		must(f.pages[f.page].WriteString("\n"))
@@ -1889,7 +1889,7 @@ func (f *DocPDF) out(s string) {
 	}
 }
 
-func (f *DocPDF) put(s string) {
+func (f *TinyPDF) put(s string) {
 	if f.state == 2 {
 		f.pages[f.page].WriteString(s)
 	} else {
@@ -1898,7 +1898,7 @@ func (f *DocPDF) put(s string) {
 }
 
 // outbuf adds a buffered line to the document
-func (f *DocPDF) outbuf(r io.Reader) {
+func (f *TinyPDF) outbuf(r io.Reader) {
 	if f.state == 2 {
 		must64(f.pages[f.page].ReadFrom(r))
 		must(f.pages[f.page].WriteString("\n"))
@@ -1912,7 +1912,7 @@ func (f *DocPDF) outbuf(r io.Reader) {
 // low-level function that is not required for normal PDF construction. An
 // understanding of the PDF specification is needed to use this method
 // correctly.
-func (f *DocPDF) RawWriteStr(str string) {
+func (f *TinyPDF) RawWriteStr(str string) {
 	f.out(str)
 }
 
@@ -1920,50 +1920,50 @@ func (f *DocPDF) RawWriteStr(str string) {
 // generation buffer. This is a low-level function that is not required for
 // normal PDF construction. An understanding of the PDF specification is needed
 // to use this method correctly.
-func (f *DocPDF) RawWriteBuf(r io.Reader) {
+func (f *TinyPDF) RawWriteBuf(r io.Reader) {
 	f.outbuf(r)
 }
 
 // outf adds a formatted line to the document
-func (f *DocPDF) outf(fmtStr string, args ...interface{}) {
+func (f *TinyPDF) outf(fmtStr string, args ...interface{}) {
 	f.out(sprintf(fmtStr, args...))
 }
 
-func (f *DocPDF) putF64(v float64, prec int) {
+func (f *TinyPDF) putF64(v float64, prec int) {
 	f.put(f.fmtF64(v, prec))
 }
 
 // fmtF64 converts the floating-point number f to a string with precision prec.
-func (f *DocPDF) fmtF64(v float64, prec int) string {
+func (f *TinyPDF) fmtF64(v float64, prec int) string {
 	// Usar tinystring para formatear float con precisión
 	return Convert(v).Round(prec).String()
 }
 
-func (f *DocPDF) putInt(v int) {
+func (f *TinyPDF) putInt(v int) {
 	f.put(f.fmtInt(v))
 }
 
-func (f *DocPDF) fmtInt(v int) string {
+func (f *TinyPDF) fmtInt(v int) string {
 	// Usar tinystring para convertir int a string
 	return Convert(v).String()
 }
 
 // SetDefaultCatalogSort sets the default value of the catalog sort flag that
-// will be used when initializing a new DocPDF instance. See SetCatalogSort() for
+// will be used when initializing a new TinyPDF instance. See SetCatalogSort() for
 // more details.
 func SetDefaultCatalogSort(flag bool) {
 	gl.catalogSort = flag
 }
 
 // GetCatalogSort returns the document's internal catalog sort flag.
-func (f *DocPDF) GetCatalogSort() bool {
+func (f *TinyPDF) GetCatalogSort() bool {
 	return f.catalogSort
 }
 
 // SetCatalogSort sets a flag that will be used, if true, to consistently order
 // the document's internal resource catalogs. This method is typically only
 // used for test purposes to facilitate PDF comparison.
-func (f *DocPDF) SetCatalogSort(flag bool) {
+func (f *TinyPDF) SetCatalogSort(flag bool) {
 	f.catalogSort = flag
 }
 
@@ -1971,7 +1971,7 @@ func (f *DocPDF) SetCatalogSort(flag bool) {
 // replace all occurrences of that alias after writing but before the document
 // is closed. Functions ExampleFpdf_RegisterAlias() and
 // ExampleFpdf_RegisterAlias_utf8() in fpdf_test.go demonstrate this method.
-func (f *DocPDF) RegisterAlias(alias, replacement string) {
+func (f *TinyPDF) RegisterAlias(alias, replacement string) {
 	// Note: map[string]string assignments embed literal escape ("\00") sequences
 	// into utf16 key and value  Consequently, subsequent search/replace
 	// operations will fail unexpectedly if utf8toutf16() conversions take place
@@ -1980,7 +1980,7 @@ func (f *DocPDF) RegisterAlias(alias, replacement string) {
 	f.aliasMap[alias] = replacement
 }
 
-func (f *DocPDF) replaceAliases() {
+func (f *TinyPDF) replaceAliases() {
 	for mode := 0; mode < 2; mode++ {
 		for alias, replacement := range f.aliasMap {
 			if mode == 1 {

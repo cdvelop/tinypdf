@@ -16,7 +16,7 @@ func byteBound(v byte) byte {
 // percentages ranging from 0 to 100. Values above this are quietly capped to
 // 100. An error occurs if the specified name is already associated with a
 // color.
-func (f *DocPDF) AddSpotColor(nameStr string, c, m, y, k byte) {
+func (f *TinyPDF) AddSpotColor(nameStr string, c, m, y, k byte) {
 	if f.err == nil {
 		_, ok := f.spotColorMap[nameStr]
 		if !ok {
@@ -36,7 +36,7 @@ func (f *DocPDF) AddSpotColor(nameStr string, c, m, y, k byte) {
 	}
 }
 
-func (f *DocPDF) getSpotColor(nameStr string) (clr spotColorType, ok bool) {
+func (f *TinyPDF) getSpotColor(nameStr string) (clr spotColorType, ok bool) {
 	if f.err == nil {
 		clr, ok = f.spotColorMap[nameStr]
 		if !ok {
@@ -50,7 +50,7 @@ func (f *DocPDF) getSpotColor(nameStr string) (clr spotColorType, ok bool) {
 // with nameStr. An error occurs if the name is not associated with a color.
 // The value for tint ranges from 0 (no intensity) to 100 (full intensity). It
 // is quietly bounded to this range.
-func (f *DocPDF) SetDrawSpotColor(nameStr string, tint byte) {
+func (f *TinyPDF) SetDrawSpotColor(nameStr string, tint byte) {
 	var clr spotColorType
 	var ok bool
 
@@ -69,7 +69,7 @@ func (f *DocPDF) SetDrawSpotColor(nameStr string, tint byte) {
 // with nameStr. An error occurs if the name is not associated with a color.
 // The value for tint ranges from 0 (no intensity) to 100 (full intensity). It
 // is quietly bounded to this range.
-func (f *DocPDF) SetFillSpotColor(nameStr string, tint byte) {
+func (f *TinyPDF) SetFillSpotColor(nameStr string, tint byte) {
 	var clr spotColorType
 	var ok bool
 
@@ -89,7 +89,7 @@ func (f *DocPDF) SetFillSpotColor(nameStr string, tint byte) {
 // with nameStr. An error occurs if the name is not associated with a color.
 // The value for tint ranges from 0 (no intensity) to 100 (full intensity). It
 // is quietly bounded to this range.
-func (f *DocPDF) SetTextSpotColor(nameStr string, tint byte) {
+func (f *TinyPDF) SetTextSpotColor(nameStr string, tint byte) {
 	var clr spotColorType
 	var ok bool
 
@@ -102,7 +102,7 @@ func (f *DocPDF) SetTextSpotColor(nameStr string, tint byte) {
 	}
 }
 
-func (f *DocPDF) returnSpotColor(clr colorType) (name string, c, m, y, k byte) {
+func (f *TinyPDF) returnSpotColor(clr colorType) (name string, c, m, y, k byte) {
 	var spotClr spotColorType
 	var ok bool
 
@@ -123,7 +123,7 @@ func (f *DocPDF) returnSpotColor(clr colorType) (name string, c, m, y, k byte) {
 // drawing. This will not be the current drawing color if some other color type
 // such as RGB is active. If no spot color has been set for drawing, zero
 // values are returned.
-func (f *DocPDF) GetDrawSpotColor() (name string, c, m, y, k byte) {
+func (f *TinyPDF) GetDrawSpotColor() (name string, c, m, y, k byte) {
 	return f.returnSpotColor(f.color.draw)
 }
 
@@ -131,7 +131,7 @@ func (f *DocPDF) GetDrawSpotColor() (name string, c, m, y, k byte) {
 // text output. This will not be the current text color if some other color
 // type such as RGB is active. If no spot color has been set for text, zero
 // values are returned.
-func (f *DocPDF) GetTextSpotColor() (name string, c, m, y, k byte) {
+func (f *TinyPDF) GetTextSpotColor() (name string, c, m, y, k byte) {
 	return f.returnSpotColor(f.color.text)
 }
 
@@ -139,11 +139,11 @@ func (f *DocPDF) GetTextSpotColor() (name string, c, m, y, k byte) {
 // fill output. This will not be the current fill color if some other color
 // type such as RGB is active. If no fill spot color has been set, zero values
 // are returned.
-func (f *DocPDF) GetFillSpotColor() (name string, c, m, y, k byte) {
+func (f *TinyPDF) GetFillSpotColor() (name string, c, m, y, k byte) {
 	return f.returnSpotColor(f.color.fill)
 }
 
-func (f *DocPDF) putSpotColors() {
+func (f *TinyPDF) putSpotColors() {
 	for k, v := range f.spotColorMap {
 		f.newobj()
 		f.outf("[/Separation /%s", Convert(k).Replace(" ", "#20", -1))
@@ -158,7 +158,7 @@ func (f *DocPDF) putSpotColors() {
 	}
 }
 
-func (f *DocPDF) spotColorPutResourceDict() {
+func (f *TinyPDF) spotColorPutResourceDict() {
 	f.out("/ColorSpace <<")
 	for _, clr := range f.spotColorMap {
 		f.outf("/CS%d %d 0 R", clr.id, clr.objID)

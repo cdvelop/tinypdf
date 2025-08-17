@@ -4,7 +4,7 @@ import (
 	. "github.com/cdvelop/tinystring"
 )
 
-func (f *DocPDF) pngColorSpace(ct byte) (colspace string, colorVal int) {
+func (f *TinyPDF) pngColorSpace(ct byte) (colspace string, colorVal int) {
 	colorVal = 1
 	switch ct {
 	case 0, 4:
@@ -20,7 +20,7 @@ func (f *DocPDF) pngColorSpace(ct byte) (colspace string, colorVal int) {
 	return
 }
 
-func (f *DocPDF) parsepngstream(r *rbuffer, readdpi bool) (info *ImageInfoType) {
+func (f *TinyPDF) parsepngstream(r *rbuffer, readdpi bool) (info *ImageInfoType) {
 	info = f.newImageInfo()
 	// 	Check signature
 	if string(r.Next(8)) != "\x89PNG\x0d\x0a\x1a\x0a" {

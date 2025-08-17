@@ -4,7 +4,7 @@ package tinypdf
 //
 // GetJavascript returns an empty string if no javascript was
 // previously defined.
-func (f *DocPDF) GetJavascript() string {
+func (f *TinyPDF) GetJavascript() string {
 	if f.javascript == nil {
 		return ""
 	}
@@ -12,11 +12,11 @@ func (f *DocPDF) GetJavascript() string {
 }
 
 // SetJavascript adds Adobe JavaScript to the document.
-func (f *DocPDF) SetJavascript(script string) {
+func (f *TinyPDF) SetJavascript(script string) {
 	f.javascript = &script
 }
 
-func (f *DocPDF) putjavascript() {
+func (f *TinyPDF) putjavascript() {
 	if f.javascript == nil {
 		return
 	}

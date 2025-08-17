@@ -14,7 +14,7 @@ import (
 // measure itself. If pageNum is zero or otherwise out of bounds, it returns
 // the default page size, that is, the size of the page that would be added by
 // AddPage().
-func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
+func (f *TinyPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 	sz, ok := f.pageSizes[pageNum]
 	if ok {
 		// Convert from points back to user units
@@ -33,7 +33,7 @@ func (f *DocPDF) PageSize(pageNum int) (wd, ht float64, unitStr string) {
 // size specifies the size of the new page in the units established in New().
 //
 // The PageSize() example demonstrates this method.
-func (f *DocPDF) AddPageFormat(orientationStr orientationType, size PageSize) {
+func (f *TinyPDF) AddPageFormat(orientationStr orientationType, size PageSize) {
 	if f.err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (f *DocPDF) AddPageFormat(orientationStr orientationType, size PageSize) {
 //
 // See AddPageFormat() for a version of this method that allows the page size
 // and orientation to be different than the default.
-func (f *DocPDF) AddPage() {
+func (f *TinyPDF) AddPage() {
 	if f.err != nil {
 		return
 	}
@@ -162,14 +162,14 @@ func (f *DocPDF) AddPage() {
 // PageNo returns the current page number.
 //
 // See the example for AddPage() for a demonstration of this method.
-func (f *DocPDF) PageNo() int {
+func (f *TinyPDF) PageNo() int {
 	return f.page
 }
 
 // GetPageSize returns the current page's width and height. This is the paper's
 // size. To compute the size of the area being used, subtract the margins (see
 // GetMargins()).
-func (f *DocPDF) GetPageSize() (width, height float64) {
+func (f *TinyPDF) GetPageSize() (width, height float64) {
 	width = f.w
 	height = f.h
 	return
@@ -179,7 +179,7 @@ func (f *DocPDF) GetPageSize() (width, height float64) {
 // pages. Allowable types are trim, trimbox, crop, cropbox, bleed, bleedbox,
 // art and artbox box types are case insensitive. See SetPageBox() for a method
 // that specifies the coordinates and extent of the page box individually.
-func (f *DocPDF) SetPageBoxRec(t string, pb PageBox) {
+func (f *TinyPDF) SetPageBoxRec(t string, pb PageBox) {
 	switch Convert(t).ToLower().String() {
 	case "trim":
 		fallthrough
@@ -218,13 +218,13 @@ func (f *DocPDF) SetPageBoxRec(t string, pb PageBox) {
 // SetPageBox sets the page box for the current page, and any following pages.
 // Allowable types are trim, trimbox, crop, cropbox, bleed, bleedbox, art and
 // artbox box types are case insensitive.
-func (f *DocPDF) SetPageBox(t string, x, y, wd, ht float64) {
+func (f *TinyPDF) SetPageBox(t string, x, y, wd, ht float64) {
 	f.SetPageBoxRec(t, PageBox{SizeType{Wd: wd, Ht: ht}, PointType{X: x, Y: y}})
 }
 
 // SetPage sets the current page to that of a valid page in the PDF document.
 // pageNum is one-based. The SetPage() example demonstrates this method.
-func (f *DocPDF) SetPage(pageNum int) {
+func (f *TinyPDF) SetPage(pageNum int) {
 	if (pageNum > 0) && (pageNum < len(f.pages)) {
 		f.page = pageNum
 	}
@@ -233,14 +233,14 @@ func (f *DocPDF) SetPage(pageNum int) {
 // PageCount returns the number of pages currently in the document. Since page
 // numbers in gofpdf are one-based, the page count is the same as the page
 // number of the current last page.
-func (f *DocPDF) PageCount() int {
+func (f *TinyPDF) PageCount() int {
 	return len(f.pages) - 1
 }
 
 // GetMargins returns the left, top, right, and bottom margins. The first three
 // are set with the SetMargins() method. The bottom margin is set with the
 // SetAutoPageBreak() method.
-func (f *DocPDF) GetMargins() (left, top, right, bottom float64) {
+func (f *TinyPDF) GetMargins() (left, top, right, bottom float64) {
 	left = f.lMargin
 	top = f.tMargin
 	right = f.rMargin
@@ -259,7 +259,7 @@ func (f *DocPDF) GetMargins() (left, top, right, bottom float64) {
 //
 // See the example for SetLeftMargin() to see how this function can be used to
 // manage multiple columns.
-func (f *DocPDF) SetAcceptPageBreakFunc(fnc func() bool) {
+func (f *TinyPDF) SetAcceptPageBreakFunc(fnc func() bool) {
 	f.acceptPageBreak = fnc
 }
 
@@ -267,16 +267,16 @@ func (f *DocPDF) SetAcceptPageBreakFunc(fnc func() bool) {
 // page header. See SetHeaderFunc() for more details. The value for homeMode
 // should be set to true to have the current position set to the left and top
 // margin after the header function is called.
-func (f *DocPDF) SetHeaderFuncMode(fnc func(), homeMode bool) {
+func (f *TinyPDF) SetHeaderFuncMode(fnc func(), homeMode bool) {
 	f.headerFnc = fnc
 	f.headerHomeMode = homeMode
 }
 
 // SetHeaderFunc sets the function that lets the application render the page
 // header. The specified function is automatically called by AddPage() and
-// should not be called directly by the application. The implementation in DocPDF
+// should not be called directly by the application. The implementation in TinyPDF
 // is empty, so you have to provide an appropriate function if you want page
-// headers. fnc will typically be a closure that has access to the DocPDF
+// headers. fnc will typically be a closure that has access to the TinyPDF
 // instance and other document generation variables.
 //
 // A header is a convenient place to put background content that repeats on
@@ -285,20 +285,20 @@ func (f *DocPDF) SetHeaderFuncMode(fnc func(), homeMode bool) {
 // watermark on each page is demonstrated in the example for TransformRotate.
 //
 // This method is demonstrated in the example for AddPage().
-func (f *DocPDF) SetHeaderFunc(fnc func()) {
+func (f *TinyPDF) SetHeaderFunc(fnc func()) {
 	f.headerFnc = fnc
 }
 
 // SetFooterFunc sets the function that lets the application render the page
 // footer. The specified function is automatically called by AddPage() and
 // Close() and should not be called directly by the application. The
-// implementation in DocPDF is empty, so you have to provide an appropriate
+// implementation in TinyPDF is empty, so you have to provide an appropriate
 // function if you want page footers. fnc will typically be a closure that has
-// access to the DocPDF instance and other document generation variables. See
+// access to the TinyPDF instance and other document generation variables. See
 // SetFooterFuncLpi for a similar function that passes a last page indicator.
 //
 // This method is demonstrated in the example for AddPage().
-func (f *DocPDF) SetFooterFunc(fnc func()) {
+func (f *TinyPDF) SetFooterFunc(fnc func()) {
 	f.footerFnc = fnc
 	f.footerFncLpi = nil
 }
@@ -307,24 +307,24 @@ func (f *DocPDF) SetFooterFunc(fnc func()) {
 // footer. The specified function is automatically called by AddPage() and
 // Close() and should not be called directly by the application. It is passed a
 // boolean that is true if the last page of the document is being rendered. The
-// implementation in DocPDF is empty, so you have to provide an appropriate
+// implementation in TinyPDF is empty, so you have to provide an appropriate
 // function if you want page footers. fnc will typically be a closure that has
-// access to the DocPDF instance and other document generation variables.
-func (f *DocPDF) SetFooterFuncLpi(fnc func(lastPage bool)) {
+// access to the TinyPDF instance and other document generation variables.
+func (f *TinyPDF) SetFooterFuncLpi(fnc func(lastPage bool)) {
 	f.footerFncLpi = fnc
 	f.footerFnc = nil
 }
 
 // SetTopMargin defines the top margin. The method can be called before
 // creating the first page.
-func (f *DocPDF) SetTopMargin(margin float64) {
+func (f *TinyPDF) SetTopMargin(margin float64) {
 	f.tMargin = margin
 }
 
 // SetMargins defines the left, top and right margins. By default, they equal 1
 // cm. Call this method to change them. If the value of the right margin is
 // less than zero, it is set to the same as the left margin.
-func (f *DocPDF) SetMargins(left, top, right float64) {
+func (f *TinyPDF) SetMargins(left, top, right float64) {
 	f.lMargin = left
 	f.tMargin = top
 	if right < 0 {
@@ -336,7 +336,7 @@ func (f *DocPDF) SetMargins(left, top, right float64) {
 // SetLeftMargin defines the left margin. The method can be called before
 // creating the first page. If the current abscissa gets out of page, it is
 // brought back to the margin.
-func (f *DocPDF) SetLeftMargin(margin float64) {
+func (f *TinyPDF) SetLeftMargin(margin float64) {
 	f.lMargin = margin
 	if f.page > 0 && f.x < margin {
 		f.x = margin
@@ -345,14 +345,14 @@ func (f *DocPDF) SetLeftMargin(margin float64) {
 
 // SetRightMargin defines the right margin. The method can be called before
 // creating the first page.
-func (f *DocPDF) SetRightMargin(margin float64) {
+func (f *TinyPDF) SetRightMargin(margin float64) {
 	f.rMargin = margin
 }
 
 // GetAutoPageBreak returns true if automatic pages breaks are enabled, false
 // otherwise. This is followed by the triggering limit from the bottom of the
 // page. This value applies only if automatic page breaks are enabled.
-func (f *DocPDF) GetAutoPageBreak() (auto bool, margin float64) {
+func (f *TinyPDF) GetAutoPageBreak() (auto bool, margin float64) {
 	auto = f.autoPageBreak
 	margin = f.bMargin
 	return
@@ -362,7 +362,7 @@ func (f *DocPDF) GetAutoPageBreak() (auto bool, margin float64) {
 // enabling, the second parameter is the distance from the bottom of the page
 // that defines the triggering limit. By default, the mode is on and the margin
 // is 2 cm.
-func (f *DocPDF) SetAutoPageBreak(auto bool, margin float64) {
+func (f *TinyPDF) SetAutoPageBreak(auto bool, margin float64) {
 	f.autoPageBreak = auto
 	f.bMargin = margin
 	f.pageBreakTrigger = f.h - margin
@@ -386,7 +386,7 @@ func (f *DocPDF) SetAutoPageBreak(auto bool, margin float64) {
 // full access to the document regardless of the actionFlag value. An empty
 // string for this argument will be replaced with a random value, effectively
 // prohibiting full access to the document.
-func (f *DocPDF) SetProtection(actionFlag byte, userPassStr, ownerPassStr string) {
+func (f *TinyPDF) SetProtection(actionFlag byte, userPassStr, ownerPassStr string) {
 	if f.err != nil {
 		return
 	}
@@ -396,7 +396,7 @@ func (f *DocPDF) SetProtection(actionFlag byte, userPassStr, ownerPassStr string
 // OutputAndClose sends the PDF document to the writer specified by w. This
 // method will close both f and w, even if an error is detected and no document
 // is produced.
-func (f *DocPDF) OutputAndClose(w io.WriteCloser) error {
+func (f *TinyPDF) OutputAndClose(w io.WriteCloser) error {
 	_ = f.Output(w)
 	err := w.Close()
 	if err != nil {
@@ -410,7 +410,7 @@ func (f *DocPDF) OutputAndClose(w io.WriteCloser) error {
 // written file, even if an error is detected and no document is produced.
 //
 // Most examples demonstrate the use of this method.
-func (f *DocPDF) OutputFileAndClose(fileStr string) error {
+func (f *TinyPDF) OutputFileAndClose(fileStr string) error {
 	if f.err != nil {
 		return f.err
 	}
@@ -435,7 +435,7 @@ func (f *DocPDF) OutputFileAndClose(fileStr string) error {
 // take place if an error has occurred in the document generation process. w
 // remains open after this function returns. After returning, f is in a closed
 // state and its methods should not be called.
-func (f *DocPDF) Output(w io.Writer) error {
+func (f *TinyPDF) Output(w io.Writer) error {
 	if f.err != nil {
 		return f.err
 	}
@@ -450,7 +450,7 @@ func (f *DocPDF) Output(w io.Writer) error {
 	return f.err
 }
 
-func (f *DocPDF) getpagesizestr(sizeStr string) (size PageSize) {
+func (f *TinyPDF) getpagesizestr(sizeStr string) (size PageSize) {
 	if f.err != nil {
 		return
 	}
@@ -470,11 +470,11 @@ func (f *DocPDF) getpagesizestr(sizeStr string) (size PageSize) {
 }
 
 // GetPageSizeStr returns the PageSize for the given sizeStr (that is A4, A3, etc..)
-func (f *DocPDF) GetPageSizeStr(sizeStr string) (size PageSize) {
+func (f *TinyPDF) GetPageSizeStr(sizeStr string) (size PageSize) {
 	return f.getpagesizestr(sizeStr)
 }
 
-func (f *DocPDF) beginpage(newPageOrientation orientationType, size PageSize) {
+func (f *TinyPDF) beginpage(newPageOrientation orientationType, size PageSize) {
 	if f.err != nil {
 		return
 	}
@@ -519,7 +519,7 @@ func (f *DocPDF) beginpage(newPageOrientation orientationType, size PageSize) {
 	}
 }
 
-func (f *DocPDF) endpage() {
+func (f *TinyPDF) endpage() {
 	f.EndLayer()
 	f.state = 1
 }
@@ -545,7 +545,7 @@ func arrayCountValues(mp []int) map[int]int {
 	return answer
 }
 
-func (f *DocPDF) putpages() {
+func (f *TinyPDF) putpages() {
 	var wPt, hPt float64
 	var pageSize PageSize
 	var ok bool
@@ -641,7 +641,7 @@ func (f *DocPDF) putpages() {
 	f.out("endobj")
 }
 
-func (f *DocPDF) putimages() {
+func (f *TinyPDF) putimages() {
 	var keyList []string
 	var key string
 	for key = range f.images {
@@ -675,7 +675,7 @@ func (f *DocPDF) putimages() {
 	}
 }
 
-func (f *DocPDF) putimage(info *ImageInfoType) {
+func (f *TinyPDF) putimage(info *ImageInfoType) {
 	f.newobj()
 	info.n = f.n
 	f.out("<</Type /XObject")
@@ -741,7 +741,7 @@ func (f *DocPDF) putimage(info *ImageInfoType) {
 	}
 }
 
-func (f *DocPDF) putxobjectdict() {
+func (f *TinyPDF) putxobjectdict() {
 	{
 		var image *ImageInfoType
 		var key string
@@ -779,7 +779,7 @@ func (f *DocPDF) putxobjectdict() {
 	}
 }
 
-func (f *DocPDF) putresourcedict() {
+func (f *TinyPDF) putresourcedict() {
 	f.out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]")
 	f.out("/Font <<")
 	{
@@ -822,7 +822,7 @@ func (f *DocPDF) putresourcedict() {
 	f.spotColorPutResourceDict()
 }
 
-func (f *DocPDF) putBlendModes() {
+func (f *TinyPDF) putBlendModes() {
 	count := len(f.blendList)
 	for j := 1; j < count; j++ {
 		bl := f.blendList[j]
@@ -834,7 +834,7 @@ func (f *DocPDF) putBlendModes() {
 	}
 }
 
-func (f *DocPDF) putGradients() {
+func (f *TinyPDF) putGradients() {
 	count := len(f.gradientList)
 	for j := 1; j < count; j++ {
 		var f1 int
@@ -859,7 +859,7 @@ func (f *DocPDF) putGradients() {
 	}
 }
 
-func (f *DocPDF) putresources() {
+func (f *TinyPDF) putresources() {
 	if f.err != nil {
 		return
 	}
@@ -897,7 +897,7 @@ func (f *DocPDF) putresources() {
 	}
 }
 
-func (f *DocPDF) putinfo() {
+func (f *TinyPDF) putinfo() {
 	if len(f.producer) > 0 {
 		f.outf("/Producer %s", f.textstring(f.producer))
 	}
@@ -922,7 +922,7 @@ func (f *DocPDF) putinfo() {
 	f.outf("/ModDate %s", f.textstring("D:"+mod.Format("20060102150405")))
 }
 
-func (f *DocPDF) putcatalog() {
+func (f *TinyPDF) putcatalog() {
 	f.out("/Type /Catalog")
 	f.out("/Pages 1 0 R")
 	f.putOutputIntents()
@@ -978,12 +978,12 @@ func (f *DocPDF) putcatalog() {
 	f.out(">>")
 }
 
-func (f *DocPDF) putheader() {
+func (f *TinyPDF) putheader() {
 	f.outf("%%PDF-%s", f.pdfVersion)
 	f.out("%µ¶")
 }
 
-func (f *DocPDF) puttrailer() {
+func (f *TinyPDF) puttrailer() {
 	f.outf("/Size %d", f.n+1)
 	f.outf("/Root %d 0 R", f.n)
 	f.outf("/Info %d 0 R", f.n-1)
@@ -993,7 +993,7 @@ func (f *DocPDF) puttrailer() {
 	}
 }
 
-func (f *DocPDF) putxmp() {
+func (f *TinyPDF) putxmp() {
 	if len(f.xmp) == 0 {
 		return
 	}
@@ -1004,7 +1004,7 @@ func (f *DocPDF) putxmp() {
 	f.out("endobj")
 }
 
-func (f *DocPDF) putbookmarks() {
+func (f *TinyPDF) putbookmarks() {
 	nb := len(f.outlines)
 	if nb > 0 {
 		lru := make(map[int]int)
@@ -1057,7 +1057,7 @@ func (f *DocPDF) putbookmarks() {
 	}
 }
 
-func (f *DocPDF) putOutputIntents() {
+func (f *TinyPDF) putOutputIntents() {
 	if len(f.outputIntents) <= 0 {
 		return
 	}
@@ -1076,7 +1076,7 @@ func (f *DocPDF) putOutputIntents() {
 	f.out("]")
 }
 
-func (f *DocPDF) putOutputIntentStreams() {
+func (f *TinyPDF) putOutputIntentStreams() {
 	if len(f.outputIntents) <= 0 {
 		return
 	}
@@ -1094,7 +1094,7 @@ func (f *DocPDF) putOutputIntentStreams() {
 	}
 }
 
-func (f *DocPDF) enddoc() {
+func (f *TinyPDF) enddoc() {
 	if f.err != nil {
 		return
 	}
@@ -1146,7 +1146,7 @@ func (f *DocPDF) enddoc() {
 }
 
 // GetDisplayMode returns the current display mode. See SetDisplayMode() for details.
-func (f *DocPDF) GetDisplayMode() (zoomStr, layoutStr string) {
+func (f *TinyPDF) GetDisplayMode() (zoomStr, layoutStr string) {
 	return f.zoomMode, f.layoutMode
 }
 
@@ -1169,7 +1169,7 @@ func (f *DocPDF) GetDisplayMode() (zoomStr, layoutStr string) {
 // time with odd-numbered pages on the left, or "TwoPageRight" to display pages
 // two at a time with odd-numbered pages on the right, or "default" to use
 // viewer default mode.
-func (f *DocPDF) SetDisplayMode(zoomStr, layoutStr string) {
+func (f *TinyPDF) SetDisplayMode(zoomStr, layoutStr string) {
 	if f.err != nil {
 		return
 	}

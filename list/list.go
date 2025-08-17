@@ -40,7 +40,7 @@ func main() {
 			ok, name = matchTail(name, ".pdf")
 			if ok {
 				name = Convert(name).Replace("_", " ").String()
-				ok, showStr = matchHead(name, "DocPDF ")
+				ok, showStr = matchHead(name, "TinyPDF ")
 				if ok {
 					println(Fmt("[%s](%s)", showStr, path))
 				} else {

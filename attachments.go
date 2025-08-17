@@ -36,7 +36,7 @@ func checksum(data []byte) string {
 
 // Writes a compressed file like object as "/EmbeddedFile". Compressing is
 // done with deflate. Includes length, compressed length and MD5 checksum.
-func (f *DocPDF) writeCompressedFileObject(content []byte) {
+func (f *TinyPDF) writeCompressedFileObject(content []byte) {
 	lenUncompressed := len(content)
 	sum := checksum(content)
 	mem := xmem.compress(content)
@@ -51,7 +51,7 @@ func (f *DocPDF) writeCompressedFileObject(content []byte) {
 }
 
 // Embed includes the content of `a`, and update its internal reference.
-func (f *DocPDF) embed(a *Attachment) {
+func (f *TinyPDF) embed(a *Attachment) {
 	if a.objectNumber != 0 { // already embedded (objectNumber start at 2)
 		return
 	}
@@ -75,13 +75,13 @@ func (f *DocPDF) embed(a *Attachment) {
 // useful, previous calls are discarded. Be aware that not all PDF readers
 // support document attachments. See the SetAttachment example for a
 // demonstration of this method.
-func (f *DocPDF) SetAttachments(as []Attachment) {
+func (f *TinyPDF) SetAttachments(as []Attachment) {
 	f.attachments = as
 }
 
 // embed current attachments. store object numbers
 // for later use by getEmbeddedFiles()
-func (f *DocPDF) putAttachments() {
+func (f *TinyPDF) putAttachments() {
 	for i, a := range f.attachments {
 		f.embed(&a)
 		f.attachments[i] = a
@@ -89,7 +89,7 @@ func (f *DocPDF) putAttachments() {
 }
 
 // return /EmbeddedFiles tree name catalog entry.
-func (f DocPDF) getEmbeddedFiles() string {
+func (f TinyPDF) getEmbeddedFiles() string {
 	names := make([]string, len(f.attachments))
 	for i, as := range f.attachments {
 		names[i] = Fmt("(Attachement%d) %d 0 R ", i+1, as.objectNumber)
@@ -116,7 +116,7 @@ type annotationAttach struct {
 // shared amongst all links. Be aware that not all PDF readers support
 // annotated attachments. See the AddAttachmentAnnotation example for a
 // demonstration of this method.
-func (f *DocPDF) AddAttachmentAnnotation(a *Attachment, x, y, w, h float64) {
+func (f *TinyPDF) AddAttachmentAnnotation(a *Attachment, x, y, w, h float64) {
 	if a == nil {
 		return
 	}
@@ -129,7 +129,7 @@ func (f *DocPDF) AddAttachmentAnnotation(a *Attachment, x, y, w, h float64) {
 // embed current annotations attachments. store object numbers
 // for later use by putAttachmentAnnotationLinks(), which is
 // called for each page.
-func (f *DocPDF) putAnnotationsAttachments() {
+func (f *TinyPDF) putAnnotationsAttachments() {
 	// avoid duplication
 	m := map[*Attachment]bool{}
 	for _, l := range f.pageAttachments {
@@ -142,7 +142,7 @@ func (f *DocPDF) putAnnotationsAttachments() {
 	}
 }
 
-func (f *DocPDF) putAttachmentAnnotationLinks(out *fmtBuffer, page int) {
+func (f *TinyPDF) putAttachmentAnnotationLinks(out *fmtBuffer, page int) {
 	for _, an := range f.pageAttachments[page] {
 		x1, y1, x2, y2 := an.x, an.y, an.x+an.w, an.y-an.h
 		as := Fmt("<< /Type /XObject /Subtype /Form /BBox [%.2f %.2f %.2f %.2f] /Length 0 >>",

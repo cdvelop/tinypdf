@@ -43,9 +43,9 @@ func init() {
 }
 
 func TestFpdfImplementPdf(t *testing.T) {
-	// this will not compile if DocPDF and Tpl
+	// this will not compile if TinyPDF and Tpl
 	// do not implement Pdf
-	var _ tinypdf.Pdf = (*tinypdf.DocPDF)(nil)
+	var _ tinypdf.Pdf = (*tinypdf.TinyPDF)(nil)
 	var _ tinypdf.Pdf = (*tinypdf.Tpl)(nil)
 }
 
@@ -108,7 +108,7 @@ func TestIssue0116(t *testing.T) {
 // assigned to the FPDF instance error.
 func TestIssue0193(t *testing.T) {
 	var png []byte
-	var pdf *tinypdf.DocPDF
+	var pdf *tinypdf.TinyPDF
 	var err error
 	var rdr *bytes.Reader
 
