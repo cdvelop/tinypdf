@@ -168,7 +168,7 @@ func UnicodeTranslator(r io.Reader) (f func(string) string, err error) {
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		lineStr = sc.Text()
-		lineStr = Convert(lineStr).Trim().String()
+		lineStr = Convert(lineStr).TrimSpace().String()
 		if len(lineStr) > 0 {
 			parts := Convert(lineStr).Split()
 			if len(parts) >= 3 && Contains(parts[0], "!") && Contains(parts[1], "U+") {

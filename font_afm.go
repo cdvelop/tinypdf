@@ -33,7 +33,7 @@ loop:
 		case "FontName":
 			fnt.FontName = p.readStr(1)
 		case "Weight":
-			weight := Convert(p.readStr(1)).Low().String()
+			weight := Convert(p.readStr(1)).ToLower().String()
 			fnt.Bold = weight == "bold" || weight == "black"
 		case "FontBBox":
 			fnt.Desc.FontBBox.Xmin = p.readFixed(1)
@@ -83,7 +83,7 @@ func (p *afmParser) scan() bool {
 	}
 	p.line++
 	ok := p.s.Scan()
-	p.toks = Convert(p.s.Text()).Trim().Split()
+	p.toks = Convert(p.s.Text()).TrimSpace().Split()
 	if ok && len(p.toks) == 0 {
 		// skip empty lines.
 		return p.scan()
@@ -127,7 +127,7 @@ func (p *afmParser) parseCharMetric(fnt *fontInfoType) error {
 	}
 	var ch metric
 	for _, v := range Convert(p.s.Text()).Split(";") {
-		v = Convert(v).Trim().String()
+		v = Convert(v).TrimSpace().String()
 		if v == "" {
 			continue
 		}

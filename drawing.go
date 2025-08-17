@@ -501,7 +501,7 @@ func (f *DocPDF) Line(x1, y1, x2, y2 float64) {
 
 // fillDrawOp corrects path painting operators
 func fillDrawOp(styleStr string) (opStr string) {
-	switch Convert(styleStr).Up().String() {
+	switch Convert(styleStr).ToUpper().String() {
 	case "", "D":
 		// Stroke the path.
 		opStr = "S"

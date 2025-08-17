@@ -259,7 +259,7 @@ func makeFontEncoding(encList encListType, refEncFileStr string) (diffStr string
 			buf.printf("/%s ", encList[j].name)
 		}
 	}
-	diffStr = Convert(buf.String()).Trim().String()
+	diffStr = Convert(buf.String()).TrimSpace().String()
 	return
 }
 
@@ -341,7 +341,7 @@ func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Write
 	if !fileExist(fontFileStr) {
 		return Errf("font file not found: %s", fontFileStr)
 	}
-	extStr := Convert(fontFileStr[len(fontFileStr)-3:]).Low().String()
+	extStr := Convert(fontFileStr[len(fontFileStr)-3:]).ToLower().String()
 	// printf("Font file extension [%s]\n", extStr)
 	var tpStr string
 	switch extStr {

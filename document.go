@@ -180,7 +180,7 @@ func (f *DocPDF) GetPageSize() (width, height float64) {
 // art and artbox box types are case insensitive. See SetPageBox() for a method
 // that specifies the coordinates and extent of the page box individually.
 func (f *DocPDF) SetPageBoxRec(t string, pb PageBox) {
-	switch Convert(t).Low().String() {
+	switch Convert(t).ToLower().String() {
 	case "trim":
 		fallthrough
 	case "trimbox":
@@ -454,7 +454,7 @@ func (f *DocPDF) getpagesizestr(sizeStr string) (size PageSize) {
 	if f.err != nil {
 		return
 	}
-	sizeStr = Convert(sizeStr).Low().String()
+	sizeStr = Convert(sizeStr).ToLower().String()
 	// dbg("Size [%s]", sizeStr)
 	var ok bool
 	size, ok = f.stdPageSizes[sizeStr]

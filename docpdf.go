@@ -689,7 +689,7 @@ func (f *DocPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 		return
 	}
 
-	borderStr = Convert(borderStr).Up().String()
+	borderStr = Convert(borderStr).ToLower().String()
 	k := f.k
 	if f.y+h > f.pageBreakTrigger && !f.inHeader && !f.inFooter && f.acceptPageBreak() {
 		// Automatic page break
@@ -1553,7 +1553,7 @@ func (f *DocPDF) RegisterImageOptionsReader(imgName string, options ImageOptions
 		f.err = Errf("image type should be specified if reading from custom reader")
 		return
 	}
-	options.ImageType = Convert(options.ImageType).Low().String()
+	options.ImageType = Convert(options.ImageType).ToLower().String()
 	if options.ImageType == "jpeg" {
 		options.ImageType = "jpg"
 	}

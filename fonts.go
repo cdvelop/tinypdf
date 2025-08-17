@@ -170,8 +170,8 @@ func (f *DocPDF) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFi
 
 // getFontKey is used by AddFontFromReader and GetFontDesc
 func getFontKey(familyStr, styleStr string) string {
-	familyStr = Convert(familyStr).Low().String()
-	styleStr = Convert(styleStr).Up().String()
+	familyStr = Convert(familyStr).ToLower().String()
+	styleStr = Convert(styleStr).ToUpper().String()
 	if styleStr == "IB" {
 		styleStr = "BI"
 	}
@@ -275,9 +275,9 @@ func (f *DocPDF) SetFont(familyStr, styleStr string, size float64) {
 	if familyStr == "" {
 		familyStr = f.fontFamily
 	} else {
-		familyStr = Convert(familyStr).Low().String()
+		familyStr = Convert(familyStr).ToLower().String()
 	}
-	styleStr = Convert(styleStr).Up().String()
+	styleStr = Convert(styleStr).ToUpper().String()
 	f.underline = Contains(styleStr, "U")
 	if f.underline {
 		styleStr = Convert(styleStr).Replace("U", "").String()
@@ -459,9 +459,9 @@ func (f *DocPDF) AddUTF8Font(familyStr, styleStr, fileStr string) {
 func (f *DocPDF) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 	if fileStr == "" {
 		if isUTF8 {
-			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).Low().String() + ".ttf"
+			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).ToLower().String() + ".ttf"
 		} else {
-			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).Low().String() + ".json"
+			fileStr = Convert(familyStr).Replace(" ", "").String() + Convert(styleStr).ToLower().String() + ".json"
 		}
 	}
 	if isUTF8 {
