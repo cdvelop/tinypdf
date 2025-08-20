@@ -7,6 +7,79 @@ import (
 	. "github.com/cdvelop/tinystring"
 )
 
+// LoadFonts is the single, shared loader for all build targets. Platform-specific
+// files must provide the helper function `getFontData`.
+func (fm *FontManager) LoadFonts() error {
+	// Clear any previously loaded fonts
+	fm.fontFamilies = make([]FontFamily, 0)
+
+	// Recorrer directamente fontsPath
+	for _, fontPath := range fm.fontsPath {
+		if !HasSuffix(Convert(fontPath).ToLower().String(), ".ttf") {
+			continue
+		}
+
+		fontData, err := fm.getFontData(fontPath)
+		if err != nil {
+			if fm.log != nil {
+				fm.log("Warning: could not load font '%s': %v\n", fontPath, err)
+			}
+			continue
+		}
+
+		// Usar la nueva API que recibe []byte directamente
+		ttf, err := TtfParse(fontData)
+		if err != nil {
+			if fm.log != nil {
+				fm.log("Warning: could not parse ttf '%s': %v\n", fontPath, err)
+			}
+			continue
+		}
+
+		fontDef, err := createFontDefFromTtf(ttf, fontData)
+		if err != nil {
+			if fm.log != nil {
+				fm.log("Warning: could not create font definition for '%s': %v\n", fontPath, err)
+			}
+			continue
+		}
+		fontDef.File = fontPath
+
+		if err := fm.setFontID(fontDef); err != nil {
+			if fm.log != nil {
+				fm.log("Warning: could not set font id for '%s': %v\n", fontPath, err)
+			}
+			continue
+		}
+
+		fontFamilyName, style := parseFontName(fontPath)
+
+		// Find existing family or create a new one
+		var family *FontFamily
+		for i := range fm.fontFamilies {
+			if fm.fontFamilies[i].Name == fontFamilyName {
+				family = &fm.fontFamilies[i]
+				break
+			}
+		}
+		if family == nil {
+			ff := FontFamily{
+				Name:   fontFamilyName,
+				Styles: make(map[fontStyle]*FontDef),
+			}
+			fm.fontFamilies = append(fm.fontFamilies, ff)
+			family = &fm.fontFamilies[len(fm.fontFamilies)-1]
+		}
+
+		family.Styles[style] = fontDef
+		if style == Regular {
+			family.Regular = fontDef
+		}
+	}
+
+	return nil
+}
+
 // createFontDefFromTtf converts the parsed TTF data into a FontDef structure.
 func createFontDefFromTtf(ttf TtfType, fontData []byte) (*FontDef, error) {
 	def := &FontDef{
@@ -73,97 +146,4 @@ func createFontDefFromTtf(ttf TtfType, fontData []byte) (*FontDef, error) {
 	}
 
 	return def, nil
-}
-
-// parseFontName is duplicated here from loader_std.go to avoid non-Wasm imports.
-// A better solution might be to move it to a common file without os/fs imports.
-func parseFontName(filename string) (family, style string) {
-	basename := Convert(filename).TrimSuffix(".ttf").String()
-	basename = Convert(basename).TrimSuffix(".TTF").String()
-
-	parts := Convert(basename).Split("-")
-	if len(parts) > 1 {
-		style = parts[len(parts)-1]
-		family = Convert(parts[:len(parts)-1]).Join("-").String()
-		if len(style) > 0 {
-			style = Convert(style[:1]).ToUpper().String() + Convert(style[1:]).ToLower().String()
-		}
-	} else {
-		family = basename
-		style = "Regular"
-	}
-	return family, style
-}
-
-// LoadFonts is the single, shared loader for all build targets. Platform-specific
-// files must provide the helper function `getFontData`.
-func (fm *FontManager) LoadFonts() error {
-	// Clear any previously loaded fonts
-	fm.fontFamilies = make([]FontFamily, 0)
-
-	// Recorrer directamente fontsPath
-	for _, fontPath := range fm.fontsPath {
-		if !HasSuffix(Convert(fontPath).ToLower().String(), ".ttf") {
-			continue
-		}
-
-		fontData, err := fm.getFontData(fontPath)
-		if err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not load font '%s': %v\n", fontPath, err)
-			}
-			continue
-		}
-
-		// Usar la nueva API que recibe []byte directamente
-		ttf, err := TtfParse(fontData)
-		if err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not parse ttf '%s': %v\n", fontPath, err)
-			}
-			continue
-		}
-
-		fontDef, err := createFontDefFromTtf(ttf, fontData)
-		if err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not create font definition for '%s': %v\n", fontPath, err)
-			}
-			continue
-		}
-		fontDef.File = fontPath
-
-		if err := fm.setFontID(fontDef); err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not set font id for '%s': %v\n", fontPath, err)
-			}
-			continue
-		}
-
-		fontFamilyName, style := parseFontName(fontPath)
-
-		// Find existing family or create a new one
-		var family *FontFamily
-		for i := range fm.fontFamilies {
-			if fm.fontFamilies[i].Name == fontFamilyName {
-				family = &fm.fontFamilies[i]
-				break
-			}
-		}
-		if family == nil {
-			ff := FontFamily{
-				Name:   fontFamilyName,
-				Styles: make(map[string]*FontDef),
-			}
-			fm.fontFamilies = append(fm.fontFamilies, ff)
-			family = &fm.fontFamilies[len(fm.fontFamilies)-1]
-		}
-
-		family.Styles[style] = fontDef
-		if style == "Regular" {
-			family.Regular = fontDef
-		}
-	}
-
-	return nil
 }

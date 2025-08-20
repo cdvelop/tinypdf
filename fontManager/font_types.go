@@ -69,7 +69,7 @@ type FontDef struct {
 // FontFamily groups the different styles (Regular, Bold, etc.) for a single font.
 type FontFamily struct {
 	Name   string
-	Styles map[string]*FontDef
+	Styles map[fontStyle]*FontDef
 	// Regular is a fallback for any missing styles
 	Regular *FontDef
 }

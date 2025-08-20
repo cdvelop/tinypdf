@@ -39,7 +39,7 @@ func NewFontManager(fontsPath []string, logger func(...any)) *FontManager {
 
 // GetFontDef retrieves a font definition for a given family and style.
 // If the exact style is not found, it attempts to fall back to the Regular style for that family.
-func (fm *FontManager) GetFontDef(family, style string) (*FontDef, error) {
+func (fm *FontManager) GetFontDef(family string, style fontStyle) (*FontDef, error) {
 
 	// Find family by name in the slice
 	var fontFamily *FontFamily
