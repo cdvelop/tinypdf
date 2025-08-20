@@ -27,16 +27,18 @@ type TtfType struct {
 
 type ttfParser struct {
 	rec              TtfType
-	file             osFile
+	data             []byte
+	pos              int
 	tables           map[string]uint32
 	numberOfHMetrics uint16
 	numGlyphs        uint16
 }
 
 // TtfParse extracts various metrics from a TrueType font file.
-func TtfParse(f osFile) (TtfRec TtfType, err error) {
+func TtfParse(data []byte) (TtfRec TtfType, err error) {
 	var t ttfParser
-	t.file = f
+	t.data = data
+	t.pos = 0
 
 	version, err := t.ReadStr(4)
 	if err != nil {
@@ -177,7 +179,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 	idDelta := make([]int16, 0, 8)
 	idRangeOffset := make([]uint16, 0, 8)
 	t.rec.Chars = make(map[uint16]uint16)
-	_, err = t.file.Seek(int64(t.tables["cmap"])+offset31, SeekStart)
+	_, err = t.SeekToPos(int64(t.tables["cmap"]) + offset31)
 	if err != nil {
 		err = Errf("could not seek to cmap table: %w", err)
 		return
@@ -200,7 +202,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 	for j := 0; j < segCount; j++ {
 		idDelta = append(idDelta, t.ReadShort())
 	}
-	offset, _ = t.file.Seek(int64(0), SeekCurrent)
+	offset = t.GetPos()
 	for j := 0; j < segCount; j++ {
 		idRangeOffset = append(idRangeOffset, t.ReadUShort())
 	}
@@ -210,7 +212,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 		d := idDelta[j]
 		ro := idRangeOffset[j]
 		if ro > 0 {
-			_, err = t.file.Seek(offset+2*int64(j)+int64(ro), SeekStart)
+			_, err = t.SeekToPos(offset + 2*int64(j) + int64(ro))
 			if err != nil {
 				return Errf("could not seek to id range offset: %w", err)
 			}
@@ -242,7 +244,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 func (t *ttfParser) ParseName() (err error) {
 	err = t.Seek("name")
 	if err == nil {
-		tableOffset, _ := t.file.Seek(0, SeekCurrent)
+		tableOffset := t.GetPos()
 		t.rec.PostScriptName = ""
 		t.Skip(2) // format
 		count := t.ReadUShort()
@@ -254,7 +256,7 @@ func (t *ttfParser) ParseName() (err error) {
 			offset := t.ReadUShort()
 			if nameID == 6 {
 				// PostScript name
-				_, err = t.file.Seek(int64(tableOffset)+int64(stringOffset)+int64(offset), SeekStart)
+				_, err = t.SeekToPos(int64(tableOffset) + int64(stringOffset) + int64(offset))
 				if err != nil {
 					return
 				}
@@ -314,60 +316,70 @@ func (t *ttfParser) ParsePost() (err error) {
 	return
 }
 
+func (t *ttfParser) SeekToPos(pos int64) (int64, error) {
+	if pos < 0 || int(pos) >= len(t.data) {
+		return 0, Errf("seek position %d out of bounds", pos)
+	}
+	t.pos = int(pos)
+	return pos, nil
+}
+
+func (t *ttfParser) GetPos() int64 {
+	return int64(t.pos)
+}
+
 func (t *ttfParser) Seek(tag string) (err error) {
 	ofs, ok := t.tables[tag]
 	if !ok {
 		return Errf("table not found: %s", tag)
 	}
 
-	_, err = t.file.Seek(int64(ofs), SeekStart)
-	if err != nil {
-		return Errf("could not seek to table %q: %w", tag, err)
+	if int(ofs) >= len(t.data) {
+		return Errf("seek position %d out of bounds", ofs)
 	}
+	t.pos = int(ofs)
 	return
 }
 
 func (t *ttfParser) Skip(n int) {
-	_, err := t.file.Seek(int64(n), SeekCurrent)
-	if err != nil {
-		panic(Errf("could not skip %d bytes: %w", n, err))
+	t.pos += n
+	if t.pos > len(t.data) {
+		panic(Errf("skip position %d out of bounds", t.pos))
 	}
 }
 
 func (t *ttfParser) ReadStr(length int) (str string, err error) {
-	var n int
-	buf := make([]byte, length)
-	n, err = t.file.Read(buf)
-	if err == nil {
-		if n == length {
-			str = string(buf)
-		} else {
-			err = Errf("unable to read %d bytes", length)
-		}
+	if t.pos+length > len(t.data) {
+		return "", Errf("unable to read %d bytes at position %d", length, t.pos)
 	}
+	str = string(t.data[t.pos : t.pos+length])
+	t.pos += length
 	return
 }
 
 func (t *ttfParser) ReadUShort() (val uint16) {
-	err := binary.Read(t.file, binary.BigEndian, &val)
-	if err != nil {
-		panic(Errf("could not read u16: %w", err))
+	if t.pos+2 > len(t.data) {
+		panic(Errf("cannot read u16 at position %d", t.pos))
 	}
+	val = binary.BigEndian.Uint16(t.data[t.pos:])
+	t.pos += 2
 	return
 }
 
 func (t *ttfParser) ReadShort() (val int16) {
-	err := binary.Read(t.file, binary.BigEndian, &val)
-	if err != nil {
-		panic(Errf("could not read i16: %w", err))
+	if t.pos+2 > len(t.data) {
+		panic(Errf("cannot read i16 at position %d", t.pos))
 	}
+	val = int16(binary.BigEndian.Uint16(t.data[t.pos:]))
+	t.pos += 2
 	return
 }
 
 func (t *ttfParser) ReadULong() (val uint32) {
-	err := binary.Read(t.file, binary.BigEndian, &val)
-	if err != nil {
-		panic(Errf("could not read u32: %w", err))
+	if t.pos+4 > len(t.data) {
+		panic(Errf("cannot read u32 at position %d", t.pos))
 	}
+	val = binary.BigEndian.Uint32(t.data[t.pos:])
+	t.pos += 4
 	return
 }

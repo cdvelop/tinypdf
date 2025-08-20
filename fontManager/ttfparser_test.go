@@ -2,6 +2,7 @@ package fontManager_test
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"testing"
 
@@ -9,8 +10,11 @@ import (
 	"github.com/cdvelop/tinypdf/fontManager"
 )
 
+//go:embed fonts/calligra.ttf
+var testFontData []byte
+
 func ExampleTtfParse() {
-	ttf, err := fontManager.TtfParse()
+	ttf, err := fontManager.TtfParse(testFontData)
 	if err == nil {
 		fmt.Printf("Postscript name:  %s\n", ttf.PostScriptName)
 		fmt.Printf("unitsPerEm:       %8d\n", ttf.UnitsPerEm)

@@ -96,49 +96,51 @@ func parseFontName(filename string) (family, style string) {
 }
 
 // LoadFonts is the single, shared loader for all build targets. Platform-specific
-// files must provide the helper functions `getFontList` and `getFontData`.
+// files must provide the helper function `getFontData`.
 func (fm *FontManager) LoadFonts() error {
-
 	// Clear any previously loaded fonts
 	fm.fontFamilies = make([]FontFamily, 0)
 
-	list, err := fm.getFontList()
-	if err != nil {
-		return Errf("could not get font list: %w", err)
-	}
-
-	for _, fileName := range list {
-		if !HasSuffix(Convert(fileName).ToLower().String(), ".ttf") {
+	// Recorrer directamente fontsPath
+	for _, fontPath := range fm.fontsPath {
+		if !HasSuffix(Convert(fontPath).ToLower().String(), ".ttf") {
 			continue
 		}
 
-		fontData, err := fm.getFontData(fileName)
+		fontData, err := fm.getFontData(fontPath)
 		if err != nil {
-			fm.log("Warning: could not load font '%s': %v\n", fileName, err)
+			if fm.log != nil {
+				fm.log("Warning: could not load font '%s': %v\n", fontPath, err)
+			}
 			continue
 		}
 
-		reader := bytes.NewReader(fontData)
-
-		ttf, err := TtfParse(reader)
+		// Usar la nueva API que recibe []byte directamente
+		ttf, err := TtfParse(fontData)
 		if err != nil {
-			fm.log("Warning: could not parse ttf '%s': %v\n", fileName, err)
+			if fm.log != nil {
+				fm.log("Warning: could not parse ttf '%s': %v\n", fontPath, err)
+			}
 			continue
 		}
 
 		fontDef, err := createFontDefFromTtf(ttf, fontData)
 		if err != nil {
-			fm.log("Warning: could not create font definition for '%s': %v\n", fileName, err)
+			if fm.log != nil {
+				fm.log("Warning: could not create font definition for '%s': %v\n", fontPath, err)
+			}
 			continue
 		}
-		fontDef.File = fileName
+		fontDef.File = fontPath
 
 		if err := fm.setFontID(fontDef); err != nil {
-			fm.log("Warning: could not set font id for '%s': %v\n", fileName, err)
+			if fm.log != nil {
+				fm.log("Warning: could not set font id for '%s': %v\n", fontPath, err)
+			}
 			continue
 		}
 
-		fontFamilyName, style := parseFontName(fileName)
+		fontFamilyName, style := parseFontName(fontPath)
 
 		// Find existing family or create a new one
 		var family *FontFamily

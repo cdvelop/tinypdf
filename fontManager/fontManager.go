@@ -9,7 +9,6 @@ import (
 type FontManager struct {
 	fontsPath    []string // List of font paths/URLs to load
 	fontFamilies []FontFamily
-	reader       osFile
 	log          func(...any) // logging function, can be nil
 }
 
@@ -36,14 +35,6 @@ func NewFontManager(fontsPath []string, logger func(...any)) *FontManager {
 		fontFamilies: make([]FontFamily, 0),
 		log:          logger,
 	}
-}
-
-// getFontList
-func (fm *FontManager) getFontList() ([]string, error) {
-	if len(fm.fontsPath) == 0 {
-		return nil, Err("no font paths provided for WASM build")
-	}
-	return fm.fontsPath, nil
 }
 
 // GetFontDef retrieves a font definition for a given family and style.
