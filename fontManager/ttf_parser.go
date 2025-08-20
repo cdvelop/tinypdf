@@ -1,11 +1,10 @@
-package tinypdf
+package fontManager
 
 import (
 	"encoding/binary"
-	. "github.com/cdvelop/tinystring"
-	"io"
-	"os"
 	"regexp"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // TtfType contains metrics of a TrueType font.
@@ -28,19 +27,17 @@ type TtfType struct {
 
 type ttfParser struct {
 	rec              TtfType
-	file             *os.File
+	file             Reader
 	tables           map[string]uint32
 	numberOfHMetrics uint16
 	numGlyphs        uint16
 }
 
 // TtfParse extracts various metrics from a TrueType font file.
-func TtfParse(fileStr string) (TtfRec TtfType, err error) {
+func TtfParse(r Reader) (TtfRec TtfType, err error) {
 	var t ttfParser
-	t.file, err = os.Open(fileStr)
-	if err != nil {
-		return
-	}
+	t.file = r
+
 	version, err := t.ReadStr(4)
 	if err != nil {
 		return
@@ -71,7 +68,6 @@ func TtfParse(fileStr string) (TtfRec TtfType, err error) {
 	if err != nil {
 		return
 	}
-	t.file.Close()
 	TtfRec = t.rec
 	return
 }
@@ -181,7 +177,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 	idDelta := make([]int16, 0, 8)
 	idRangeOffset := make([]uint16, 0, 8)
 	t.rec.Chars = make(map[uint16]uint16)
-	_, err = t.file.Seek(int64(t.tables["cmap"])+offset31, io.SeekStart)
+	_, err = t.file.Seek(int64(t.tables["cmap"])+offset31, SeekStart)
 	if err != nil {
 		err = Errf("could not seek to cmap table: %w", err)
 		return
@@ -204,7 +200,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 	for j := 0; j < segCount; j++ {
 		idDelta = append(idDelta, t.ReadShort())
 	}
-	offset, _ = t.file.Seek(int64(0), io.SeekCurrent)
+	offset, _ = t.file.Seek(int64(0), SeekCurrent)
 	for j := 0; j < segCount; j++ {
 		idRangeOffset = append(idRangeOffset, t.ReadUShort())
 	}
@@ -214,7 +210,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 		d := idDelta[j]
 		ro := idRangeOffset[j]
 		if ro > 0 {
-			_, err = t.file.Seek(offset+2*int64(j)+int64(ro), io.SeekStart)
+			_, err = t.file.Seek(offset+2*int64(j)+int64(ro), SeekStart)
 			if err != nil {
 				return Errf("could not seek to id range offset: %w", err)
 			}
@@ -246,7 +242,7 @@ func (t *ttfParser) ParseCmap() (err error) {
 func (t *ttfParser) ParseName() (err error) {
 	err = t.Seek("name")
 	if err == nil {
-		tableOffset, _ := t.file.Seek(0, io.SeekCurrent)
+		tableOffset, _ := t.file.Seek(0, SeekCurrent)
 		t.rec.PostScriptName = ""
 		t.Skip(2) // format
 		count := t.ReadUShort()
@@ -258,7 +254,7 @@ func (t *ttfParser) ParseName() (err error) {
 			offset := t.ReadUShort()
 			if nameID == 6 {
 				// PostScript name
-				_, err = t.file.Seek(int64(tableOffset)+int64(stringOffset)+int64(offset), io.SeekStart)
+				_, err = t.file.Seek(int64(tableOffset)+int64(stringOffset)+int64(offset), SeekStart)
 				if err != nil {
 					return
 				}
@@ -324,7 +320,7 @@ func (t *ttfParser) Seek(tag string) (err error) {
 		return Errf("table not found: %s", tag)
 	}
 
-	_, err = t.file.Seek(int64(ofs), io.SeekStart)
+	_, err = t.file.Seek(int64(ofs), SeekStart)
 	if err != nil {
 		return Errf("could not seek to table %q: %w", tag, err)
 	}
@@ -332,7 +328,7 @@ func (t *ttfParser) Seek(tag string) (err error) {
 }
 
 func (t *ttfParser) Skip(n int) {
-	_, err := t.file.Seek(int64(n), io.SeekCurrent)
+	_, err := t.file.Seek(int64(n), SeekCurrent)
 	if err != nil {
 		panic(Errf("could not skip %d bytes: %w", n, err))
 	}

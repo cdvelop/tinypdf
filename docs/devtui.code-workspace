@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../envfonts"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../tinystring"
+		}
+	],
+	"settings": {}
+}
