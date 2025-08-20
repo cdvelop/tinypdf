@@ -2,7 +2,6 @@ package fontManager
 
 import (
 	"encoding/binary"
-	"regexp"
 
 	. "github.com/cdvelop/tinystring"
 )
@@ -266,11 +265,7 @@ func (t *ttfParser) ParseName() (err error) {
 					return
 				}
 				s = Convert(s).Replace("\x00", "", -1).String()
-				var re *regexp.Regexp
-				if re, err = regexp.Compile(`[(){}<> /%[\]]`); err != nil {
-					return
-				}
-				t.rec.PostScriptName = re.ReplaceAllString(s, "")
+				t.rec.PostScriptName = cleanPostScriptName(s)
 			}
 		}
 		if t.rec.PostScriptName == "" {
@@ -382,4 +377,20 @@ func (t *ttfParser) ReadULong() (val uint32) {
 	val = binary.BigEndian.Uint32(t.data[t.pos:])
 	t.pos += 4
 	return
+}
+
+// cleanPostScriptName removes invalid characters from PostScript font names
+// Characters to remove: () {} <> space / % [ ]
+func cleanPostScriptName(s string) string {
+	var result []byte
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch c {
+		case '(', ')', '{', '}', '<', '>', ' ', '/', '%', '[', ']':
+			// Skip these characters
+		default:
+			result = append(result, c)
+		}
+	}
+	return string(result)
 }
