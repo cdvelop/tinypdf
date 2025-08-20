@@ -1,7 +1,7 @@
 package fontManager
 
-// Reader is a minimal interface for parsing TTF without depending on the io package
-type Reader interface {
+// osFile is a minimal interface for parsing TTF without depending on the io package
+type osFile interface {
 	Read([]byte) (int, error)
 	Seek(offset int64, whence int) (int64, error)
 }

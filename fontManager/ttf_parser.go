@@ -27,16 +27,16 @@ type TtfType struct {
 
 type ttfParser struct {
 	rec              TtfType
-	file             Reader
+	file             osFile
 	tables           map[string]uint32
 	numberOfHMetrics uint16
 	numGlyphs        uint16
 }
 
 // TtfParse extracts various metrics from a TrueType font file.
-func TtfParse(r Reader) (TtfRec TtfType, err error) {
+func TtfParse(f osFile) (TtfRec TtfType, err error) {
 	var t ttfParser
-	t.file = r
+	t.file = f
 
 	version, err := t.ReadStr(4)
 	if err != nil {

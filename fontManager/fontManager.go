@@ -7,48 +7,43 @@ import (
 // FontManager manages the loading and accessing of fonts for the PDF document.
 // It scans a directory for TTF files and makes them available to the generator.
 type FontManager struct {
-	fontsBasePath string
-	fontFamilies  []FontFamily
-
-	reader Reader
-
-	log func(...any) // logging function, can be nil
+	fontsPath    []string // List of font paths/URLs to load
+	fontFamilies []FontFamily
+	reader       osFile
+	log          func(...any) // logging function, can be nil
 }
 
 // NewFontManager creates and initializes a new FontManager.
 //
-// fontsBasePath: path to the directory that contains font files (TTF/OTF).
-// If an empty string is provided, the default directory "fonts/" is used.
+// fontsPath: slice of font file paths or URLs to load.
 //
-// logger: optional logging function. Pass nil to disable logging. The logger,
-// if provided, will be called with variadic values (similar to fmt.Println)
-// for informational or debugging messages emitted by the manager.
+// For WASM builds, use URLs:
 //
-// Note: NewFontManager only constructs the manager and sets its fields. It
-// does not scan or load font files from disk automatically; call
-// fm.LoadFonts() after creation to scan the configured directory and register
-// available fonts.
+//	fontsPath := []string{"fonts/arial.ttf", "fonts/helvetica.ttf", "fonts/times.ttf"}
 //
-// eg:
+// For Server/Desktop builds, use file paths:
 //
-//	fm := NewFontManager("assets/myfonts/", func(a ...any) { fmt.Println(a...) })
-//	if err := fm.LoadFonts(); err != nil {
-//	    // handle the error
-//	}
-//	def, err := fm.GetFontDef("Roboto", "Bold")
-//	if err != nil {
-//	    // handle the error
-//	}
-func NewFontManager(fontsBasePath string, logger func(...any)) *FontManager {
-	if fontsBasePath == "" {
-		// Default runtime font directory
-		fontsBasePath = "fonts/"
-	}
+//	fontsPath := []string{"./fonts/arial.ttf", "/usr/share/fonts/truetype/arial.ttf"}
+//
+// Or use a directory pattern (for auto-discovery in non-WASM):
+//
+//	fontsPath := []string{"./fonts/"} // Will scan directory
+//
+// logger: optional logging function. Pass nil to disable logging.
+func NewFontManager(fontsPath []string, logger func(...any)) *FontManager {
 	return &FontManager{
-		fontsBasePath: fontsBasePath,
-		fontFamilies:  make([]FontFamily, 0),
-		log:           logger,
+		fontsPath:    fontsPath,
+		fontFamilies: make([]FontFamily, 0),
+		log:          logger,
 	}
+}
+
+// getFontList
+func (fm *FontManager) getFontList() ([]string, error) {
+	if len(fm.fontsPath) == 0 {
+		return nil, Err("no font paths provided for WASM build")
+	}
+	return fm.fontsPath, nil
 }
 
 // GetFontDef retrieves a font definition for a given family and style.
@@ -77,14 +72,6 @@ func (fm *FontManager) GetFontDef(family, style string) (*FontDef, error) {
 	}
 
 	return fontDef, nil
-}
-
-// ChangeFontsDir updates the font directory path and reloads the fonts.
-func (fm *FontManager) ChangeFontsDir(newPath string) *FontManager {
-	fm.fontsBasePath = newPath
-	fm.fontFamilies = make([]FontFamily, 0)
-	fm.LoadFonts()
-	return fm
 }
 
 // GetAllFontDefs returns a slice of all loaded font definitions.
