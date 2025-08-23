@@ -56,9 +56,9 @@ func TestPagedTemplate(t *testing.T) {
 // TestIssue0116 addresses issue 116 in which library silently fails after
 // calling CellFormat when no font has been set.
 func TestIssue0116(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.Font().SetFont("Arial", "B", 16)
+	pdf.SetFont("Calligrapher", "B", 16)
 	pdf.Cell(40, 10, "OK")
 	if pdf.Error() != nil {
 		t.Fatalf("not expecting error when rendering text")
@@ -97,9 +97,9 @@ func TestIssue0193(t *testing.T) {
 // TestIssue0209SplitLinesEqualMultiCell addresses issue 209
 // make SplitLines and MultiCell split at the same place
 func TestIssue0209SplitLinesEqualMultiCell(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.Font().SetFont("Arial", "", 8)
+	pdf.SetFont("Calligrapher", "", 8)
 	// this sentence should not be splited
 	str := "Guochin Amandine"
 	lines := pdf.SplitLines([]byte(str), 26)
@@ -120,7 +120,7 @@ func TestIssue0209SplitLinesEqualMultiCell(t *testing.T) {
 	lines = pdf.SplitLines([]byte(str), 26)
 	y_start = pdf.GetY()
 	pdf.MultiCell(26, FontSize, str, "", "L", false)
-	y_end = pdf.GetY()
+	y_end := pdf.GetY()
 
 	if len(lines) != 2 {
 		t.Fatalf("expect SplitLines split in two lines")
@@ -133,7 +133,7 @@ func TestIssue0209SplitLinesEqualMultiCell(t *testing.T) {
 // TestFooterFuncLpi tests to make sure the footer is not call twice and SetFooterFuncLpi can work
 // without SetFooterFunc.
 func TestFooterFuncLpi(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	var (
 		oldFooterFnc  = "oldFooterFnc"
 		bothPages     = "bothPages"
@@ -144,13 +144,13 @@ func TestFooterFuncLpi(t *testing.T) {
 	// This set just for testing, only set SetFooterFuncLpi.
 	pdf.SetFooterFunc(func() {
 		pdf.SetY(-15)
-		pdf.Font().SetFont("Arial", "I", 8)
+		pdf.SetFont("Calligrapher", "I", 8)
 		pdf.CellFormat(0, 10, oldFooterFnc,
 			"", 0, "C", false, 0, "")
 	})
 	pdf.SetFooterFuncLpi(func(lastPage bool) {
 		pdf.SetY(-15)
-		pdf.Font().SetFont("Arial", "I", 8)
+		pdf.SetFont("Calligrapher", "I", 8)
 		pdf.CellFormat(0, 10, bothPages, "", 0, "L", false, 0, "")
 		if !lastPage {
 			pdf.CellFormat(0, 10, firstPageOnly, "", 0, "C", false, 0, "")
@@ -159,7 +159,7 @@ func TestFooterFuncLpi(t *testing.T) {
 		}
 	})
 	pdf.AddPage()
-	pdf.Font().SetFont("Arial", "B", 16)
+	pdf.SetFont("Calligrapher", "B", 16)
 	for j := 1; j <= 40; j++ {
 		pdf.CellFormat(0, 10, fmt.Sprintf("Printing line number %d", j),
 			"", 1, "", false, 0, "")
@@ -203,9 +203,9 @@ func TestIssue0069PanicOnSplitTextWithUnicode(t *testing.T) {
 		}
 	}()
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.Font().SetFont("Arial", "", 8)
+	pdf.SetFont("Calligrapher", "", 8)
 
 	testChars := []string{"«", "»", "—"}
 
@@ -224,9 +224,9 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 		}
 	}()
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.Font().SetFont("Arial", "", 8)
+	pdf.SetFont("Calligrapher", "", 8)
 
 	// Test values in utf8 beyond the ascii range
 	// I assuming that if the function can handle values in this range

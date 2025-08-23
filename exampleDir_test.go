@@ -28,7 +28,7 @@ func init() {
 func NewDocPdfTest(options ...any) *tinypdf.TinyPDF {
 
 	// Defaults: use a specific TTF inside the test fonts directory
-	fonts := []string{rootTestDir.MakePath(FontsDirName(), "calligra.ttf")}
+	fonts := []string{}
 	logger := func(v ...any) { fmt.Println(v...) }
 
 	// Parse optional parameters. If a []string is provided, use it as fonts.

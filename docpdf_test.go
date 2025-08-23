@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -69,9 +68,9 @@ func (f fontResourceType) Open(name string) (rdr io.Reader, err error) {
 // finally retrieved with the output call where it can be handled by the
 // application.
 func Test_Basic(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
+	pdf.SetFont("Calligrapher", "B", 16)
 	pdf.Cell(40, 10, "Hello World!")
 	fileStr := Filename("Test_Basic")
 	err := pdf.OutputFileAndClose(fileStr)
@@ -82,25 +81,25 @@ func Test_Basic(t *testing.T) {
 
 // Test_AddPage demonstrates the generation of headers, footers and page breaks.
 func Test_AddPage(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetTopMargin(30)
 	pdf.SetHeaderFuncMode(func() {
 		pdf.Image(ImageFile("logo.png"), 10, 6, 30, 0, false, "", 0, "")
 		pdf.SetY(5)
-		pdf.SetFont("Arial", "B", 15)
+		pdf.SetFont("Calligrapher", "B", 15)
 		pdf.Cell(80, 0, "")
 		pdf.CellFormat(30, 10, "Title", "1", 0, "C", false, 0, "")
 		pdf.Ln(20)
 	}, true)
 	pdf.SetFooterFunc(func() {
 		pdf.SetY(-15)
-		pdf.SetFont("Arial", "I", 8)
+		pdf.SetFont("Calligrapher", "I", 8)
 		pdf.CellFormat(0, 10, fmt.Sprintf("Page %d/{nb}", pdf.PageNo()),
 			"", 0, "C", false, 0, "")
 	})
 	pdf.AliasNbPages("")
 	pdf.AddPage()
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	for j := 1; j <= 40; j++ {
 		pdf.CellFormat(0, 10, fmt.Sprintf("Printing line number %d", j),
 			"", 1, "", false, 0, "")
@@ -115,13 +114,13 @@ func Test_AddPage(t *testing.T) {
 // Test_MultiCell demonstrates word-wrapping, line justification and
 // page-breaking.
 func Test_MultiCell(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	titleStr := "20000 Leagues Under the Seas"
 	pdf.SetTitle(titleStr, false)
 	pdf.SetAuthor("Jules Verne", false)
 	pdf.SetHeaderFunc(func() {
 		// Arial bold 15
-		pdf.SetFont("Arial", "B", 15)
+		pdf.SetFont("Calligrapher", "", 15)
 		// Calculate width of title and position
 		wd := pdf.GetStringWidth(titleStr) + 6
 		pdf.SetX((210 - wd) / 2)
@@ -140,7 +139,7 @@ func Test_MultiCell(t *testing.T) {
 		// Position at 1.5 cm from bottom
 		pdf.SetY(-15)
 		// Arial italic 8
-		pdf.SetFont("Arial", "I", 8)
+		pdf.SetFont("Calligrapher", "I", 8)
 		// Text color in gray
 		pdf.SetTextColor(128, 128, 128)
 		// Page number
@@ -149,7 +148,7 @@ func Test_MultiCell(t *testing.T) {
 	})
 	chapterTitle := func(chapNum int, titleStr string) {
 		// 	// Arial 12
-		pdf.SetFont("Arial", "", 12)
+		pdf.SetFont("Calligrapher", "", 12)
 		// Background color
 		pdf.SetFillColor(200, 220, 255)
 		// Title
@@ -165,7 +164,7 @@ func Test_MultiCell(t *testing.T) {
 			pdf.SetError(err)
 		}
 		// Times 12
-		pdf.SetFont("Times", "", 12)
+		pdf.SetFont("Calligrapher", "", 12)
 		// Output justified text
 		pdf.MultiCell(0, 5, string(txtStr), "", "", false)
 		// Line break
@@ -193,7 +192,7 @@ func Test_MultiCell(t *testing.T) {
 func Test_SetLeftMargin(t *testing.T) {
 	var y0 float64
 	var crrntCol int
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetDisplayMode("fullpage", "TwoColumnLeft")
 	titleStr := "20000 Leagues Under the Seas"
 	pdf.SetTitle(titleStr, false)
@@ -207,7 +206,7 @@ func Test_SetLeftMargin(t *testing.T) {
 	}
 	chapterTitle := func(chapNum int, titleStr string) {
 		// Arial 12
-		pdf.SetFont("Arial", "", 12)
+		pdf.SetFont("Calligrapher", "", 12)
 		// Background color
 		pdf.SetFillColor(200, 220, 255)
 		// Title
@@ -224,7 +223,7 @@ func Test_SetLeftMargin(t *testing.T) {
 			pdf.SetError(err)
 		}
 		// Font
-		pdf.SetFont("Times", "", 12)
+		pdf.SetFont("Calligrapher", "", 12)
 		// Output text in a 6 cm width column
 		pdf.MultiCell(60, 5, string(txtStr), "", "", false)
 		pdf.Ln(-1)
@@ -257,7 +256,7 @@ func Test_SetLeftMargin(t *testing.T) {
 	})
 	pdf.SetHeaderFunc(func() {
 		// Arial bold 15
-		pdf.SetFont("Arial", "B", 15)
+		pdf.SetFont("Calligrapher", "", 15)
 		// Calculate width of title and position
 		wd := pdf.GetStringWidth(titleStr) + 6
 		pdf.SetX((210 - wd) / 2)
@@ -278,7 +277,7 @@ func Test_SetLeftMargin(t *testing.T) {
 		// Position at 1.5 cm from bottom
 		pdf.SetY(-15)
 		// Arial italic 8
-		pdf.SetFont("Arial", "I", 8)
+		pdf.SetFont("Calligrapher", "I", 8)
 		// Text color in gray
 		pdf.SetTextColor(128, 128, 128)
 		// Page number
@@ -314,12 +313,12 @@ func Test_SplitLines_tables(t *testing.T) {
 		cell     cellType
 	)
 
-	pdf := NewDocPdfTest() // 210 x 297
+	pdf := NewDocPdfTest(FontFile("calligra.ttf")) // 210 x 297
 	header := [colCount]string{"Column A", "Column B", "Column C"}
 	alignList := [colCount]string{"L", "C", "R"}
 	strList := loremList()
 	pdf.SetMargins(marginH, 15, marginH)
-	pdf.SetFont("Arial", "", 14)
+	pdf.SetFont("Calligrapher", "", 14)
 	pdf.AddPage()
 
 	// Headers
@@ -377,7 +376,7 @@ func Test_SplitLines_tables(t *testing.T) {
 
 // Test_CellFormat_tables demonstrates various table styles.
 func Test_CellFormat_tables(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	type countryType struct {
 		nameStr, capitalStr, areaStr, popStr string
 	}
@@ -498,7 +497,7 @@ func Test_CellFormat_tables(t *testing.T) {
 		pdf.CellFormat(wSum, 0, "", "T", 0, "", false, 0, "")
 	}
 	loadData(TextFile("countries.txt"))
-	pdf.SetFont("Arial", "", 14)
+	pdf.SetFont("Calligrapher", "", 14)
 	pdf.AddPage()
 	basicTable()
 	pdf.AddPage()
@@ -515,10 +514,10 @@ func Test_CellFormat_tables(t *testing.T) {
 // Test_HTMLBasicNew demonstrates internal and external links with and without basic
 // HTML.
 func Test_HTMLBasicNew(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	// First page: manual local link
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", 20)
+	pdf.SetFont("Calligrapher", "", 20)
 	_, lineHt := pdf.GetFontSizes()
 	pdf.Write(lineHt, "To find out what's new in this tutorial, click ")
 	pdf.SetFont("", "U", 0)
@@ -549,8 +548,7 @@ func Test_HTMLBasicNew(t *testing.T) {
 
 // Test_AddFont demonstrates the use of a non-standard font.
 func Test_AddFont(t *testing.T) {
-	pdf := NewDocPdfTest(tinypdf.MM, FontsDirName())
-	pdf.AddFont("Calligrapher", "", "calligra.json")
+	pdf := NewDocPdfTest(tinypdf.MM, FontFile("calligra.ttf"))
 	pdf.AddPage()
 	pdf.SetFont("Calligrapher", "", 35)
 	pdf.Cell(0, 10, "Enjoy new fonts with FPDF!")
@@ -563,11 +561,11 @@ func Test_AddFont(t *testing.T) {
 
 // Test_WriteAligned demonstrates how to align text with the Write function.
 func Test_WriteAligned(t *testing.T) {
-	pdf := NewDocPdfTest(tinypdf.MM, FontsDirName())
+	pdf := NewDocPdfTest(tinypdf.MM, FontFile("calligra.ttf"))
 	pdf.SetLeftMargin(50.0)
 	pdf.SetRightMargin(50.0)
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.WriteAligned(0, 35, "This text is the default alignment, Left", "")
 	pdf.Ln(35)
 	pdf.WriteAligned(0, 35, "This text is aligned Left", "L")
@@ -583,10 +581,10 @@ func Test_WriteAligned(t *testing.T) {
 	pdf.SetWordSpacing((pageWidth - pdf.GetStringWidth(line)) / float64(strings.Count(line, " ")))
 	pdf.WriteAligned(pageWidth, 35, line, "L")
 	pdf.Ln(10)
-	pdf.SetFont("Helvetica", "U", 12)
+	pdf.SetFont("Calligrapher", "U", 12)
 	pdf.WriteAligned(pageWidth, 35, line, "L")
 	pdf.Ln(10)
-	pdf.SetFont("Helvetica", "S", 12)
+	pdf.SetFont("Calligrapher", "S", 12)
 	pdf.WriteAligned(pageWidth, 35, line, "L")
 	fileStr := Filename("Test_WriteAligned")
 	err := pdf.OutputFileAndClose(fileStr)
@@ -597,9 +595,9 @@ func Test_WriteAligned(t *testing.T) {
 
 // Test_Image demonstrates how images are included in documents.
 func Test_Image(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 11)
+	pdf.SetFont("Calligrapher", "", 11)
 	pdf.Image(ImageFile("logo.png"), 10, 10, 30, 0, false, "", 0, "")
 	pdf.Text(50, 20, "logo.png")
 	pdf.Image(ImageFile("logo.gif"), 10, 40, 30, 0, false, "", 0, "")
@@ -622,9 +620,9 @@ func Test_Image(t *testing.T) {
 func Test_ImageOptions(t *testing.T) {
 	var opt tinypdf.ImageOptions
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 11)
+	pdf.SetFont("Calligrapher", "", 11)
 	pdf.SetX(60)
 	opt.ImageType = "png"
 	pdf.ImageOptions(ImageFile("logo.png"), -10, 10, 30, 0, false, opt, 0, "")
@@ -648,9 +646,9 @@ func Test_RegisterImageOptionsReader(t *testing.T) {
 	)
 
 	pdfStr = Filename("Test_RegisterImageOptionsReader")
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 11)
+	pdf.SetFont("Calligrapher", "", 11)
 	fl, err = os.Open(ImageFile("logo.png"))
 	if err == nil {
 		opt.ImageType = "png"
@@ -672,7 +670,7 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 	var y0 float64
 	var crrntCol int
 	loremStr := lorem()
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	const (
 		pageWd = 297.0 // A4 210.0 x 297.0
 		margin = 10.0
@@ -688,7 +686,7 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 	}
 	pdf.SetHeaderFunc(func() {
 		titleStr := "gofpdf"
-		pdf.SetFont("Helvetica", "B", 48)
+		pdf.SetFont("Calligrapher", "", 48)
 		wd := pdf.GetStringWidth(titleStr) + 6
 		pdf.SetX((pageWd - wd) / 2)
 		pdf.SetTextColor(128, 128, 160)
@@ -709,7 +707,7 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 		return true
 	})
 	pdf.AddPage()
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	for j := 0; j < 20; j++ {
 		if j == 1 {
 			pdf.Image(ImageFile("tinypdf.png"), -1, 0, colWd, 0, true, "", 0, "")
@@ -733,8 +731,8 @@ func Test_Circle(t *testing.T) {
 		thin  = 0.2
 		thick = 3.0
 	)
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Helvetica", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.SetFillColor(200, 200, 220)
 	pdf.AddPage()
 
@@ -823,11 +821,11 @@ func Test_SetAlpha(t *testing.T) {
 	modeList := []string{"Normal", "Multiply", "Screen", "Overlay",
 		"Darken", "Lighten", "ColorDodge", "ColorBurn", "HardLight", "SoftLight",
 		"Difference", "Exclusion", "Hue", "Saturation", "Color", "Luminosity"}
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetLineWidth(2)
 	pdf.SetAutoPageBreak(false, 0)
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", 18)
+	pdf.SetFont("Calligrapher", "", 18)
 	pdf.SetXY(0, gapY)
 	pdf.SetTextColor(0, 0, 0)
 	pdf.CellFormat(pageW, gapY, "Alpha Blending Modes", "", 0, "C", false, 0, "")
@@ -837,12 +835,12 @@ func Test_SetAlpha(t *testing.T) {
 		x := gapX
 		for row := 0; row < 4; row++ {
 			pdf.Rect(x, y, rectW, rectH, "D")
-			pdf.SetFont("Helvetica", "B", 12)
+			pdf.SetFont("Calligrapher", "B", 12)
 			pdf.SetFillColor(0, 0, 0)
 			pdf.SetTextColor(250, 250, 230)
 			pdf.SetXY(x, y+rectH-4)
 			pdf.CellFormat(rectW, 5, modeList[j], "", 0, "C", true, 0, "")
-			pdf.SetFont("Helvetica", "I", 150)
+			pdf.SetFont("Calligrapher", "I", 150)
 			pdf.SetTextColor(80, 80, 120)
 			pdf.SetXY(x, y+2)
 			pdf.CellFormat(rectW, rectH, "A", "", 0, "C", false, 0, "")
@@ -864,8 +862,8 @@ func Test_SetAlpha(t *testing.T) {
 
 // Test_LinearGradient demonstrates various gradients.
 func Test_LinearGradient(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Helvetica", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AddPage()
 	pdf.LinearGradient(0, 0, 210, 100, 250, 250, 255, 220, 220, 225, 0, 0, 0, .5)
 	pdf.LinearGradient(20, 25, 75, 75, 220, 220, 250, 80, 80, 220, 0, .2, 0, .8)
@@ -887,11 +885,11 @@ func Test_LinearGradient(t *testing.T) {
 
 // Test_ClipText demonstrates clipping.
 func Test_ClipText(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	y := 10.0
 	pdf.AddPage()
 
-	pdf.SetFont("Helvetica", "", 24)
+	pdf.SetFont("Calligrapher", "", 24)
 	pdf.SetXY(0, y)
 	pdf.ClipText(10, y+12, "Clipping examples", false)
 	pdf.RadialGradient(10, y, 100, 20, 128, 128, 160, 32, 32, 48,
@@ -899,7 +897,7 @@ func Test_ClipText(t *testing.T) {
 	pdf.ClipEnd()
 
 	y += 12
-	pdf.SetFont("Helvetica", "B", 120)
+	pdf.SetFont("Calligrapher", "B", 120)
 	pdf.SetDrawColor(64, 80, 80)
 	pdf.SetLineWidth(.5)
 	pdf.ClipText(10, y+40, pdf.String(), true)
@@ -944,7 +942,7 @@ func Test_ClipText(t *testing.T) {
 	pdf.RadialGradient(10, y, 120, 20, 255, 255, 255, 240, 240, 220,
 		0.25, 0.75, 0.25, 0.75, 0.5)
 	pdf.SetXY(5, y-5)
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.MultiCell(130, 5, lorem(), "", "", false)
 	pdf.ClipEnd()
 
@@ -954,7 +952,7 @@ func Test_ClipText(t *testing.T) {
 	pdf.RadialGradient(10, y, 120, 20, 255, 255, 255, 240, 240, 220,
 		0.25, 0.75, 0.25, 0.75, 0.5)
 	pdf.SetXY(5, y-5)
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.MultiCell(130, 5, lorem(), "", "", false)
 	pdf.ClipEnd()
 
@@ -967,23 +965,17 @@ func Test_ClipText(t *testing.T) {
 
 // Test_PageSize generates a PDF document with various page sizes.
 func Test_PageSize(t *testing.T) {
-	pdf := tinypdf.New(&tinypdf.InitType{
-		OrientationStr: tinypdf.Portrait,
-		UnitType:       tinypdf.IN,
-		Size:           tinypdf.PageSize{Wd: 6, Ht: 6, AutoHt: false},
-		RootDirectory:  rootTestDir,
-		FontDirName:    FontsDirName(),
-	})
+	pdf := NewDocPdfTest(tinypdf.IN, FontFile("calligra.ttf"))
 
 	pdf.SetMargins(0.5, 1, 0.5)
-	pdf.SetFont("Times", "", 14)
-	pdf.AddPageFormat(tinypdf.Landscape, tinypdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
+	pdf.SetFont("Calligrapher", "", 14)
+	pdf.AddPageFormat("L", tinypdf.PageSize{Wd: 12, Ht: 3})
 	pdf.SetXY(0.5, 1.5)
 	pdf.CellFormat(11, 0.2, "12 in x 3 in", "", 0, "C", false, 0, "")
-	pdf.AddPage() // Default size established in NewCustom()
+	pdf.AddPageFormat("P", tinypdf.PageSize{Wd: 6, Ht: 6})
 	pdf.SetXY(0.5, 3)
 	pdf.CellFormat(5, 0.2, "6 in x 6 in", "", 0, "C", false, 0, "")
-	pdf.AddPageFormat(tinypdf.Portrait, tinypdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
+	pdf.AddPageFormat("P", tinypdf.PageSize{Wd: 3, Ht: 12})
 	pdf.SetXY(0.5, 6)
 	pdf.CellFormat(2, 0.2, "3 in x 12 in", "", 0, "C", false, 0, "")
 	for j := 0; j <= 3; j++ {
@@ -994,20 +986,18 @@ func Test_PageSize(t *testing.T) {
 	err := pdf.OutputFileAndClose(fileStr)
 	SummaryCompare(err, fileStr)
 	// Output:
-	// 0:   6.00 in,   6.00 in
+	// 0:   8.50 in,  11.00 in
 	// 1:  12.00 in,   3.00 in
 	// 2:   6.00 in,   6.00 in
-	// 3:   3.00 in,  12.00 in
-	// Successfully generated pdf/Test_PageSize.pdf
 	// 3:   3.00 in,  12.00 in
 	// Successfully generated pdf/Test_PageSize.pdf
 }
 
 // Test_Bookmark demonstrates the Bookmark method.
 func Test_Bookmark(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 15)
+	pdf.SetFont("Calligrapher", "", 15)
 	pdf.Bookmark("Page 1", 0, 0)
 	pdf.Bookmark("Paragraph 1", 1, -1)
 	pdf.Cell(0, 6, "Paragraph 1")
@@ -1034,7 +1024,7 @@ func Test_TransformBegin(t *testing.T) {
 	)
 	var refX, refY float64
 	var refStr string
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	color := func(val int) {
 		pdf.SetDrawColor(val, val, val)
@@ -1058,7 +1048,7 @@ func Test_TransformBegin(t *testing.T) {
 	titleStr := "Transformations"
 	titlePt := 36.0
 	titleHt := pdf.PointConvert(titlePt)
-	pdf.SetFont("Helvetica", "", titlePt)
+	pdf.SetFont("Calligrapher", "", titlePt)
 	titleWd := pdf.GetStringWidth(titleStr)
 	titleX := (210 - titleWd) / 2
 	pdf.Text(titleX, 10+titleHt, titleStr)
@@ -1071,7 +1061,7 @@ func Test_TransformBegin(t *testing.T) {
 	pdf.ClipEnd()
 	pdf.TransformEnd()
 
-	pdf.SetFont("Helvetica", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 
 	// Scale by 150% centered by lower left corner of the rectangle
 	refDraw("Scale", 50, 60)
@@ -1164,10 +1154,10 @@ func Test_RegisterImage(t *testing.T) {
 	var infoPtr *tinypdf.ImageInfoType
 	var imageFileStr string
 	var imgWd, imgHt, lf, tp float64
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	pdf.SetMargins(10, 10, 10)
-	pdf.SetFont("Helvetica", "", 15)
+	pdf.SetFont("Calligrapher", "", 15)
 	for j, str := range fileList {
 		imageFileStr = ImageFile(str)
 		infoPtr = pdf.RegisterImage(imageFileStr, "")
@@ -1222,8 +1212,8 @@ func Test_SplitLines(t *testing.T) {
 		fontPtSize = 18.0
 		wd         = 100.0
 	)
-	pdf := NewDocPdfTest() // A4 210.0 x 297.0
-	pdf.SetFont("Times", "", fontPtSize)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", fontPtSize)
 	_, lineHt := pdf.GetFontSizes()
 	pdf.AddPage()
 	pdf.SetMargins(10, 10, 10)
@@ -1257,8 +1247,8 @@ func Test_SVGBasicWrite(t *testing.T) {
 		sig tinypdf.SVGBasicType
 		err error
 	)
-	pdf := NewDocPdfTest() // A4 210.0 x 297.0
-	pdf.SetFont("Times", "", fontPtSize)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", fontPtSize)
 	lineHt := pdf.PointConvert(fontPtSize)
 	pdf.AddPage()
 	pdf.SetMargins(10, 10, 10)
@@ -1307,8 +1297,8 @@ func Test_SVGBasicDraw(t *testing.T) {
 		sig tinypdf.SVGBasicType
 		err error
 	)
-	pdf := NewDocPdfTest() // A4 210.0 x 297.0
-	pdf.SetFont("Times", "", fontPtSize)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", fontPtSize)
 	lineHt := pdf.PointConvert(fontPtSize)
 	pdf.AddPage()
 	pdf.SetMargins(10, 10, 10)
@@ -1380,8 +1370,8 @@ func Test_CellFormat_align(t *testing.T) {
 			linkStr = "https://github.com/cdvelop/tinypdf"
 		}
 	}
-	pdf := NewDocPdfTest() // A4 210.0 x 297.0
-	pdf.SetFont("Helvetica", "", 16)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 16)
 	formatRect(pdf, recList)
 	formatRect(pdf, recListBaseline)
 
@@ -1399,9 +1389,9 @@ func Test_CellFormat_align(t *testing.T) {
 // Windows-1252 code page (gofpdf default). See the example for CellFormat (4)
 // for a way to do this automatically.
 func Test_CellFormat_codepageescape(t *testing.T) {
-	pdf := NewDocPdfTest() // A4 210.0 x 297.0
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	fontSize := 16.0
-	pdf.SetFont("Helvetica", "", fontSize)
+	pdf.SetFont("Calligrapher", "", fontSize)
 	ht := pdf.PointConvert(fontSize)
 	write := func(str string) {
 		pdf.CellFormat(190, ht, str, "", 1, "C", false, 0, "")
@@ -1429,10 +1419,10 @@ func Test_CellFormat_codepageescape(t *testing.T) {
 
 // Test_SetProtection demonstrates password protection for documents.
 func Test_SetProtection(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetProtection(tinypdf.CnProtectPrint, "123", "abc")
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.Write(10, "Password-protected.")
 	fileStr := Filename("Test_SetProtection")
 	err := pdf.OutputFileAndClose(fileStr)
@@ -1462,9 +1452,9 @@ func Test_Polygon(t *testing.T) {
 		}
 		return
 	}
-	pdf := NewDocPdfTest() // A4 210.0 x 297.0
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", ptSize)
+	pdf.SetFont("Calligrapher", "", ptSize)
 	pdf.SetDrawColor(0, 80, 180)
 	gap = 12.0
 	pdf.SetY(gap)
@@ -1497,9 +1487,9 @@ func Test_Polygon(t *testing.T) {
 // interactively.
 func Test_AddLayer(t *testing.T) {
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 15)
+	pdf.SetFont("Calligrapher", "", 15)
 	pdf.Write(8, "This line doesn't belong to any layer.\n")
 
 	// Define layers
@@ -1550,9 +1540,9 @@ func Test_RegisterImageReader(t *testing.T) {
 		tp  string
 	)
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", fontSize)
+	pdf.SetFont("Calligrapher", "", fontSize)
 	ln := pdf.PointConvert(fontSize)
 	pdf.MultiCell(wd-margin-margin, ln, msgStr, "", "L", false)
 	rsp, err = http.Get(urlStr)
@@ -1622,9 +1612,9 @@ func Test_Beziergon(t *testing.T) {
 		{X: -1, Y: -1},
 	}
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", fontSize)
+	pdf.SetFont("Calligrapher", "", fontSize)
 	for j, src := range srcList {
 		srcList[j].X = offsetX + src.X*Unit
 		srcList[j].Y = offsetY + src.Y*Unit
@@ -1667,7 +1657,7 @@ func Test_Beziergon(t *testing.T) {
 // Test_MoveTo demonstrates the Path Drawing functions, such as: MoveTo,
 // LineTo, CurveTo, ..., ClosePath and DrawPath.
 func Test_MoveTo(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	pdf.MoveTo(20, 20)
 	pdf.LineTo(170, 20)
@@ -1688,7 +1678,7 @@ func Test_MoveTo(t *testing.T) {
 // Test_SetLineJoinStyle demonstrates various line cap and line join styles.
 func Test_SetLineJoinStyle(t *testing.T) {
 	const offset = 75.0
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	var draw = func(cap, join string, x0, y0, x1, y1 float64) {
 		// transform begin & end needed to isolate caps and joins
@@ -1728,10 +1718,10 @@ func Test_SetLineJoinStyle(t *testing.T) {
 
 // Test_DrawPath demonstrates various fill modes.
 func Test_DrawPath(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetDrawColor(0xff, 0x00, 0x00)
 	pdf.SetFillColor(0x99, 0x99, 0x99)
-	pdf.SetFont("Helvetica", "", 15)
+	pdf.SetFont("Calligrapher", "", 15)
 	pdf.AddPage()
 	pdf.SetAlpha(1, "Multiply")
 	var (
@@ -1819,8 +1809,8 @@ func Test_AddFontFromBytes(t *testing.T) {
 // This example demonstrate Clipped table cells
 func Test_ClipRect(t *testing.T) {
 	marginCell := 2. // margin of top/bottom of cell
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AddPage()
 	pagew, pageh := pdf.GetPageSize()
 	mleft, mright, _, mbottom := pdf.GetMargins()
@@ -1862,8 +1852,8 @@ func Test_ClipRect(t *testing.T) {
 // This example demonstrate wrapped table cells
 func Test_Rect(t *testing.T) {
 	marginCell := 2. // margin of top/bottom of cell
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AddPage()
 	pagew, pageh := pdf.GetPageSize()
 	mleft, mright, _, mbottom := pdf.GetMargins()
@@ -1912,10 +1902,10 @@ func Test_Rect(t *testing.T) {
 
 // Test_SetJavascript demonstrates including JavaScript in the document.
 func Test_SetJavascript(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetJavascript("print(true);")
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.Write(10, "Auto-print.")
 	fileStr := Filename("Test_SetJavascript")
 	err := pdf.OutputFileAndClose(fileStr)
@@ -1926,7 +1916,7 @@ func Test_SetJavascript(t *testing.T) {
 
 // Test_AddSpotColor demonstrates spot color use
 func Test_AddSpotColor(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddSpotColor("PANTONE 145 CVC", 0, 42, 100, 25)
 	pdf.AddPage()
 	pdf.SetFillSpotColor("PANTONE 145 CVC", 90)
@@ -1941,8 +1931,8 @@ func Test_AddSpotColor(t *testing.T) {
 // Test_RegisterAlias demonstrates how to use `RegisterAlias` to create a table of
 // contents.
 func Test_RegisterAlias(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AliasNbPages("")
 	pdf.AddPage()
 
@@ -2004,8 +1994,8 @@ func Test_RegisterAlias_utf8(t *testing.T) {
 
 // Test_Grid demonstrates the generation of graph grids.
 func Test_Grid(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AddPage()
 
 	gr := tinypdf.NewGrid(13, 10, 187, 130)
@@ -2082,9 +2072,9 @@ func Test_SetPageBox(t *testing.T) {
 		fontsize  = 6
 		boxmargin = 3 * fontsize
 	)
-	pdf := NewDocPdfTest() // 210mm x 297mm
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetPageBox("crop", boxmargin, boxmargin, wd-2*boxmargin, ht-2*boxmargin)
-	pdf.SetFont("Arial", "", pdf.UnitToPointConvert(fontsize))
+	pdf.SetFont("Calligrapher", "", pdf.UnitToPointConvert(fontsize))
 	pdf.AddPage()
 	pdf.MoveTo(fontsize, fontsize)
 	pdf.Write(fontsize, "This will be cropped from printed output")
@@ -2106,9 +2096,9 @@ func Test_SubWrite(t *testing.T) {
 		halfX    = 105
 	)
 
-	pdf := NewDocPdfTest() // 210mm x 297mm
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", fontSize)
+	pdf.SetFont("Calligrapher", "", fontSize)
 	_, lineHt := pdf.GetFontSizes()
 
 	pdf.Write(lineHt, "Hello World!")
@@ -2151,8 +2141,8 @@ func Test_SubWrite(t *testing.T) {
 // generation to be deferred until all pages have been added.
 func Test_SetPage(t *testing.T) {
 	rnd := rand.New(rand.NewSource(0)) // Make reproducible documents
-	pdf := NewDocPdfTest(tinypdf.CM)
-	pdf.SetFont("Times", "", 12)
+	pdf := NewDocPdfTest(tinypdf.CM, FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 
 	var time []float64
 	temperaturesFromSensors := make([][]float64, 5)
@@ -2208,10 +2198,10 @@ func Test_SetPage(t *testing.T) {
 // Test_SetFillColor demonstrates how graphic attributes are properly
 // assigned within multiple transformations. See issue #234.
 func Test_SetFillColor(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 8)
+	pdf.SetFont("Calligrapher", "", 8)
 
 	draw := func(trX, trY float64) {
 		pdf.TransformBegin()
@@ -2245,7 +2235,7 @@ func Test_SetFillColor(t *testing.T) {
 func Test_TransformRotate(t *testing.T) {
 
 	loremStr := lorem() + "\n\n"
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	margin := 25.0
 	pdf.SetMargins(margin, margin, margin)
 
@@ -2258,7 +2248,7 @@ func Test_TransformRotate(t *testing.T) {
 	ctrY := 297.0 / 2.0
 
 	pdf.SetHeaderFunc(func() {
-		pdf.SetFont("Arial", "B", markFontHt)
+		pdf.SetFont("Calligrapher", "B", markFontHt)
 		pdf.SetTextColor(206, 216, 232)
 		pdf.SetXY(margin, markY)
 		pdf.TransformBegin()
@@ -2269,7 +2259,7 @@ func Test_TransformRotate(t *testing.T) {
 	})
 
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 8)
+	pdf.SetFont("Calligrapher", "", 8)
 	for j := 0; j < 25; j++ {
 		pdf.MultiCell(0, lineHt, loremStr, "", "L", false)
 	}
@@ -2341,7 +2331,7 @@ func Test_RoundedRect(t *testing.T) {
 		}
 		return
 	}
-	pdf := NewDocPdfTest() // 210 x 297
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	pdf.SetLineWidth(0.5)
 	y := vgap
@@ -2373,11 +2363,11 @@ func Test_RoundedRect(t *testing.T) {
 // Test_Cell_strikeout demonstrates striked-out text
 func Test_Cell_strikeout(t *testing.T) {
 
-	pdf := NewDocPdfTest() // 210mm x 297mm
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 
 	for fontSize := 4; fontSize < 40; fontSize += 10 {
-		pdf.SetFont("Arial", "S", float64(fontSize))
+		pdf.SetFont("Calligrapher", "S", float64(fontSize))
 		pdf.SetXY(0, float64(fontSize))
 		pdf.Cell(40, 10, "Hello World")
 	}
@@ -2392,11 +2382,11 @@ func Test_Cell_strikeout(t *testing.T) {
 // Test_SetTextRenderingMode demonstrates rendering modes in PDFs.
 func Test_SetTextRenderingMode(t *testing.T) {
 
-	pdf := NewDocPdfTest() // 210mm x 297mm
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	fontSz := float64(16)
 	lineSz := pdf.PointToUnitConvert(fontSz)
-	pdf.SetFont("Times", "", fontSz)
+	pdf.SetFont("Calligrapher", "", fontSz)
 	pdf.Write(lineSz, "This document demonstrates various modes of text rendering. Search for \"Mode 3\" "+
 		"to locate text that has been rendered invisibly. This selection can be copied "+
 		"into the clipboard as usual and is useful for overlaying onto non-textual elements such "+
@@ -2459,10 +2449,10 @@ func TestMultiCellUnsupportedChar(t *testing.T) {
 	pdf.OutputFileAndClose(fileStr)
 }
 
-// Test_SetTextRenderingMode demonstrates embedding files in PDFs,
+// Test_SetAttachments demonstrates embedding files in PDFs,
 // at the top-level.
 func Test_SetAttachments(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 
 	// Global attachments
 	file, err := os.ReadFile("grid.go")
@@ -2485,8 +2475,8 @@ func Test_SetAttachments(t *testing.T) {
 }
 
 func Test_AddAttachmentAnnotation(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AddPage()
 
 	// Per page attachment
@@ -2507,7 +2497,7 @@ func Test_AddAttachmentAnnotation(t *testing.T) {
 	pdf.Cell(50, 15, "A second link (no copy)")
 
 	fileStr := Filename("Test_FileAnnotations")
-	err = pdf.OutputFileAndClose(fileStr)
+	err := pdf.OutputFileAndClose(fileStr)
 	SummaryCompare(err, fileStr)
 	// Output:
 	// Successfully generated pdf/Test_FileAnnotations.pdf
@@ -2519,7 +2509,7 @@ func Test_SetModificationDate(t *testing.T) {
 	// Producer:       FPDF 1.7
 	// CreationDate:   Sat Jan  1 00:00:00 2000
 	// ModDate:        Sun Jan  2 10:22:30 2000
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
 	pdf.SetModificationDate(time.Date(2000, 1, 2, 10, 22, 30, 0, time.UTC))
 	fileStr := Filename("Test_SetModificationDate")
@@ -2530,8 +2520,8 @@ func Test_SetModificationDate(t *testing.T) {
 }
 
 func Test_RoundedRect_rotated(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.AddPage()
 
 	pdf.TransformBegin()
@@ -2591,9 +2581,9 @@ func Test_SetXmpMetadata(t *testing.T) {
 </x:xmpmeta>
 <?xpacket end="r"?>`
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 12)
+	pdf.SetFont("Calligrapher", "", 12)
 	pdf.Write(10, "Embed custom XMP metadata.")
 
 	pdf.SetXmpMetadata([]byte(xmpData))
@@ -2612,9 +2602,9 @@ func Test_AddOutputIntent(t *testing.T) {
 		panic(err)
 	}
 
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
+	pdf.SetFont("Calligrapher", "B", 16)
 	pdf.Cell(40, 10, "Hello World!")
 	pdf.AddOutputIntent(tinypdf.OutputIntentType{
 		SubtypeIdent:              tinypdf.OutputIntent_GTS_PDFA1,

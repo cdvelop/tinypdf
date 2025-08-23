@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/cdvelop/tinypdf"
-	. "github.com/cdvelop/tinystring"
 )
 
 var floatEpsilon = math.Nextafter(1.0, 2.0) - 1.0
@@ -243,12 +242,12 @@ func TestGetFillSpotColor(t *testing.T) {
 }
 
 func TestGetFontFamily(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.Font().SetFont("Times", "", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "", 12)
 
 	fontFamily := pdf.GetFontFamily()
 
-	if got, want := fontFamily, "times"; got != want {
+	if got, want := fontFamily, "calligrapher"; got != want {
 		t.Errorf("invalid fontFamily: got=%v, want=%v", got, want)
 	}
 }
@@ -263,7 +262,7 @@ func (tfl *testFontLoader) Open(name string) (io.Reader, error) {
 }
 
 func TestGetFontSize(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
 	pdf.SetFontSize(19)
 
 	ptSize, _ := pdf.GetFontSizes()
@@ -282,10 +281,10 @@ func TestGetFontSize(t *testing.T) {
 }
 
 func TestGetFontStyle(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFont("Arial", "BIUS", 12)
+	pdf := NewDocPdfTest(FontFile("calligra.ttf"))
+	pdf.SetFont("Calligrapher", "BIUS", 12)
 
-	fontStyle := pdf.Font().GetFontStyle()
+	fontStyle := pdf.GetTextDecorations()
 
 	if got, want := len(fontStyle), 4; got != want {
 		t.Errorf("invalid fontStyle length: got=%v, want=%v", got, want)

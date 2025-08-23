@@ -1163,6 +1163,16 @@ func (f *TinyPDF) GetImageInfo(imageStr string) (info *ImageInfoType) {
 	return f.images[imageStr]
 }
 
+func (f *TinyPDF) GetFontDesc(familyStr, styleStr string) (fontManager.FontDescType) {
+	return fontManager.FontDescType{}
+}
+
+
+
+func (f *TinyPDF) UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string) string) {
+	return nil
+}
+
 // ImportObjects imports objects from gofpdi into current document
 func (f *TinyPDF) ImportObjects(objs map[string][]byte) {
 	// imported objects support removed along with templates

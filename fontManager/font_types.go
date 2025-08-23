@@ -74,3 +74,44 @@ type FontFamily struct {
 	// Regular is a fallback for any missing styles
 	Regular *FontDef
 }
+
+// Font flags for FontDescType.Flags as defined in the pdf specification.
+const (
+	// FontFlagFixedPitch is set if all glyphs have the same width (as
+	// opposed to proportional or variable-pitch fonts, which have
+	// different widths).
+	FontFlagFixedPitch = 1 << 0
+	// FontFlagSerif is set if glyphs have serifs, which are short
+	// strokes drawn at an angle on the top and bottom of glyph stems.
+	// (Sans serif fonts do not have serifs.)
+	FontFlagSerif = 1 << 1
+	// FontFlagSymbolic is set if font contains glyphs outside the
+	// Adobe standard Latin character set. This flag and the
+	// Nonsymbolic flag shall not both be set or both be clear.
+	FontFlagSymbolic = 1 << 2
+	// FontFlagScript is set if glyphs resemble cursive handwriting.
+	FontFlagScript = 1 << 3
+	// FontFlagNonsymbolic is set if font uses the Adobe standard
+	// Latin character set or a subset of it.
+	FontFlagNonsymbolic = 1 << 5
+	// FontFlagItalic is set if glyphs have dominant vertical strokes
+	// that are slanted.
+	FontFlagItalic = 1 << 6
+	// FontFlagAllCap is set if font contains no lowercase letters;
+	// typically used for display purposes, such as for titles or
+	// headlines.
+	FontFlagAllCap = 1 << 16
+	// SmallCap is set if font contains both uppercase and lowercase
+	// letters. The uppercase letters are similar to those in the
+	// regular version of the same typeface family. The glyphs for the
+	// lowercase letters have the same shapes as the corresponding
+	// uppercase letters, but they are sized and their proportions
+	// adjusted so that they have the same size and stroke weight as
+	// lowercase glyphs in the same typeface family.
+	SmallCap = 1 << 18
+	// ForceBold determines whether bold glyphs shall be painted with
+	// extra pixels even at very small text sizes by a conforming
+	// reader. If the ForceBold flag is set, features of bold glyphs
+	// may be thickened at small text sizes.
+	ForceBold = 1 << 18
+)

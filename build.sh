@@ -20,7 +20,6 @@ documentation() {
 }
 
 cov() {
-  all
   go test -v -coverprofile=coverage
   go tool cover -html=coverage -o=coverage.html
 }
