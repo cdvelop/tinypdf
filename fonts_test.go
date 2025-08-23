@@ -7,7 +7,7 @@ import "testing"
 func Test_SetUnderlineThickness(t *testing.T) {
 	pdf := NewDocPdfTest() // 210mm x 297mm
 	pdf.AddPage()
-	pdf.SetFont("Arial", "U", 12)
+	pdf.Font().SetFont("Arial", "U", 12)
 
 	pdf.SetUnderlineThickness(0.5)
 	pdf.CellFormat(0, 10, "Thin underline", "", 1, "", false, 0, "")

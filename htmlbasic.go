@@ -103,7 +103,7 @@ func (f *TinyPDF) HTMLBasicNew() (html HTMLBasicType) {
 // break occurs and text continues from the left margin. Upon method exit, the
 // current position is left at the end of the text.
 //
-// lineHt indicates the line height in the unit of measure specified in New().
+// lineHt indicates the line height in the Unit of measure specified in New().
 func (html *HTMLBasicType) Write(lineHt float64, htmlStr string) {
 	var boldLvl, italicLvl, underscoreLvl, linkBold, linkItalic, linkUnderscore int
 	var textR, textG, textB = html.pdf.GetTextColor()

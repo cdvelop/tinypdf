@@ -466,12 +466,12 @@ func (f *TinyPDF) Text(x, y float64, txtStr string) {
 		}
 		txt2 = f.escape(utf8toutf16(txtStr, false))
 		for _, uni := range txtStr {
-			f.currentFont.usedRunes[int(uni)] = int(uni)
+			f.currentFont.UsedRunes[int(uni)] = int(uni)
 		}
 	} else {
 		txt2 = f.escape(txtStr)
 	}
-	s := sprintf("BT %.2f %.2f Td (%s) Tj ET", x*f.k, (f.h-y)*f.k, txt2)
+	s := Fmt("BT %.2f %.2f Td (%s) Tj ET", x*f.k, (f.h-y)*f.k, txt2)
 	if f.underline && txtStr != "" {
 		s += " " + f.dounderline(x, y, txtStr)
 	}
@@ -479,7 +479,7 @@ func (f *TinyPDF) Text(x, y float64, txtStr string) {
 		s += " " + f.dostrikeout(x, y, txtStr)
 	}
 	if f.colorFlag {
-		s = sprintf("q %s %s Q", f.color.text.str, s)
+		s = Fmt("q %s %s Q", f.color.text.str, s)
 	}
 	f.out(s)
 }
@@ -834,8 +834,8 @@ func (f *TinyPDF) SetAlpha(alpha float64, blendModeStr string) {
 	}
 	f.alpha = alpha
 	f.blendMode = blendModeStr
-	alphaStr := sprintf("%.3f", alpha)
-	keyStr := sprintf("%s %s", alphaStr, blendModeStr)
+	alphaStr := Fmt("%.3f", alpha)
+	keyStr := Fmt("%s %s", alphaStr, blendModeStr)
 	pos, ok := f.blendMap[keyStr]
 	if !ok {
 		pos = len(f.blendList) // at least 1

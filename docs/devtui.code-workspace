@@ -1,14 +1,19 @@
 {
 	"folders": [
 		{
-			"path": "../../envfonts"
-		},
-		{
 			"path": ".."
 		},
 		{
 			"path": "../../tinystring"
+		},
+		{
+			"path": "../../devtui"
+		},
+		{
+			"path": "../../godev"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "platform"
+	}
 }

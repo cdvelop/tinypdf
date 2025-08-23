@@ -278,7 +278,7 @@ func TestCompareBytesWithPrintDiff(t *testing.T) {
 	data1 := []byte("hello")
 	data2 := []byte("world")
 
-	// We can't easily capture stdout in a unit test, but we can at least
+	// We can't easily capture stdout in a Unit test, but we can at least
 	// verify the function doesn't panic when printDiff is true
 	err := CompareBytes(data1, data2, true)
 	if err == nil {

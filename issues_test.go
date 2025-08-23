@@ -46,43 +46,11 @@ func TestFpdfImplementPdf(t *testing.T) {
 	// this will not compile if TinyPDF and Tpl
 	// do not implement Pdf
 	var _ tinypdf.Pdf = (*tinypdf.TinyPDF)(nil)
-	var _ tinypdf.Pdf = (*tinypdf.Tpl)(nil)
 }
 
 // TestPagedTemplate ensures new paged templates work
 func TestPagedTemplate(t *testing.T) {
-	pdf := NewDocPdfTest()
-	tpl := pdf.CreateTemplate(func(t *tinypdf.Tpl) {
-		// this will be the second page, as a page is already
-		// created by default
-		t.AddPage()
-		t.AddPage()
-		t.AddPage()
-	})
-
-	if tpl.NumPages() != 4 {
-		t.Fatalf("The template does not have the correct number of pages %d", tpl.NumPages())
-	}
-
-	tplPages := tpl.FromPages()
-	for x := 0; x < len(tplPages); x++ {
-		pdf.AddPage()
-		pdf.UseTemplate(tplPages[x])
-	}
-
-	// get the last template
-	tpl2, err := tpl.FromPage(tpl.NumPages())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// the objects should be the exact same, as the
-	// template will represent the last page by default
-	// therefore no new id should be set, and the object
-	// should be the same object
-	if fmt.Sprintf("%p", tpl2) != fmt.Sprintf("%p", tpl) {
-		t.Fatal("Template no longer respecting initial template object")
-	}
+	t.Skip("templates removed; paged template test skipped")
 }
 
 // TestIssue0116 addresses issue 116 in which library silently fails after
@@ -90,13 +58,13 @@ func TestPagedTemplate(t *testing.T) {
 func TestIssue0116(t *testing.T) {
 	pdf := NewDocPdfTest()
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
+	pdf.Font().SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "OK")
 	if pdf.Error() != nil {
 		t.Fatalf("not expecting error when rendering text")
 	}
 
-	pdf = tinypdf.New(tinypdf.MM, "A4", "")
+	pdf = NewDocPdfTest(tinypdf.MM)
 	pdf.AddPage()
 	pdf.Cell(40, 10, "Not OK") // Font not set
 	if pdf.Error() == nil {
@@ -115,7 +83,7 @@ func TestIssue0193(t *testing.T) {
 	png, err = os.ReadFile(ImageFile("sweden.png"))
 	if err == nil {
 		rdr = bytes.NewReader(png)
-		pdf = tinypdf.New(tinypdf.MM, "A4", "")
+		pdf = NewDocPdfTest(tinypdf.MM)
 		pdf.AddPage()
 		_ = pdf.RegisterImageOptionsReader("sweden", tinypdf.ImageOptions{ImageType: "png", ReadDpi: true}, rdr)
 		err = pdf.Error()
@@ -131,11 +99,11 @@ func TestIssue0193(t *testing.T) {
 func TestIssue0209SplitLinesEqualMultiCell(t *testing.T) {
 	pdf := NewDocPdfTest()
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 8)
+	pdf.Font().SetFont("Arial", "", 8)
 	// this sentence should not be splited
 	str := "Guochin Amandine"
 	lines := pdf.SplitLines([]byte(str), 26)
-	_, FontSize := pdf.GetFontSize()
+	_, FontSize := pdf.GetFontSizes()
 	y_start := pdf.GetY()
 	pdf.MultiCell(26, FontSize, str, "", "L", false)
 	y_end := pdf.GetY()
@@ -176,13 +144,13 @@ func TestFooterFuncLpi(t *testing.T) {
 	// This set just for testing, only set SetFooterFuncLpi.
 	pdf.SetFooterFunc(func() {
 		pdf.SetY(-15)
-		pdf.SetFont("Arial", "I", 8)
+		pdf.Font().SetFont("Arial", "I", 8)
 		pdf.CellFormat(0, 10, oldFooterFnc,
 			"", 0, "C", false, 0, "")
 	})
 	pdf.SetFooterFuncLpi(func(lastPage bool) {
 		pdf.SetY(-15)
-		pdf.SetFont("Arial", "I", 8)
+		pdf.Font().SetFont("Arial", "I", 8)
 		pdf.CellFormat(0, 10, bothPages, "", 0, "L", false, 0, "")
 		if !lastPage {
 			pdf.CellFormat(0, 10, firstPageOnly, "", 0, "C", false, 0, "")
@@ -191,7 +159,7 @@ func TestFooterFuncLpi(t *testing.T) {
 		}
 	})
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
+	pdf.Font().SetFont("Arial", "B", 16)
 	for j := 1; j <= 40; j++ {
 		pdf.CellFormat(0, 10, fmt.Sprintf("Printing line number %d", j),
 			"", 1, "", false, 0, "")
@@ -237,7 +205,7 @@ func TestIssue0069PanicOnSplitTextWithUnicode(t *testing.T) {
 
 	pdf := NewDocPdfTest()
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 8)
+	pdf.Font().SetFont("Arial", "", 8)
 
 	testChars := []string{"«", "»", "—"}
 
@@ -258,7 +226,7 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 
 	pdf := NewDocPdfTest()
 	pdf.AddPage()
-	pdf.SetFont("Arial", "", 8)
+	pdf.Font().SetFont("Arial", "", 8)
 
 	// Test values in utf8 beyond the ascii range
 	// I assuming that if the function can handle values in this range
@@ -268,20 +236,6 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 	for i := 128; i < 1_000_000; i++ {
 		str = string(rune(i))
 		_ = pdf.SplitText(str, 100)
-	}
-
-}
-
-func TestAFMFontParser(t *testing.T) {
-	const embed = true
-	err := tinypdf.MakeFont(
-		FontFile("cmmi10.pfb"),
-		FontFile("cp1252.map"),
-		FontsDirName(),
-		nil, embed,
-	)
-	if err != nil {
-		t.Fatalf("could not create cmmi10 font: %v", err)
 	}
 
 }

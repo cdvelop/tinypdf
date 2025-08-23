@@ -10,7 +10,7 @@ support for text, drawing and images.
 
 -   UTF-8 support
 
--   Choice of measurement unit, page format and margins
+-   Choice of measurement Unit, page format and margins
 
 -   Page header and footer management
 
@@ -74,7 +74,7 @@ The following Go code generates a simple PDF file.
 pdf := tinypdf.New("mm", "A4", "")
 
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
+	pdf.Font().SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "Hello, world")
 	err := pdf.OutputFileAndClose("hello.pdf")
 

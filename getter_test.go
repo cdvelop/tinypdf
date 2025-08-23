@@ -114,7 +114,7 @@ func TestGetConversionRatio(t *testing.T) {
 		t.Errorf("invalid conversionRatio: got=%v, want=%v", got, want)
 	}
 
-	pdf = tinypdf.New(tinypdf.POINT, "A4", "")
+	pdf = NewDocPdfTest(tinypdf.POINT)
 
 	conversionRatio = pdf.GetConversionRatio()
 
@@ -244,7 +244,7 @@ func TestGetFillSpotColor(t *testing.T) {
 
 func TestGetFontFamily(t *testing.T) {
 	pdf := NewDocPdfTest()
-	pdf.SetFont("Times", "", 12)
+	pdf.Font().SetFont("Times", "", 12)
 
 	fontFamily := pdf.GetFontFamily()
 
@@ -262,52 +262,11 @@ func (tfl *testFontLoader) Open(name string) (io.Reader, error) {
 	return tfl.reader, tfl.err
 }
 
-func TestGetFontLoader(t *testing.T) {
-	testErr := Err(D.Invalid, "TestGetFontLoader error")
-	tfl := &testFontLoader{
-		reader: strings.NewReader("TestGetFontLoader reader"),
-		err:    testErr,
-	}
-
-	pdf := NewDocPdfTest()
-	pdf.SetFontLoader(tfl)
-
-	fontLoader := pdf.GetFontLoader()
-
-	reader, err := fontLoader.Open("test")
-
-	if got := reader; got == nil {
-		t.Fatalf("invalid reader: got=nil, want non-nil")
-	}
-	if got, want := err, testErr; got != want {
-		t.Errorf("invalid error: got=%v, want=%v", got, want)
-	}
-
-	read, err := io.ReadAll(reader)
-	if err != nil {
-		t.Errorf("reading error: got=%v, want=nil", err)
-	}
-	if got, want := string(read[:]), "TestGetFontLoader reader"; got != want {
-		t.Errorf("invalid reader content: got=%v, want=%v", got, want)
-	}
-}
-
-func TestGetFontLocation(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetFontLocation("test-font-location")
-
-	fontLocation := pdf.GetFontLocation()
-
-	if got, want := fontLocation, "test-font-location"; got != want {
-		t.Errorf("invalid fontLocation: got=%v, want=%v", got, want)
-	}
-}
-
 func TestGetFontSize(t *testing.T) {
 	pdf := NewDocPdfTest()
 	pdf.SetFontSize(19)
 
-	ptSize, _ := pdf.GetFontSize()
+	ptSize, _ := pdf.GetFontSizes()
 
 	if got, want := ptSize, 19.0; !floatEqual(got, want) {
 		t.Errorf("invalid ptSize: got=%v, want=%v", got, want)
@@ -315,7 +274,7 @@ func TestGetFontSize(t *testing.T) {
 
 	pdf.SetFontUnitSize(246)
 
-	_, unitSize := pdf.GetFontSize()
+	_, unitSize := pdf.GetFontSizes()
 
 	if got, want := unitSize, 246.0; !floatEqual(got, want) {
 		t.Errorf("invalid unitSize: got=%v, want=%v", got, want)
@@ -326,7 +285,7 @@ func TestGetFontStyle(t *testing.T) {
 	pdf := NewDocPdfTest()
 	pdf.SetFont("Arial", "BIUS", 12)
 
-	fontStyle := pdf.GetFontStyle()
+	fontStyle := pdf.Font().GetFontStyle()
 
 	if got, want := len(fontStyle), 4; got != want {
 		t.Errorf("invalid fontStyle length: got=%v, want=%v", got, want)
@@ -458,7 +417,7 @@ func TestGetModificationDate(t *testing.T) {
 }
 
 func TestGetPageSize(t *testing.T) {
-	pdf := tinypdf.New(tinypdf.POINT, "A4", "")
+	pdf := NewDocPdfTest(tinypdf.POINT)
 
 	pageWidth, pageHeight := pdf.GetPageSize()
 

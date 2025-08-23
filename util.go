@@ -6,7 +6,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"path/filepath"
 
 	. "github.com/cdvelop/tinystring"
 )
@@ -28,10 +27,6 @@ func round(f float64) int {
 		return -int(math.Floor(-f + 0.5))
 	}
 	return int(math.Floor(f + 0.5))
-}
-
-func sprintf(fmtStr string, args ...interface{}) string {
-	return Fmt(fmtStr, args...)
 }
 
 // fileExist returns true if the specified normal file exists
@@ -212,37 +207,6 @@ func UnicodeTranslatorFromFile(fileStr string) (f func(string) string, err error
 	return
 }
 
-// UnicodeTranslatorFromDescriptor returns a function that can be used to
-// translate, where possible, utf-8 strings to a form that is compatible with
-// the specified code page. See UnicodeTranslator for more details.
-//
-// cpStr identifies a code page. A descriptor file in the font directory, set
-// with the fontDirStr argument in the call to New(), should have this name
-// plus the extension ".map". If cpStr is empty, it will be replaced with
-// "cp1252", the gofpdf code page default.
-//
-// If an error occurs reading the descriptor, the returned function is valid
-// but does not perform any rune translation.
-//
-// The CellFormat_codepage example demonstrates this method.
-func (f *TinyPDF) UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string) string) {
-	if f.err == nil {
-		if len(cpStr) == 0 {
-			cpStr = "cp1252"
-		}
-		emb, err := embFS.Open("font_embed/" + cpStr + ".map")
-		if err == nil {
-			defer emb.Close()
-			rep, f.err = UnicodeTranslator(emb)
-		} else {
-			rep, f.err = UnicodeTranslatorFromFile(filepath.Join(f.fontsPath, cpStr) + ".map")
-		}
-	} else {
-		rep = doNothing
-	}
-	return
-}
-
 // Transform moves a point by given X, Y offset
 func (p *PointType) Transform(x, y float64) PointType {
 	return PointType{p.X + x, p.Y + y}
@@ -407,12 +371,4 @@ func isChinese(rune2 rune) bool {
 		return true
 	}
 	return false
-}
-
-// Condition font family string to PDF name compliance. See section 5.3 (Names)
-// in https://resources.infosecinstitute.com/pdf-file-format-basic-structure/
-func fontFamilyEscape(familyStr string) (escStr string) {
-	escStr = Convert(familyStr).Replace(" ", "#20", -1).String()
-	// Additional replacements can take place here
-	return
 }

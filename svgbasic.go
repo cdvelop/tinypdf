@@ -182,9 +182,9 @@ type SVGBasicType struct {
 	Segments [][]SVGBasicSegmentType
 }
 
-// parseFloatWithUnit parses a float and its unit, e.g. "42pt".
+// parseFloatWithUnit parses a float and its Unit, e.g. "42pt".
 //
-// The result is converted into pt values wich is the default document unit.
+// The result is converted into pt values wich is the default document Unit.
 // parseFloatWithUnit returns the factor to apply to positions or distances to
 // convert their values in point units.
 func parseFloatWithUnit(val string) (float64, float64, error) {
@@ -227,7 +227,7 @@ func parseFloatWithUnit(val string) (float64, float64, error) {
 // includes only the commands 'M' (absolute moveto: x, y), 'L' (absolute
 // lineto: x, y), 'C' (absolute cubic Bézier curve: cx0, cy0, cx1, cy1,
 // x1,y1), 'Q' (absolute quadratic Bézier curve: x0, y0, x1, y1) and 'Z'
-// (closepath). The document is returned with "pt" unit.
+// (closepath). The document is returned with "pt" Unit.
 func SVGBasicParse(buf []byte) (sig SVGBasicType, err error) {
 	type pathType struct {
 		D string `xml:"d,attr"`

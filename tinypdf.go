@@ -12,6 +12,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cdvelop/tinypdf/fontManager"
 	. "github.com/cdvelop/tinystring"
 )
 
@@ -30,8 +31,20 @@ func (b *fmtBuffer) printf(fmtStr string, args ...any) {
 	b.Buffer.WriteString(Fmt(fmtStr, args...))
 }
 
-func New(options ...any) (f *TinyPDF) {
+func New(fontsPath []string, logger func(...any)) (f *TinyPDF) {
 	f = new(TinyPDF)
+	f.log = logger
+	f.fm = fontManager.New(&fontManager.Config{
+		Log:                 logger,
+		FontsPath:           fontsPath,
+		ConversionRatio:     f.ConversionRatio,
+		CurrentObjectNumber: f.CurrentObjectNumber,
+		SetFontCB: func(family, style string, size float64) {
+			// proxy back to TinyPDF's SetFont implementation
+			f.SetFont(family, style, size)
+		},
+		FontFamilyEscape: f.fontFamilyEscape,
+	})
 
 	var size = PageSize{0, 0, false}
 	var initType *InitType
@@ -39,28 +52,8 @@ func New(options ...any) (f *TinyPDF) {
 	// Set default values
 	f.defOrientation = Portrait
 	f.rootDirectory = "."
-	f.fontsDirName = "fonts"
 	f.unitType = MM
 
-	for _, opt := range options {
-		switch v := opt.(type) {
-		case unit:
-			if v != "" {
-				f.unitType = v
-			}
-		case orientationType:
-			f.defOrientation = v
-		case PageSize:
-			size = v
-		case *InitType:
-			initType = v
-		case RootDirectoryType:
-			f.rootDirectory = v
-		case FontsDirName:
-			f.fontsDirName = v
-
-		}
-	}
 	if initType != nil {
 		f.defOrientation = initType.OrientationStr
 		if f.defOrientation == "" {
@@ -72,7 +65,6 @@ func New(options ...any) (f *TinyPDF) {
 
 		// Note: page size conversion happens later after scale factor is set
 		f.rootDirectory = initType.RootDirectory
-		f.fontsPath = initType.RootDirectory.MakePath(initType.FontDirName)
 	}
 
 	f.page = 0
@@ -83,11 +75,7 @@ func New(options ...any) (f *TinyPDF) {
 	f.pageBoxes = make(map[int]map[string]PageBox)
 	f.defPageBoxes = make(map[string]PageBox)
 	f.state = 0
-	f.fonts = make(map[string]fontDefType)
-	f.fontFiles = make(map[string]fontFileType)
-	f.diffs = make([]string, 0, 8)
-	f.templates = make(map[string]Template)
-	f.templateObjects = make(map[string]int)
+	// Template/imported-template support (minimal for gofpdi)
 	f.importedObjs = make(map[string][]byte)
 	f.importedObjPos = make(map[string]map[int]string)
 	f.importedTplObjs = make(map[string]string)
@@ -103,8 +91,6 @@ func New(options ...any) (f *TinyPDF) {
 	f.inHeader = false
 	f.inFooter = false
 	f.lasth = 0
-	f.fontFamily = ""
-	f.fontStyle = ""
 	f.SetFontSize(12)
 	f.underline = false
 	f.strikeout = false
@@ -113,17 +99,7 @@ func New(options ...any) (f *TinyPDF) {
 	f.setTextColor(0, 0, 0)
 	f.colorFlag = false
 	f.ws = 0
-	// Set fontsPath instance
-	f.fontsPath = f.rootDirectory.MakePath(string(f.fontsDirName))
 
-	// Core fonts
-	f.coreFonts = map[string]bool{
-		"courier":      true,
-		"helvetica":    true,
-		"times":        true,
-		"symbol":       true,
-		"zapfdingbats": true,
-	}
 	// Scale factor
 	switch f.unitType {
 	case POINT:
@@ -508,14 +484,14 @@ func (f *TinyPDF) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr color
 	const prec = 3
 	if len(grayStr) > 0 {
 		if clr.gray {
-			// clr.str = sprintf("%.3f %s", clr.r, grayStr)
+			// clr.str = Fmt("%.3f %s", clr.r, grayStr)
 			f.fmt.col.Reset()
 			f.fmt.col.WriteString(f.fmtF64(clr.r, prec))
 			f.fmt.col.WriteString(" ")
 			f.fmt.col.WriteString(grayStr)
 			clr.str = f.fmt.col.String()
 		} else {
-			// clr.str = sprintf("%.3f %.3f %.3f %s", clr.r, clr.g, clr.b, fullStr)
+			// clr.str = Fmt("%.3f %.3f %.3f %s", clr.r, clr.g, clr.b, fullStr)
 			f.fmt.col.Reset()
 			f.fmt.col.WriteString(f.fmtF64(clr.r, prec))
 			f.fmt.col.WriteString(" ")
@@ -527,7 +503,7 @@ func (f *TinyPDF) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr color
 			clr.str = f.fmt.col.String()
 		}
 	} else {
-		// clr.str = sprintf("%.3f %.3f %.3f", clr.r, clr.g, clr.b)
+		// clr.str = Fmt("%.3f %.3f %.3f", clr.r, clr.g, clr.b)
 		f.fmt.col.Reset()
 		f.fmt.col.WriteString(f.fmtF64(clr.r, prec))
 		f.fmt.col.WriteString(" ")
@@ -537,14 +513,6 @@ func (f *TinyPDF) rgbColorValue(r, g, b int, grayStr, fullStr string) (clr color
 		clr.str = f.fmt.col.String()
 	}
 	return
-}
-
-func makeSubsetRange(end int) map[int]int {
-	answer := make(map[int]int)
-	for i := 0; i < end; i++ {
-		answer[i] = 0
-	}
-	return answer
 }
 
 // AddLink creates a new internal link and returns its identifier. An internal
@@ -618,7 +586,7 @@ func (f *TinyPDF) GetWordSpacing() float64 {
 // WriteAligned() example for a demonstration of its use.
 func (f *TinyPDF) SetWordSpacing(space float64) {
 	f.ws = space
-	f.out(sprintf("%.5f Tw", space*f.k))
+	f.out(Fmt("%.5f Tw", space*f.k))
 }
 
 // SetTextRenderingMode sets the rendering mode of following text.
@@ -634,230 +602,7 @@ func (f *TinyPDF) SetWordSpacing(space float64) {
 // This method is demonstrated in the SetTextRenderingMode example.
 func (f *TinyPDF) SetTextRenderingMode(mode int) {
 	if mode >= 0 && mode <= 7 {
-		f.out(sprintf("%d Tr", mode))
-	}
-}
-
-// CellFormat prints a rectangular cell with optional borders, background color
-// and character string. The upper-left corner of the cell corresponds to the
-// current position. The text can be aligned or centered. After the call, the
-// current position moves to the right or to the next line. It is possible to
-// put a link on the text.
-//
-// An error will be returned if a call to SetFont() has not already taken
-// place before this method is called.
-//
-// If automatic page breaking is enabled and the cell goes beyond the limit, a
-// page break is done before outputting.
-//
-// w and h specify the width and height of the cell. If w is 0, the cell
-// extends up to the right margin. Specifying 0 for h will result in no output,
-// but the current position will be advanced by w.
-//
-// txtStr specifies the text to display.
-//
-// borderStr specifies how the cell border will be drawn. An empty string
-// indicates no border, "1" indicates a full border, and one or more of "L",
-// "T", "R" and "B" indicate the left, top, right and bottom sides of the
-// border.
-//
-// ln indicates where the current position should go after the call. Possible
-// values are 0 (to the right), 1 (to the beginning of the next line), and 2
-// (below). Putting 1 is equivalent to putting 0 and calling Ln() just after.
-//
-// alignStr specifies how the text is to be positioned within the cell.
-// Horizontal alignment is controlled by including "L", "C" or "R" (left,
-// center, right) in alignStr. Vertical alignment is controlled by including
-// "T", "M", "B" or "A" (top, middle, bottom, baseline) in alignStr. The default
-// alignment is left middle.
-//
-// fill is true to paint the cell background or false to leave it transparent.
-//
-// link is the identifier returned by AddLink() or 0 for no internal link.
-//
-// linkStr is a target URL or empty for no external link. A non--zero value for
-// link takes precedence over linkStr.
-func (f *TinyPDF) CellFormat(w, h float64, txtStr, borderStr string, ln int,
-	alignStr string, fill bool, link int, linkStr string) {
-	// dbg("CellFormat. h = %.2f, borderStr = %s", h, borderStr)
-	if f.err != nil {
-		return
-	}
-
-	if f.currentFont.Name == "" {
-		f.err = Errf("font has not been set; unable to render text")
-		return
-	}
-
-	borderStr = Convert(borderStr).ToLower().String()
-	k := f.k
-	if f.y+h > f.pageBreakTrigger && !f.inHeader && !f.inFooter && f.acceptPageBreak() {
-		// Automatic page break
-		x := f.x
-		ws := f.ws
-		// dbg("auto page break, x %.2f, ws %.2f", x, ws)
-		if ws > 0 {
-			f.ws = 0
-			f.out("0 Tw")
-		}
-		f.AddPageFormat(f.curOrientation, f.curPageSize)
-		if f.err != nil {
-			return
-		}
-		f.x = x
-		if ws > 0 {
-			f.ws = ws
-			// f.outf("%.3f Tw", ws*k)
-			f.putF64(ws*k, 3)
-			f.put(" Tw\n")
-		}
-	}
-	if w == 0 {
-		w = f.w - f.rMargin - f.x
-	}
-	var s fmtBuffer
-	if h > 0 && (fill || borderStr == "1") {
-		var op string
-		if fill {
-			if borderStr == "1" {
-				op = "B"
-				// dbg("border is '1', fill")
-			} else {
-				op = "f"
-				// dbg("border is empty, fill")
-			}
-		} else {
-			// dbg("border is '1', no fill")
-			op = "S"
-		}
-		/// dbg("(CellFormat) f.x %.2f f.k %.2f", f.x, f.k)
-		s.printf("%.2f %.2f %.2f %.2f re %s ", f.x*k, (f.h-f.y)*k, w*k, -h*k, op)
-	}
-	if len(borderStr) > 0 && borderStr != "1" {
-		// fmt.Printf("border is '%s', no fill\n", borderStr)
-		x := f.x
-		y := f.y
-		left := x * k
-		top := (f.h - y) * k
-		right := (x + w) * k
-		bottom := (f.h - (y + h)) * k
-		if Contains(borderStr, "L") {
-			s.printf("%.2f %.2f m %.2f %.2f l S ", left, top, left, bottom)
-		}
-		if Contains(borderStr, "T") {
-			s.printf("%.2f %.2f m %.2f %.2f l S ", left, top, right, top)
-		}
-		if Contains(borderStr, "R") {
-			s.printf("%.2f %.2f m %.2f %.2f l S ", right, top, right, bottom)
-		}
-		if Contains(borderStr, "B") {
-			s.printf("%.2f %.2f m %.2f %.2f l S ", left, bottom, right, bottom)
-		}
-	}
-	if len(txtStr) > 0 {
-		var dx, dy float64
-		// Horizontal alignment
-		switch {
-		case Contains(alignStr, "R"):
-			dx = w - f.cMargin - f.GetStringWidth(txtStr)
-		case Contains(alignStr, "C"):
-			dx = (w - f.GetStringWidth(txtStr)) / 2
-		default:
-			dx = f.cMargin
-		}
-
-		// Vertical alignment
-		switch {
-		case Contains(alignStr, "T"):
-			dy = (f.fontSize - h) / 2.0
-		case Contains(alignStr, "B"):
-			dy = (h - f.fontSize) / 2.0
-		case Contains(alignStr, "A"):
-			var descent float64
-			d := f.currentFont.Desc
-			if d.Descent == 0 {
-				// not defined (standard font?), use average of 19%
-				descent = -0.19 * f.fontSize
-			} else {
-				descent = float64(d.Descent) * f.fontSize / float64(d.Ascent-d.Descent)
-			}
-			dy = (h-f.fontSize)/2.0 - descent
-		default:
-			dy = 0
-		}
-		if f.colorFlag {
-			s.printf("q %s ", f.color.text.str)
-		}
-		//If multibyte, Tw has no effect - do word spacing using an adjustment before each space
-		if (f.ws != 0 || alignStr == "J") && f.isCurrentUTF8 { // && f.ws != 0
-			if f.isRTL {
-				txtStr = reverseText(txtStr)
-			}
-			wmax := int(math.Ceil((w - 2*f.cMargin) * 1000 / f.fontSize))
-			for _, uni := range txtStr {
-				f.currentFont.usedRunes[int(uni)] = int(uni)
-			}
-			space := f.escape(utf8toutf16(" ", false))
-			strSize := f.GetStringSymbolWidth(txtStr)
-			s.printf("BT 0 Tw %.2f %.2f Td [", (f.x+dx)*k, (f.h-(f.y+.5*h+.3*f.fontSize))*k)
-			t := Convert(txtStr).Split(" ")
-			shift := float64((wmax - strSize)) / float64(len(t)-1)
-			numt := len(t)
-			for i := 0; i < numt; i++ {
-				tx := t[i]
-				tx = "(" + f.escape(utf8toutf16(tx, false)) + ")"
-				s.printf("%s ", tx)
-				if (i + 1) < numt {
-					s.printf("%.3f(%s) ", -shift, space)
-				}
-			}
-			s.printf("] TJ ET")
-		} else {
-			var txt2 string
-			if f.isCurrentUTF8 {
-				if f.isRTL {
-					txtStr = reverseText(txtStr)
-				}
-				txt2 = f.escape(utf8toutf16(txtStr, false))
-				for _, uni := range txtStr {
-					f.currentFont.usedRunes[int(uni)] = int(uni)
-				}
-			} else {
-
-				txt2 = Convert(txtStr).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)").String()
-			}
-			bt := (f.x + dx) * k
-			td := (f.h - (f.y + dy + .5*h + .3*f.fontSize)) * k
-			s.printf("BT %.2f %.2f Td (%s)Tj ET", bt, td, txt2)
-			//BT %.2F %.2F Td (%s) Tj ET',(f.x+dx)*k,(f.h-(f.y+.5*h+.3*f.FontSize))*k,txt2);
-		}
-
-		if f.underline {
-			s.printf(" %s", f.dounderline(f.x+dx, f.y+dy+.5*h+.3*f.fontSize, txtStr))
-		}
-		if f.strikeout {
-			s.printf(" %s", f.dostrikeout(f.x+dx, f.y+dy+.5*h+.3*f.fontSize, txtStr))
-		}
-		if f.colorFlag {
-			s.printf(" Q")
-		}
-		if link > 0 || len(linkStr) > 0 {
-			f.newLink(f.x+dx, f.y+dy+.5*h-.5*f.fontSize, f.GetStringWidth(txtStr), f.fontSize, link, linkStr)
-		}
-	}
-	str := s.String()
-	if len(str) > 0 {
-		f.out(str)
-	}
-	f.lasth = h
-	if ln > 0 {
-		// Go to next line
-		f.y += h
-		if ln == 1 {
-			f.x = f.lMargin
-		}
-	} else {
-		f.x += w
+		f.out(Fmt("%d Tr", mode))
 	}
 }
 
@@ -882,7 +627,7 @@ func (f *TinyPDF) Cell(w, h float64, txtStr string) {
 // links or special alignment. See documentation for the fmt package for
 // details on fmtStr and args.
 func (f *TinyPDF) Cellf(w, h float64, fmtStr string, args ...interface{}) {
-	f.CellFormat(w, h, sprintf(fmtStr, args...), "", 0, "L", false, 0, "")
+	f.CellFormat(w, h, Fmt(fmtStr, args...), "", 0, "L", false, 0, "")
 }
 
 // SplitLines splits text into several lines using the current font. Each line
@@ -937,220 +682,6 @@ func (f *TinyPDF) SplitLines(txt []byte, w float64) [][]byte {
 		lines = append(lines, s[j:i])
 	}
 	return lines
-}
-
-// MultiCell supports printing text with line breaks. They can be automatic (as
-// soon as the text reaches the right border of the cell) or explicit (via the
-// \n character). As many cells as necessary are output, one below the other.
-//
-// Text can be aligned, centered or justified. The cell block can be framed and
-// the background painted. See CellFormat() for more details.
-//
-// The current position after calling MultiCell() is the beginning of the next
-// line, equivalent to calling CellFormat with ln equal to 1.
-//
-// w is the width of the cells. A value of zero indicates cells that reach to
-// the right margin.
-//
-// h indicates the line height of each cell in the unit of measure specified in New().
-//
-// Note: this method has a known bug that treats UTF-8 fonts differently than
-// non-UTF-8 fonts. With UTF-8 fonts, all trailing newlines in txtStr are
-// removed. With a non-UTF-8 font, if txtStr has one or more trailing newlines,
-// only the last is removed. In the next major module version, the UTF-8 logic
-// will be changed to match the non-UTF-8 logic. To prepare for that change,
-// applications that use UTF-8 fonts and depend on having all trailing newlines
-// removed should call TrimRight(txtStr, "\r\n") before calling this
-// method.
-func (f *TinyPDF) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill bool) {
-	if f.err != nil {
-		return
-	}
-	// dbg("MultiCell")
-	if alignStr == "" {
-		alignStr = "J"
-	}
-	cw := f.currentFont.Cw
-	if w == 0 {
-		w = f.w - f.rMargin - f.x
-	}
-	wmax := int(math.Ceil((w - 2*f.cMargin) * 1000 / f.fontSize))
-	s := Convert(txtStr).Replace("\r", "").String()
-	srune := []rune(s)
-
-	// remove extra line breaks
-	var nb int
-	if f.isCurrentUTF8 {
-		nb = len(srune)
-		for nb > 0 && srune[nb-1] == '\n' {
-			nb--
-		}
-		srune = srune[0:nb]
-	} else {
-		nb = len(s)
-		bytes2 := []byte(s)
-
-		// for nb > 0 && bytes2[nb-1] == '\n' {
-
-		// Prior to August 2019, if s ended with a newline, this code stripped it.
-		// After that date, to be compatible with the UTF-8 code above, *all*
-		// trailing newlines were removed. Because this regression caused at least
-		// one application to break (see issue #333), the original behavior has been
-		// reinstated with a caveat included in the documentation.
-		if nb > 0 && bytes2[nb-1] == '\n' {
-			nb--
-		}
-		s = s[0:nb]
-	}
-	// dbg("[%s]\n", s)
-	var b, b2 string
-	b = "0"
-	if len(borderStr) > 0 {
-		if borderStr == "1" {
-			borderStr = "LTRB"
-			b = "LRT"
-			b2 = "LR"
-		} else {
-			b2 = ""
-			if Contains(borderStr, "L") {
-				b2 += "L"
-			}
-			if Contains(borderStr, "R") {
-				b2 += "R"
-			}
-			if Contains(borderStr, "T") {
-				b = b2 + "T"
-			} else {
-				b = b2
-			}
-		}
-	}
-	sep := -1
-	i := 0
-	j := 0
-	l := 0
-	ls := 0
-	ns := 0
-	nl := 1
-	for i < nb {
-		// Get next character
-		var c rune
-		if f.isCurrentUTF8 {
-			c = srune[i]
-		} else {
-			c = rune(s[i])
-		}
-		if c == '\n' {
-			// Explicit line break
-			if f.ws > 0 {
-				f.ws = 0
-				f.out("0 Tw")
-			}
-
-			if f.isCurrentUTF8 {
-				newAlignStr := alignStr
-				if newAlignStr == "J" {
-					if f.isRTL {
-						newAlignStr = "R"
-					} else {
-						newAlignStr = "L"
-					}
-				}
-				f.CellFormat(w, h, string(srune[j:i]), b, 2, newAlignStr, fill, 0, "")
-			} else {
-				f.CellFormat(w, h, s[j:i], b, 2, alignStr, fill, 0, "")
-			}
-			i++
-			sep = -1
-			j = i
-			l = 0
-			ns = 0
-			nl++
-			if len(borderStr) > 0 && nl == 2 {
-				b = b2
-			}
-			continue
-		}
-		if c == ' ' || isChinese(c) {
-			sep = i
-			ls = l
-			ns++
-		}
-		if int(c) >= len(cw) {
-			f.err = Errf("character outside the supported range: %s", string(c))
-			return
-		}
-		if cw[int(c)] == 0 { //Marker width 0 used for missing symbols
-			l += f.currentFont.Desc.MissingWidth
-		} else if cw[int(c)] != 65535 { //Marker width 65535 used for zero width symbols
-			l += cw[int(c)]
-		}
-		if l > wmax {
-			// Automatic line break
-			if sep == -1 {
-				if i == j {
-					i++
-				}
-				if f.ws > 0 {
-					f.ws = 0
-					f.out("0 Tw")
-				}
-				if f.isCurrentUTF8 {
-					f.CellFormat(w, h, string(srune[j:i]), b, 2, alignStr, fill, 0, "")
-				} else {
-					f.CellFormat(w, h, s[j:i], b, 2, alignStr, fill, 0, "")
-				}
-			} else {
-				if alignStr == "J" {
-					if ns > 1 {
-						f.ws = float64((wmax-ls)/1000) * f.fontSize / float64(ns-1)
-					} else {
-						f.ws = 0
-					}
-					// f.outf("%.3f Tw", f.ws*f.k)
-					f.putF64(f.ws*f.k, 3)
-					f.put(" Tw\n")
-				}
-				if f.isCurrentUTF8 {
-					f.CellFormat(w, h, string(srune[j:sep]), b, 2, alignStr, fill, 0, "")
-				} else {
-					f.CellFormat(w, h, s[j:sep], b, 2, alignStr, fill, 0, "")
-				}
-				i = sep + 1
-			}
-			sep = -1
-			j = i
-			l = 0
-			ns = 0
-			nl++
-			if len(borderStr) > 0 && nl == 2 {
-				b = b2
-			}
-		} else {
-			i++
-		}
-	}
-	// Last chunk
-	if f.ws > 0 {
-		f.ws = 0
-		f.out("0 Tw")
-	}
-	if len(borderStr) > 0 && Contains(borderStr, "B") {
-		b += "B"
-	}
-	if f.isCurrentUTF8 {
-		if alignStr == "J" {
-			if f.isRTL {
-				alignStr = "R"
-			} else {
-				alignStr = ""
-			}
-		}
-		f.CellFormat(w, h, string(srune[j:i]), b, 2, alignStr, fill, 0, "")
-	} else {
-		f.CellFormat(w, h, s[j:i], b, 2, alignStr, fill, 0, "")
-	}
-	f.x = f.lMargin
 }
 
 // write outputs text in flowing mode
@@ -1265,7 +796,7 @@ func (f *TinyPDF) write(h float64, txtStr string, link int, linkStr string) {
 //
 // It is possible to put a link on the text.
 //
-// h indicates the line height in the unit of measure specified in New().
+// h indicates the line height in the Unit of measure specified in New().
 func (f *TinyPDF) Write(h float64, txtStr string) {
 	f.write(h, txtStr, 0, "")
 }
@@ -1273,7 +804,7 @@ func (f *TinyPDF) Write(h float64, txtStr string) {
 // Writef is like Write but uses printf-style formatting. See the documentation
 // for package fmt for more details on fmtStr and args.
 func (f *TinyPDF) Writef(h float64, fmtStr string, args ...interface{}) {
-	f.write(h, sprintf(fmtStr, args...), 0, "")
+	f.write(h, Fmt(fmtStr, args...), 0, "")
 }
 
 // WriteLinkString writes text that when clicked launches an external URL. See
@@ -1293,10 +824,10 @@ func (f *TinyPDF) WriteLinkID(h float64, displayStr string, linkID int) {
 // text.
 //
 // width indicates the width of the box the text will be drawn in. This is in
-// the unit of measure specified in New(). If it is set to 0, the bounding box
+// the Unit of measure specified in New(). If it is set to 0, the bounding box
 // of the page will be taken (pageWidth - leftMargin - rightMargin).
 //
-// lineHeight indicates the line height in the unit of measure specified in
+// lineHeight indicates the line height in the Unit of measure specified in
 // New().
 //
 // alignStr sees to horizontal alignment of the given textStr. The options are
@@ -1559,11 +1090,11 @@ func (f *TinyPDF) RegisterImageOptionsReader(imgName string, options ImageOption
 	}
 	switch options.ImageType {
 	case "jpg":
-		info = f.parsejpg(r)
+		info = f.ParseJPG(r)
 	case "png":
-		info = f.parsepng(r, options.ReadDpi)
+		info = f.ParsePNG(r, options.ReadDpi)
 	case "gif":
-		info = f.parsegif(r)
+		info = f.ParseGIF(r)
 	default:
 		f.err = Errf("unsupported image type: %s", options.ImageType)
 	}
@@ -1634,87 +1165,17 @@ func (f *TinyPDF) GetImageInfo(imageStr string) (info *ImageInfoType) {
 
 // ImportObjects imports objects from gofpdi into current document
 func (f *TinyPDF) ImportObjects(objs map[string][]byte) {
-	for k, v := range objs {
-		f.importedObjs[k] = v
-	}
+	// imported objects support removed along with templates
 }
 
 // ImportObjPos imports object hash positions from gofpdi
 func (f *TinyPDF) ImportObjPos(objPos map[string]map[int]string) {
-	for k, v := range objPos {
-		f.importedObjPos[k] = v
-	}
+	// imported objects support removed along with templates
 }
 
 // putImportedTemplates writes the imported template objects to the PDF
-func (f *TinyPDF) putImportedTemplates() {
-	nOffset := f.n + 1
 
-	// keep track of list of sha1 hashes (to be replaced with integers)
-	objsIDHash := make([]string, len(f.importedObjs))
-
-	// actual object data with new id
-	objsIDData := make([][]byte, len(f.importedObjs))
-
-	// Populate hash slice and data slice
-	i := 0
-	for k, v := range f.importedObjs {
-		objsIDHash[i] = k
-		objsIDData[i] = v
-
-		i++
-	}
-
-	// Populate a lookup table to get an object id from a hash
-	hashToObjID := make(map[string]int, len(f.importedObjs))
-	for i = 0; i < len(objsIDHash); i++ {
-		hashToObjID[objsIDHash[i]] = i + nOffset
-	}
-
-	// Now, replace hashes inside data with %040d object id
-	for i = 0; i < len(objsIDData); i++ {
-		// get hash
-		hash := objsIDHash[i]
-
-		for pos, h := range f.importedObjPos[hash] {
-			// Convert object id into a 40 character string padded with spaces
-			objIDPadded := Fmt("%40s", Convert(hashToObjID[h]).String())
-
-			// Convert objIDPadded into []byte
-			objIDBytes := []byte(objIDPadded)
-
-			// Replace sha1 hash with object id padded
-			for j := pos; j < pos+40; j++ {
-				objsIDData[i][j] = objIDBytes[j-pos]
-			}
-		}
-
-		// Save objsIDHash so that procset dictionary has the correct object ids
-		f.importedTplIDs[hash] = i + nOffset
-	}
-
-	// Now, put objects
-	for i = 0; i < len(objsIDData); i++ {
-		f.newobj()
-		f.out(string(objsIDData[i]))
-	}
-}
-
-// UseImportedTemplate uses imported template from gofpdi. It draws imported
-// PDF page onto page.
-func (f *TinyPDF) UseImportedTemplate(tplName string, scaleX float64, scaleY float64, tX float64, tY float64) {
-	f.outf("q 0 J 1 w 0 j 0 G 0 g q %.4F 0 0 %.4F %.4F %.4F cm %s Do Q Q\n", scaleX*f.k, scaleY*f.k, tX*f.k, (tY+f.h)*f.k, tplName)
-}
-
-// ImportTemplates imports gofpdi template names into importedTplObjs for
-// inclusion in the procset dictionary
-func (f *TinyPDF) ImportTemplates(tpls map[string]string) {
-	for tplName, tplID := range tpls {
-		f.importedTplObjs[tplName] = tplID
-	}
-}
-
-// GetConversionRatio returns the conversion ratio based on the unit given when
+// GetConversionRatio returns the conversion ratio based on the Unit given when
 // creating the PDF.
 func (f *TinyPDF) GetConversionRatio() float64 {
 	return f.k
@@ -1744,6 +1205,27 @@ func (f *TinyPDF) textstring(s string) string {
 	return "(" + f.escape(s) + ")"
 }
 
+// UseImportedTemplate draws an imported PDF page (registered via ImportTemplates)
+// onto the current page. tplName should be the resource name provided by the
+// importer (for example "/TPL1").
+func (f *TinyPDF) UseImportedTemplate(tplName string, scaleX float64, scaleY float64, tX float64, tY float64) {
+	// Draw the imported XObject directly. Scaling and translation are applied
+	// in PDF user space. Keep the same operator sequence used previously.
+	f.outf("q 0 J 1 w 0 j 0 G 0 g q %.4F 0 0 %.4F %.4F %.4F cm %s Do Q Q\n", scaleX*f.k, scaleY*f.k, tX*f.k, (tY+f.h)*f.k, tplName)
+}
+
+// ImportTemplates registers a mapping of template resource names to imported
+// template identifiers coming from a PDF importer (gofpdi). The importer will
+// later call UseImportedTemplate to draw the pages.
+func (f *TinyPDF) ImportTemplates(tpls map[string]string) {
+	if f.importedTplObjs == nil {
+		f.importedTplObjs = make(map[string]string)
+	}
+	for tplName, tplID := range tpls {
+		f.importedTplObjs[tplName] = tplID
+	}
+}
+
 func blankCount(str string) (count int) {
 	l := len(str)
 	for j := 0; j < l; j++ {
@@ -1770,16 +1252,16 @@ func (f *TinyPDF) dounderline(x, y float64, txt string) string {
 	up := float64(f.currentFont.Up)
 	ut := float64(f.currentFont.Ut) * f.userUnderlineThickness
 	w := f.GetStringWidth(txt) + f.ws*float64(blankCount(txt))
-	return sprintf("%.2f %.2f %.2f %.2f re f", x*f.k,
-		(f.h-(y-up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.fontSizePt)
+	return Fmt("%.2f %.2f %.2f %.2f re f", x*f.k,
+		(f.h-(y-up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.GetFontSizePt())
 }
 
 func (f *TinyPDF) dostrikeout(x, y float64, txt string) string {
 	up := float64(f.currentFont.Up)
 	ut := float64(f.currentFont.Ut)
 	w := f.GetStringWidth(txt) + f.ws*float64(blankCount(txt))
-	return sprintf("%.2f %.2f %.2f %.2f re f", x*f.k,
-		(f.h-(y+4*up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.fontSizePt)
+	return Fmt("%.2f %.2f %.2f %.2f re f", x*f.k,
+		(f.h-(y+4*up/1000*f.fontSize))*f.k, w*f.k, -ut/1000*f.GetFontSizePt())
 }
 
 func (f *TinyPDF) newImageInfo() *ImageInfoType {
@@ -1787,9 +1269,15 @@ func (f *TinyPDF) newImageInfo() *ImageInfoType {
 	return &ImageInfoType{scale: f.k, dpi: 72}
 }
 
-// parsejpg extracts info from io.Reader with JPEG data
+// putTemplates is a no-op since template support was removed. It remains to
+// provide compatibility with code paths that call it during resource emission.
+func (f *TinyPDF) putTemplates() {
+	// intentionally empty
+}
+
+// ParseJPG extracts info from io.Reader with JPEG data
 // Thank you, Bruno Michel, for providing this code.
-func (f *TinyPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
+func (f *TinyPDF) ParseJPG(r io.Reader) (info *ImageInfoType) {
 	info = f.newImageInfo()
 	var (
 		data bytes.Buffer
@@ -1825,8 +1313,8 @@ func (f *TinyPDF) parsejpg(r io.Reader) (info *ImageInfoType) {
 	return
 }
 
-// parsepng extracts info from a PNG data
-func (f *TinyPDF) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
+// ParsePNG extracts info from a PNG data
+func (f *TinyPDF) ParsePNG(r io.Reader, readdpi bool) (info *ImageInfoType) {
 	buf, err := newRBuffer(r)
 	if err != nil {
 		f.err = err
@@ -1835,8 +1323,8 @@ func (f *TinyPDF) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
 	return f.parsepngstream(buf, readdpi)
 }
 
-// parsegif extracts info from a GIF data (via PNG conversion)
-func (f *TinyPDF) parsegif(r io.Reader) (info *ImageInfoType) {
+// ParseGIF extracts info from a GIF data (via PNG conversion)
+func (f *TinyPDF) ParseGIF(r io.Reader) (info *ImageInfoType) {
 	data, err := newRBuffer(r)
 	if err != nil {
 		f.err = err
@@ -1876,6 +1364,11 @@ func (f *TinyPDF) putstream(b []byte) {
 	f.out("stream")
 	f.out(string(b))
 	f.out("endstream")
+}
+
+// outf adds a formatted line to the document
+func (f *TinyPDF) outf(fmtStr string, args ...any) {
+	f.out(Fmt(fmtStr, args...))
 }
 
 // out; Add a line to the document
@@ -1922,11 +1415,6 @@ func (f *TinyPDF) RawWriteStr(str string) {
 // to use this method correctly.
 func (f *TinyPDF) RawWriteBuf(r io.Reader) {
 	f.outbuf(r)
-}
-
-// outf adds a formatted line to the document
-func (f *TinyPDF) outf(fmtStr string, args ...interface{}) {
-	f.out(sprintf(fmtStr, args...))
 }
 
 func (f *TinyPDF) putF64(v float64, prec int) {

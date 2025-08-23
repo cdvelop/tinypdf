@@ -27,10 +27,14 @@ func report(fileStr string, err error) {
 }
 
 func newPdf() (pdf *tinypdf.TinyPDF) {
-	pdf = tinypdf.New("mm", "A4", "../../font")
+	// New API: New(fontsPath []string, logger func(...any))
+	pdf = tinypdf.New([]string{"../../font"}, nil)
 	pdf.SetCompression(false)
-	pdf.AddFont("Calligrapher", "", "calligra.json")
+	// Note: AddFont was removed in the new API. Fonts are discovered/managed
+	// by the font manager configured via tinypdf.New(fontsPath, logger).
+	// For TrueType fonts (ttf) only basic support exists; see README for notes.
 	pdf.AddPage()
+	// The font manager proxies to TinyPDF's SetFont method; call SetFont directly.
 	pdf.SetFont("Calligrapher", "", 35)
 	pdf.Cell(0, 10, "Enjoy new fonts with FPDF!")
 	return

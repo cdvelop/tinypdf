@@ -9,3 +9,7 @@ This library is designed for web rendering with WebAssembly. It is optimized for
 
 The fork of go-pdf  https://github.com/jung-kurt/gofpdf
 
+no fmt, strconv, os, strings. use: github.com/cdvelop/tinystring for tinygo compatibility and binary size reduction.
+
+only support .ttf font
+

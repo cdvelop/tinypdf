@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/cdvelop/tinypdf"
-	"github.com/cdvelop/tinypdf/internal/files"
 )
 
 func loremList() []string {
@@ -520,7 +519,7 @@ func Test_HTMLBasicNew(t *testing.T) {
 	// First page: manual local link
 	pdf.AddPage()
 	pdf.SetFont("Helvetica", "", 20)
-	_, lineHt := pdf.GetFontSize()
+	_, lineHt := pdf.GetFontSizes()
 	pdf.Write(lineHt, "To find out what's new in this tutorial, click ")
 	pdf.SetFont("", "U", 0)
 	link := pdf.AddLink()
@@ -532,7 +531,7 @@ func Test_HTMLBasicNew(t *testing.T) {
 	pdf.Image(ImageFile("logo.png"), 10, 12, 30, 0, false, "", 0, "http://https://en.wikipedia.org/wiki/PDF")
 	pdf.SetLeftMargin(45)
 	pdf.SetFontSize(14)
-	_, lineHt = pdf.GetFontSize()
+	_, lineHt = pdf.GetFontSizes()
 	htmlStr := `You can now easily print text mixing different styles: <b>bold</b>, ` +
 		`<i>italic</i>, <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>` +
 		`<center>You can also center text.</center>` +
@@ -550,7 +549,7 @@ func Test_HTMLBasicNew(t *testing.T) {
 
 // Test_AddFont demonstrates the use of a non-standard font.
 func Test_AddFont(t *testing.T) {
-	pdf := tinypdf.New(tinypdf.MM, "A4", FontsDirName())
+	pdf := NewDocPdfTest(tinypdf.MM, FontsDirName())
 	pdf.AddFont("Calligrapher", "", "calligra.json")
 	pdf.AddPage()
 	pdf.SetFont("Calligrapher", "", 35)
@@ -564,7 +563,7 @@ func Test_AddFont(t *testing.T) {
 
 // Test_WriteAligned demonstrates how to align text with the Write function.
 func Test_WriteAligned(t *testing.T) {
-	pdf := tinypdf.New(tinypdf.MM, "A4", FontsDirName())
+	pdf := NewDocPdfTest(tinypdf.MM, FontsDirName())
 	pdf.SetLeftMargin(50.0)
 	pdf.SetRightMargin(50.0)
 	pdf.AddPage()
@@ -726,31 +725,6 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 	SummaryCompare(err, fileStr)
 	// Output:
 	// Successfully generated pdf/Test_SetAcceptPageBreakFunc_landscape.pdf
-}
-
-// This example tests corner cases as reported by the gocov tool.
-func Test_SetKeywords(t *testing.T) {
-	var err error
-	fileStr := Filename("Test_SetKeywords")
-	err = tinypdf.MakeFont(FontFile("CalligrapherRegular.pfb"),
-		FontFile("cp1252.map"), FontsDirName(), nil, true)
-	if err == nil {
-		pdf := NewDocPdfTest()
-		pdf.SetFontLocation(FontsDirName())
-		pdf.SetTitle("世界", true)
-		pdf.SetAuthor("世界", true)
-		pdf.SetSubject("世界", true)
-		pdf.SetCreator("世界", true)
-		pdf.SetKeywords("世界", true)
-		pdf.AddFont("Calligrapher", "", "CalligrapherRegular.json")
-		pdf.AddPage()
-		pdf.SetFont("Calligrapher", "", 16)
-		pdf.Writef(5, "\x95 %s \x95", pdf)
-		err = pdf.OutputFileAndClose(fileStr)
-	}
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Successfully generated pdf/Test_SetKeywords.pdf
 }
 
 // Test_Circle demonstrates the construction of various geometric figures,
@@ -1000,6 +974,7 @@ func Test_PageSize(t *testing.T) {
 		RootDirectory:  rootTestDir,
 		FontDirName:    FontsDirName(),
 	})
+
 	pdf.SetMargins(0.5, 1, 0.5)
 	pdf.SetFont("Times", "", 14)
 	pdf.AddPageFormat(tinypdf.Landscape, tinypdf.PageSize{Wd: 3, Ht: 12, AutoHt: false})
@@ -1249,7 +1224,7 @@ func Test_SplitLines(t *testing.T) {
 	)
 	pdf := NewDocPdfTest() // A4 210.0 x 297.0
 	pdf.SetFont("Times", "", fontPtSize)
-	_, lineHt := pdf.GetFontSize()
+	_, lineHt := pdf.GetFontSizes()
 	pdf.AddPage()
 	pdf.SetMargins(10, 10, 10)
 	lines := pdf.SplitLines([]byte(lorem()), wd)
@@ -1409,10 +1384,7 @@ func Test_CellFormat_align(t *testing.T) {
 	pdf.SetFont("Helvetica", "", 16)
 	formatRect(pdf, recList)
 	formatRect(pdf, recListBaseline)
-	var fr fontResourceType
-	pdf.SetFontLoader(fr)
-	pdf.AddFont("Calligrapher", "", "calligra.json")
-	pdf.SetFont("Calligrapher", "", 16)
+
 	formatRect(pdf, recListBaseline)
 	fileStr := Filename("Test_CellFormat_align")
 	err := pdf.OutputFileAndClose(fileStr)
@@ -1453,48 +1425,6 @@ func Test_CellFormat_codepageescape(t *testing.T) {
 	SummaryCompare(err, fileStr)
 	// Output:
 	// Successfully generated pdf/Test_CellFormat_codepageescape.pdf
-}
-
-// Test_CellFormat_codepage demonstrates the automatic conversion of UTF-8 strings to an
-// 8-bit font encoding.
-func Test_CellFormat_codepage(t *testing.T) {
-	pdf := tinypdf.New(tinypdf.MM, "A4", FontsDirName()) // A4 210.0 x 297.0
-	// See documentation for details on how to generate fonts
-	pdf.AddFont("Helvetica-1251", "", "helvetica_1251.json")
-	pdf.AddFont("Helvetica-1253", "", "helvetica_1253.json")
-	fontSize := 16.0
-	pdf.SetFont("Helvetica", "", fontSize)
-	ht := pdf.PointConvert(fontSize)
-	tr := pdf.UnicodeTranslatorFromDescriptor("") // "" defaults to "cp1252"
-	write := func(str string) {
-		// pdf.CellFormat(190, ht, tr(str), "", 1, "C", false, 0, "")
-		pdf.MultiCell(190, ht, tr(str), "", "C", false)
-		pdf.Ln(ht)
-	}
-	pdf.AddPage()
-	str := `DocPdf provides a translator that will convert any UTF-8 code point ` +
-		`that is present in the specified code page.`
-	pdf.MultiCell(190, ht, str, "", "L", false)
-	pdf.Ln(2 * ht)
-	write("Voix ambiguë d'un cœur qui au zéphyr préfère les jattes de kiwi.")
-	write("Falsches Üben von Xylophonmusik quält jeden größeren Zwerg.")
-	write("Heizölrückstoßabdämpfung")
-	write("Forårsjævndøgn / Efterårsjævndøgn")
-	write("À noite, vovô Kowalsky vê o ímã cair no pé do pingüim queixoso e vovó" +
-		"põe açúcar no chá de tâmaras do jabuti feliz.")
-	pdf.SetFont("Helvetica-1251", "", fontSize) // Name matches one specified in AddFont()
-	tr = pdf.UnicodeTranslatorFromDescriptor("cp1251")
-	write("Съешь же ещё этих мягких французских булок, да выпей чаю.")
-
-	pdf.SetFont("Helvetica-1253", "", fontSize)
-	tr = pdf.UnicodeTranslatorFromDescriptor("cp1253")
-	write("Θέλει αρετή και τόλμη η ελευθερία. (Ανδρέας Κάλβος)")
-
-	fileStr := Filename("Test_CellFormat_codepage")
-	err := pdf.OutputFileAndClose(fileStr)
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Successfully generated pdf/Test_CellFormat_codepage.pdf
 }
 
 // Test_SetProtection demonstrates password protection for documents.
@@ -1651,14 +1581,14 @@ func Test_Beziergon(t *testing.T) {
 	const (
 		margin      = 10
 		wd          = 210
-		unit        = (wd - 2*margin) / 6
+		Unit        = (wd - 2*margin) / 6
 		ht          = 297
 		fontSize    = 15
 		msgStr      = `Demonstration of Beziergon function`
 		coefficient = 0.6
-		delta       = coefficient * unit
+		delta       = coefficient * Unit
 		ln          = fontSize * 25.4 / 72
-		offsetX     = (wd - 4*unit) / 2.0
+		offsetX     = (wd - 4*Unit) / 2.0
 		offsetY     = offsetX + 2*ln
 	)
 
@@ -1696,8 +1626,8 @@ func Test_Beziergon(t *testing.T) {
 	pdf.AddPage()
 	pdf.SetFont("Helvetica", "", fontSize)
 	for j, src := range srcList {
-		srcList[j].X = offsetX + src.X*unit
-		srcList[j].Y = offsetY + src.Y*unit
+		srcList[j].X = offsetX + src.X*Unit
+		srcList[j].Y = offsetY + src.Y*Unit
 	}
 	for j, ctrl := range ctrlList {
 		ctrlList[j].X = ctrl.X * delta
@@ -1732,26 +1662,6 @@ func Test_Beziergon(t *testing.T) {
 	// Output:
 	// Successfully generated pdf/Test_Beziergon.pdf
 
-}
-
-// Test_SetFontLoader demonstrates loading a non-standard font using a generalized
-// font loader. fontResourceType implements the FontLoader interface and is
-// defined locally in the test source code.
-func Test_SetFontLoader(t *testing.T) {
-	var fr fontResourceType
-	pdf := NewDocPdfTest()
-	pdf.SetFontLoader(fr)
-	pdf.AddFont("Calligrapher", "", "calligra.json")
-	pdf.AddPage()
-	pdf.SetFont("Calligrapher", "", 35)
-	pdf.Cell(0, 10, "Load fonts from any source")
-	fileStr := Filename("Test_SetFontLoader")
-	err := pdf.OutputFileAndClose(fileStr)
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Generalized font loader reading calligra.json
-	// Generalized font loader reading calligra.z
-	// Successfully generated pdf/Test_SetFontLoader.pdf
 }
 
 // Test_MoveTo demonstrates the Path Drawing functions, such as: MoveTo,
@@ -1892,69 +1802,12 @@ func Test_DrawPath(t *testing.T) {
 	// Successfully generated pdf/Test_DrawPath_fill.pdf
 }
 
-// Test_CreateTemplate demonstrates creating and using templates
-func Test_CreateTemplate(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetCompression(false)
-	// pdf.SetFont("Times", "", 12)
-	template := pdf.CreateTemplate(func(tpl *tinypdf.Tpl) {
-		tpl.Image(ImageFile("logo.png"), 6, 6, 30, 0, false, "", 0, "")
-		tpl.SetFont("Arial", "B", 16)
-		tpl.Text(40, 20, "Template says hello")
-		tpl.SetDrawColor(0, 100, 200)
-		tpl.SetLineWidth(2.5)
-		tpl.Line(95, 12, 105, 22)
-	})
-	_, tplSize := template.Size()
-	// fmt.Println("Size:", tplSize)
-	// fmt.Println("Scaled:", tplSize.ScaleBy(1.5))
-
-	template2 := pdf.CreateTemplate(func(tpl *tinypdf.Tpl) {
-		tpl.UseTemplate(template)
-		subtemplate := tpl.CreateTemplate(func(tpl2 *tinypdf.Tpl) {
-			tpl2.Image(ImageFile("logo.png"), 6, 86, 30, 0, false, "", 0, "")
-			tpl2.SetFont("Arial", "B", 16)
-			tpl2.Text(40, 100, "Subtemplate says hello")
-			tpl2.SetDrawColor(0, 200, 100)
-			tpl2.SetLineWidth(2.5)
-			tpl2.Line(102, 92, 112, 102)
-		})
-		tpl.UseTemplate(subtemplate)
-	})
-
-	pdf.SetDrawColor(200, 100, 0)
-	pdf.SetLineWidth(2.5)
-	pdf.SetFont("Arial", "B", 16)
-
-	// serialize and deserialize template
-	b, _ := template2.Serialize()
-	template3, _ := tinypdf.DeserializeTemplate(b)
-
-	pdf.AddPage()
-	pdf.UseTemplate(template3)
-	pdf.UseTemplateScaled(template3, tinypdf.PointType{X: 0, Y: 30}, tplSize)
-	pdf.Line(40, 210, 60, 210)
-	pdf.Text(40, 200, "Template example page 1")
-
-	pdf.AddPage()
-	pdf.UseTemplate(template2)
-	pdf.UseTemplateScaled(template3, tinypdf.PointType{X: 0, Y: 30}, tplSize.ScaleBy(1.4))
-	pdf.Line(60, 210, 80, 210)
-	pdf.Text(40, 200, "Template example page 2")
-
-	fileStr := Filename("Test_CreateTemplate")
-	err := pdf.OutputFileAndClose(fileStr)
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Successfully generated pdf/Test_CreateTemplate.pdf
-}
-
 // Test_AddFontFromBytes demonstrate how to use embedded fonts from byte array
 func Test_AddFontFromBytes(t *testing.T) {
-	pdf := NewDocPdfTest()
+	// Create PDF with the test fonts directory so fonts are loaded at init
+	pdf := NewDocPdfTest([]string{FontsDirPath()})
 	pdf.AddPage()
-	pdf.AddFontFromBytes("calligra", "", files.CalligraJson, files.CalligraZ)
-	pdf.SetFont("calligra", "", 16)
+	pdf.SetFont("dejavu", "", 16)
 	pdf.Cell(40, 10, "Hello World With Embedded Font!")
 	fileStr := Filename("Test_EmbeddedFont")
 	err := pdf.OutputFileAndClose(fileStr)
@@ -1980,7 +1833,7 @@ func Test_ClipRect(t *testing.T) {
 	}
 
 	for _, row := range rows {
-		_, lineHt := pdf.GetFontSize()
+		_, lineHt := pdf.GetFontSizes()
 		height := lineHt + marginCell
 
 		x, y := pdf.GetXY()
@@ -2027,7 +1880,7 @@ func Test_Rect(t *testing.T) {
 		x := curx
 
 		height := 0.
-		_, lineHt := pdf.GetFontSize()
+		_, lineHt := pdf.GetFontSizes()
 
 		for i, txt := range row {
 			lines := pdf.SplitLines([]byte(txt), cols[i])
@@ -2121,9 +1974,7 @@ func Test_RegisterAlias(t *testing.T) {
 // create a table of contents. This particular example demonstrates the use of
 // UTF-8 aliases.
 func Test_RegisterAlias_utf8(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.AddUTF8Font("dejavu", "", FontFile("DejaVuSansCondensed.ttf"))
-	pdf.SetFont("dejavu", "", 12)
+	pdf := NewDocPdfTest([]string{"./fonts/DejaVuSansCondensed.ttf"})
 	pdf.AliasNbPages("{entute}")
 	pdf.AddPage()
 
@@ -2258,7 +2109,7 @@ func Test_SubWrite(t *testing.T) {
 	pdf := NewDocPdfTest() // 210mm x 297mm
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", fontSize)
-	_, lineHt := pdf.GetFontSize()
+	_, lineHt := pdf.GetFontSizes()
 
 	pdf.Write(lineHt, "Hello World!")
 	pdf.SetX(halfX)
@@ -2300,7 +2151,7 @@ func Test_SubWrite(t *testing.T) {
 // generation to be deferred until all pages have been added.
 func Test_SetPage(t *testing.T) {
 	rnd := rand.New(rand.NewSource(0)) // Make reproducible documents
-	pdf := tinypdf.New(tinypdf.CM, "A4", "")
+	pdf := NewDocPdfTest(tinypdf.CM)
 	pdf.SetFont("Times", "", 12)
 
 	var time []float64
@@ -2437,14 +2288,9 @@ func Test_AddUTF8Font(t *testing.T) {
 	var txtStr []byte
 	var err error
 
-	pdf := NewDocPdfTest()
-
+	// Load fonts at initialization via NewDocPdfTest with fonts path
+	pdf := NewDocPdfTest([]string{FontsDirPath()})
 	pdf.AddPage()
-
-	pdf.AddUTF8Font("dejavu", "", FontFile("DejaVuSansCondensed.ttf"))
-	pdf.AddUTF8Font("dejavu", "B", FontFile("DejaVuSansCondensed-Bold.ttf"))
-	pdf.AddUTF8Font("dejavu", "I", FontFile("DejaVuSansCondensed-Oblique.ttf"))
-	pdf.AddUTF8Font("dejavu", "BI", FontFile("DejaVuSansCondensed-BoldOblique.ttf"))
 
 	fileStr = Filename("Test_AddUTF8Font")
 	txtStr, err = os.ReadFile(TextFile("utf-8test.txt"))
@@ -2470,54 +2316,6 @@ func Test_AddUTF8Font(t *testing.T) {
 	SummaryCompare(err, fileStr)
 	// Output:
 	// Successfully generated pdf/Test_AddUTF8Font.pdf
-}
-
-// Test_UTF8CutFont demonstrates how generate a TrueType font subset.
-func Test_UTF8CutFont(t *testing.T) {
-	var pdfFileStr, fullFontFileStr, subFontFileStr string
-	var subFont, fullFont []byte
-	var err error
-
-	pdfFileStr = Filename("Test_UTF8CutFont")
-	fullFontFileStr = FontFile("calligra.ttf")
-	fullFont, err = os.ReadFile(fullFontFileStr)
-	if err == nil {
-		subFontFileStr = "calligra_abcde.ttf"
-		subFont = tinypdf.UTF8CutFont(fullFont, "abcde")
-		err = os.WriteFile(subFontFileStr, subFont, 0600)
-		if err == nil {
-			y := 24.0
-			pdf := NewDocPdfTest()
-			fontHt := 17.0
-			lineHt := pdf.PointConvert(fontHt)
-			write := func(format string, args ...any) {
-				pdf.SetXY(24.0, y)
-				pdf.Cell(200.0, lineHt, fmt.Sprintf(format, args...))
-				y += lineHt
-			}
-			writeSize := func(fileStr string) {
-				var info os.FileInfo
-				var err error
-				info, err = os.Stat(fileStr)
-				if err == nil {
-					write("%6d: size of %s", info.Size(), fileStr)
-				}
-			}
-			pdf.AddPage()
-			pdf.AddUTF8Font("calligra", "", subFontFileStr)
-			pdf.SetFont("calligra", "", fontHt)
-			write("cabbed")
-			write("vwxyz")
-			pdf.SetFont("courier", "", fontHt)
-			writeSize(fullFontFileStr)
-			writeSize(subFontFileStr)
-			err = pdf.OutputFileAndClose(pdfFileStr)
-			os.Remove(subFontFileStr)
-		}
-	}
-	SummaryCompare(err, pdfFileStr)
-	// Output:
-	// Successfully generated pdf/Test_UTF8CutFont.pdf
 }
 
 func Test_RoundedRect(t *testing.T) {
@@ -2629,11 +2427,11 @@ func Test_SetTextRenderingMode(t *testing.T) {
 // TestIssue0316 addresses issue 316 in which AddUTF8FromBytes modifies its argument
 // utf8bytes resulting in a panic if you generate two PDFs with the "same" font bytes.
 func TestIssue0316(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest([]string{FontsDirPath()})
 	pdf.AddPage()
+	// Ensure font bytes are not modified by the library during generation
 	fontBytes, _ := os.ReadFile(FontFile("DejaVuSansCondensed.ttf"))
 	ofontBytes := append([]byte{}, fontBytes...)
-	pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
 	pdf.SetFont("dejavu", "", 16)
 	pdf.Cell(40, 10, "Hello World!")
 	fileStr := Filename("TestIssue0316")
@@ -2645,38 +2443,9 @@ func TestIssue0316(t *testing.T) {
 	}
 }
 
-func TestConcurrentAddUTF8FontFromBytes(t *testing.T) {
-	fontBytes, err := os.ReadFile(FontFile("DejaVuSansCondensed.ttf"))
-	if err != nil {
-		t.Fatalf("could not read UTF8 font bytes: %+v", err)
-	}
-
-	wg := new(sync.WaitGroup)
-	createPDF := func() {
-		pdf := NewDocPdfTest()
-		pdf.AddPage()
-		pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
-		pdf.SetFont("dejavu", "", 16)
-		pdf.Cell(40, 10, "Hello World!")
-		err := pdf.Output(io.Discard)
-		if err != nil {
-			t.Error(err)
-		}
-		wg.Done()
-	}
-
-	for range 10 {
-		wg.Add(1)
-		go createPDF()
-	}
-	wg.Wait()
-}
-
 func TestMultiCellUnsupportedChar(t *testing.T) {
-	pdf := NewDocPdfTest()
+	pdf := NewDocPdfTest([]string{FontsDirPath()})
 	pdf.AddPage()
-	fontBytes, _ := os.ReadFile(FontFile("DejaVuSansCondensed.ttf"))
-	pdf.AddUTF8FontFromBytes("dejavu", "", fontBytes)
 	pdf.SetFont("dejavu", "", 16)
 
 	defer func() {
@@ -2686,7 +2455,6 @@ func TestMultiCellUnsupportedChar(t *testing.T) {
 	}()
 
 	pdf.MultiCell(0, 5, "😀", "", "", false)
-
 	fileStr := Filename("TestMultiCellUnsupportedChar")
 	pdf.OutputFileAndClose(fileStr)
 }

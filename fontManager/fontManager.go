@@ -7,34 +7,60 @@ import (
 // FontManager manages the loading and accessing of fonts for the PDF document.
 // It scans a directory for TTF files and makes them available to the generator.
 type FontManager struct {
-	fontsPath    []string // List of font paths/URLs to load
+	*Config
+
 	fontFamilies []FontFamily
-	log          func(...any) // logging function, can be nil
+
+	// fontFiles holds entries for font files available for embedding.
+	// Using a slice keeps this layout compatible with tinygo and
+	// avoids map iteration order issues; each entry has a Key field.
+	fontFiles []FontFileType // slice of font files
+
+	// fonts holds detailed font definitions (used by PDF generator logic)
+	// stored as a slice; each FontDefType has a Key field for lookup.
+	fonts []FontDefType
+
+	// aliasNbPagesStr mirrors the same configuration used by tinypdf; kept
+	// here for compatibility with existing font helpers that reference it.
+	aliasNbPagesStr string
+
+	err   error
+	diffs []string // array of encoding differences
 }
 
-// NewFontManager creates and initializes a new FontManager.
-//
-// fontsPath: slice of font file paths or URLs to load.
-//
-// For WASM builds, use URLs:
-//
-//	fontsPath := []string{"fonts/arial.ttf", "fonts/helvetica.ttf", "fonts/times.ttf"}
-//
-// For Server/Desktop builds, use file paths:
-//
-//	fontsPath := []string{"./fonts/arial.ttf", "/usr/share/fonts/truetype/arial.ttf"}
-//
-// Or use a directory pattern (for auto-discovery in non-WASM):
-//
-//	fontsPath := []string{"./fonts/"} // Will scan directory
-//
-// logger: optional logging function. Pass nil to disable logging.
-func NewFontManager(fontsPath []string, logger func(...any)) *FontManager {
-	return &FontManager{
-		fontsPath:    fontsPath,
+type Config struct {
+	Log                 func(...any) // logging function
+	FontsPath           []string     // list of font paths eg: ["./fonts/arial.ttf"]
+	ConversionRatio     func() float64
+	CurrentObjectNumber func() int // returns the current PDF object number
+	// SetFontCB is an optional callback that will be called when callers
+	// invoke SetFont() on the FontManager. This allows the FontManager to
+	// proxy font selection back to the TinyPDF instance without circular
+	// dependencies between packages.
+	SetFontCB func(family, style string, size float64)
+	// FontFamilyEscape is a helper function to ensure font family strings are
+	// compliant with PDF naming conventions.
+	FontFamilyEscape func(familyStr string) (escStr string)
+}
+
+func New(c *Config) *FontManager {
+
+	// Initialize font manager
+	fm := &FontManager{
+		Config:       c,
+		fontFiles:    make([]FontFileType, 0),
+		fonts:        make([]FontDefType, 0),
 		fontFamilies: make([]FontFamily, 0),
-		log:          logger,
+		diffs:        make([]string, 0, 8),
 	}
+
+	// Load fonts during initialization. Keep the error on the manager so callers
+	// can inspect it if needed; also log a warning if a logger is provided.
+	if fm.err = fm.loadFonts(); fm.err != nil {
+		fm.Log("Error: FontManager.loadFonts failed: %v", fm.err)
+	}
+
+	return fm
 }
 
 // GetFontDef retrieves a font definition for a given family and style.

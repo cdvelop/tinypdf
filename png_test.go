@@ -1,4 +1,4 @@
-package tinypdf
+package tinypdf_test
 
 import (
 	"bytes"
@@ -12,13 +12,13 @@ func BenchmarkParsePNG_rgb(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	pdf := New("P", "mm", "A4", "")
+	pdf := NewDocPdfTest()
 	pdf.AddPage()
 
 	const readDPI = true
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = pdf.parsepng(bytes.NewReader(raw), readDPI)
+		_ = pdf.ParsePNG(bytes.NewReader(raw), readDPI)
 	}
 }
 
@@ -28,13 +28,13 @@ func BenchmarkParsePNG_gray(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	pdf := New("P", "mm", "A4", "")
+	pdf := NewDocPdfTest()
 	pdf.AddPage()
 
 	const readDPI = true
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = pdf.parsepng(bytes.NewReader(raw), readDPI)
+		_ = pdf.ParsePNG(bytes.NewReader(raw), readDPI)
 	}
 }
 
@@ -44,13 +44,13 @@ func BenchmarkParsePNG_small(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	pdf := New("P", "mm", "A4", "")
+	pdf := NewDocPdfTest()
 	pdf.AddPage()
 
 	const readDPI = true
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = pdf.parsepng(bytes.NewReader(raw), readDPI)
+		_ = pdf.ParsePNG(bytes.NewReader(raw), readDPI)
 	}
 }
 
@@ -60,12 +60,12 @@ func BenchmarkParseJPG(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	pdf := New("P", "mm", "A4", "")
+	pdf := NewDocPdfTest()
 	pdf.AddPage()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = pdf.parsejpg(bytes.NewReader(raw))
+		_ = pdf.ParseJPG(bytes.NewReader(raw))
 	}
 }
 
@@ -75,11 +75,11 @@ func BenchmarkParseGIF(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	pdf := New("P", "mm", "A4", "")
+	pdf := NewDocPdfTest()
 	pdf.AddPage()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = pdf.parsegif(bytes.NewReader(raw))
+		_ = pdf.ParseGIF(bytes.NewReader(raw))
 	}
 }

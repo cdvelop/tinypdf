@@ -12,7 +12,7 @@ text, drawing and images.
 ## Features
 
 * UTF-8 support
-* Choice of measurement unit, page format and margins
+* Choice of measurement Unit, page format and margins
 * Page header and footer management
 * Automatic page breaks, line breaks, and text justification
 * Inclusion of JPEG, PNG, GIF, TIFF and basic path-only SVG images
@@ -61,9 +61,9 @@ go get -u -v github.com/cdvelop/docpdf/...
 The following Go code generates a simple PDF file.
 
 ```go
-pdf := tinypdf.New("P", "mm", "A4", "")
+pdf := tinypdf.NewDocPdfTest()
 pdf.AddPage()
-pdf.SetFont("Arial", "B", 16)
+pdf.Font().SetFont("Arial", "B", 16)
 pdf.Cell(40, 10, "Hello, world")
 err := pdf.OutputFileAndClose("hello.pdf")
 ```

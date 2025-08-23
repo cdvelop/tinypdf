@@ -34,7 +34,7 @@ func StateGet(pdf *TinyPDF) (st StateType) {
 	st.clrFill.R, st.clrFill.G, st.clrFill.B = pdf.GetFillColor()
 	st.clrText.R, st.clrText.G, st.clrText.B = pdf.GetTextColor()
 	st.lineWd = pdf.GetLineWidth()
-	_, st.fontSize = pdf.GetFontSize()
+	_, st.fontSize = pdf.GetFontSizes()
 	st.alpha, st.blendStr = pdf.GetAlpha()
 	st.cellMargin = pdf.GetCellMargin()
 	return
@@ -148,12 +148,12 @@ func NewGrid(x, y, w, h float64) (grid GridType) {
 }
 
 // WdAbs returns the absolute value of dataWd, specified in logical data units,
-// that has been converted to the unit of measure specified in New().
+// that has been converted to the Unit of measure specified in New().
 func (g GridType) WdAbs(dataWd float64) float64 {
 	return math.Abs(g.xm * dataWd)
 }
 
-// Wd converts dataWd, specified in logical data units, to the unit of measure
+// Wd converts dataWd, specified in logical data units, to the Unit of measure
 // specified in New().
 func (g GridType) Wd(dataWd float64) float64 {
 	return g.xm * dataWd
@@ -182,12 +182,12 @@ func (g GridType) X(dataX float64) float64 {
 }
 
 // HtAbs returns the absolute value of dataHt, specified in logical data units,
-// that has been converted to the unit of measure specified in New().
+// that has been converted to the Unit of measure specified in New().
 func (g GridType) HtAbs(dataHt float64) float64 {
 	return math.Abs(g.ym * dataHt)
 }
 
-// Ht converts dataHt, specified in logical data units, to the unit of measure
+// Ht converts dataHt, specified in logical data units, to the Unit of measure
 // specified in New().
 func (g GridType) Ht(dataHt float64) float64 {
 	return g.ym * dataHt

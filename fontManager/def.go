@@ -1,14 +1,9 @@
 package fontManager
 
-// FontBox defines the coordinates and extent of the various page box types
-type FontBox struct {
-	Xmin, Ymin, Xmax, Ymax int
-}
-
-// FontDesc (font descriptor) specifies metrics and other
+// FontDescType (font descriptor) specifies metrics and other
 // attributes of a font, as distinct from the metrics of individual
 // glyphs (as defined in the pdf specification).
-type FontDesc struct {
+type FontDescType struct {
 	// The maximum height above the baseline reached by glyphs in this
 	// font (for example for "S"). The height of glyphs for accented
 	// characters shall be excluded.
@@ -27,7 +22,7 @@ type FontDesc struct {
 	// rectangle enclosing the shape that would result if all of the
 	// glyphs of the font were placed with their origins coincident
 	// and then filled.
-	FontBBox FontBox
+	FontBBox fontBoxType
 	// The angle, expressed in degrees counterclockwise from the
 	// vertical, of the dominant vertical strokes of the font. (The
 	// 9-o’clock position is 90 degrees, and the 3-o’clock position
@@ -45,32 +40,36 @@ type FontDesc struct {
 	MissingWidth int
 }
 
-// FontDef contains all the information needed by the PDF generator to use a font.
-type FontDef struct {
-	Tp           string   // "Core", "TrueType", ...
-	Name         string   // "Courier-Bold", ...
-	Desc         FontDesc // Font descriptor
-	Up           int      // Underline position
-	Ut           int      // Underline thickness
-	Cw           []int    // Character width by ordinal
-	Enc          string   // "cp1252", ...
-	Diff         string   // Differences from reference encoding
-	File         string   // "Redressed.z"
-	Size1, Size2 int      // Type1 values
-	OriginalSize int      // Size of uncompressed font file
-	Data         []byte   // Raw, compressed font data for embedding.
-
-	// Fields used by the PDF generator
-	I     string // Unique font identifier, used for /F... resources
-	N     int    // PDF object number for the font
-	DiffN int    // Position of diff in app array
-	Key   string // unique key used previously when stored in map
+type FontDefType struct {
+	Tp           string        // "Core", "TrueType", ...
+	Name         string        // "Courier-Bold", ...
+	Desc         FontDescType  // Font descriptor
+	Up           int           // Underline position
+	Ut           int           // Underline thickness
+	Cw           []int         // Character width by ordinal
+	Enc          string        // "cp1252", ...
+	Diff         string        // Differences from reference encoding
+	File         string        // "Redressed.z"
+	Size1, Size2 int           // Type1 values
+	OriginalSize int           // Size of uncompressed font file
+	N            int           // Set by font loader
+	DiffN        int           // Position of diff in app array, set by font loader
+	ListIndex    string        // 1-based position in font list, set by font loader, not this program
+	utf8File     *utf8FontFile // UTF-8 font
+	Utf8File     *utf8FontFile // exported pointer so tinypdf can call GenerateCutFont
+	UsedRunes    map[int]int   // Array of used runes
+	Key          string        // unique key (was map key) for lookup
 }
 
-// FontFamily groups the different styles (Regular, Bold, etc.) for a single font.
-type FontFamily struct {
-	Name   string
-	Styles map[fontStyle]*FontDef
-	// Regular is a fallback for any missing styles
-	Regular *FontDef
+type fontBoxType struct {
+	Xmin, Ymin, Xmax, Ymax int
+}
+
+type FontFileType struct {
+	Length1, Length2 int64
+	N                int
+	Embedded         bool
+	Content          []byte
+	FontType         string
+	Key              string // the key under which this file was previously stored
 }

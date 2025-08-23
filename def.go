@@ -5,12 +5,12 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/gob"
-	"encoding/json"
 	"io"
 	"math"
 	"path"
 	"time"
 
+	"github.com/cdvelop/tinypdf/fontManager"
 	"github.com/cdvelop/tinystring"
 )
 
@@ -43,8 +43,6 @@ func (r RootDirectoryType) MakePath(pathElements ...string) string {
 	return path.Join(elements...)
 }
 
-type FontsDirName string // FontsDirName is the name of the font directory default is "fonts"
-
 type orientationType string
 
 const (
@@ -55,17 +53,17 @@ const (
 	Landscape orientationType = "l"
 )
 
-type unit string
+type Unit string
 
 const (
-	// POINT represents the size unit point
-	POINT unit = "pt"
-	// MM represents the size unit millimeter
-	MM unit = "mm"
-	// CM represents the size unit centimeter
-	CM unit = "cm"
-	// IN represents the size unit inch
-	IN unit = "inch"
+	// POINT represents the size Unit point
+	POINT Unit = "pt"
+	// MM represents the size Unit millimeter
+	MM Unit = "mm"
+	// CM represents the size Unit centimeter
+	CM Unit = "cm"
+	// IN represents the size Unit inch
+	IN Unit = "inch"
 )
 
 // Standard page sizes in points (1/72 inch)
@@ -322,7 +320,7 @@ func (info *ImageInfoType) GobDecode(buf []byte) (err error) {
 }
 
 // PointConvert returns the value of pt, expressed in points (1/72 inch), as a
-// value expressed in the unit of measure specified in New(). Since font
+// value expressed in the Unit of measure specified in New(). Since font
 // management in TinyPDF uses points, this method can help with line height
 // calculations and other methods that require user units.
 func (f *TinyPDF) PointConvert(pt float64) (u float64) {
@@ -334,7 +332,7 @@ func (f *TinyPDF) PointToUnitConvert(pt float64) (u float64) {
 	return pt / f.k
 }
 
-// UnitToPointConvert returns the value of u, expressed in the unit of measure
+// UnitToPointConvert returns the value of u, expressed in the Unit of measure
 // specified in New(), as a value expressed in points (1/72 inch). Since font
 // management in TinyPDF uses points, this method can help with setting font sizes
 // based on the sizes of other non-font page elements.
@@ -366,14 +364,6 @@ func (info *ImageInfoType) SetDpi(dpi float64) {
 	info.dpi = dpi
 }
 
-type fontFileType struct {
-	length1, length2 int64
-	n                int
-	embedded         bool
-	content          []byte
-	fontType         string
-}
-
 type linkType struct {
 	x, y, wd, ht float64
 	link         int    // Auto-generated internal link ID or...
@@ -400,19 +390,10 @@ type outlineType struct {
 // indicated by UnitType.
 type InitType struct {
 	OrientationStr orientationType // Landscape or Portrait
-	UnitType       unit
+	UnitType       Unit
 	Size           PageSize
 	RootDirectory  RootDirectoryType // Root directory of the executable default is "." but test can set it to a different directory
 	FontDirName    string            // name to the font directory default is "fonts"
-}
-
-// FontLoader is used to read fonts (JSON font specification and zlib compressed font binaries)
-// from arbitrary locations (e.g. files, zip files, embedded font resources).
-//
-// Open provides an io.Reader for the specified font file (.json or .z). The file name
-// never includes a path. Open returns an error if the specified file cannot be opened.
-type FontLoader interface {
-	Open(name string) (io.Reader, error)
 }
 
 // OutputIntentSubtype any of the pre defined types below or a value defined by ISO 32000 extension.
@@ -435,9 +416,8 @@ type OutputIntentType struct {
 // Pdf defines the interface used for various methods. It is implemented by the
 // main FPDF instance as well as templates.
 type Pdf interface {
-	AddFont(familyStr, styleStr, fileStr string)
-	AddFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFileBytes []byte)
-	AddFontFromReader(familyStr, styleStr string, r io.Reader)
+	// Font addition APIs removed. Fonts must be provided at initialization
+	// via the New(...) constructor using the FontsPath parameter.
 	AddLayer(name string, visible bool) (layerID int)
 	AddLink() int
 	AddPage()
@@ -463,8 +443,7 @@ type Pdf interface {
 	ClipText(x, y float64, txtStr string, outline bool)
 	Close()
 	ClosePath()
-	CreateTemplateCustom(corner PointType, size SizeType, fn func(*Tpl)) Template
-	CreateTemplate(fn func(*Tpl)) Template
+	// Template APIs removed. Templates are not supported in this build.
 	CurveBezierCubicTo(cx0, cy0, cx1, cy1, x, y float64)
 	CurveBezierCubic(x0, y0, cx0, cy0, cx1, cy1, x1, y1 float64, styleStr string)
 	CurveCubic(x0, y0, cx0, cy0, x1, y1, cx1, cy1 float64, styleStr string)
@@ -489,11 +468,10 @@ type Pdf interface {
 	GetDrawSpotColor() (name string, c, m, y, k byte)
 	GetFillColor() (int, int, int)
 	GetFillSpotColor() (name string, c, m, y, k byte)
-	GetFontDesc(familyStr, styleStr string) FontDescType
+	GetFontDesc(familyStr, styleStr string) fontManager.FontDescType
 	GetFontFamily() string
-	GetFontLoader() FontLoader
 	GetFontLocation() string
-	GetFontSize() (ptSize, unitSize float64)
+	GetFontSizes() (ptSize, unitSize float64)
 	GetFontStyle() string
 	GetImageInfo(imageStr string) (info *ImageInfoType)
 	GetJavascript() string
@@ -569,7 +547,6 @@ type Pdf interface {
 	SetFillColor(r, g, b int)
 	SetFillSpotColor(nameStr string, tint byte)
 	SetFont(familyStr, styleStr string, size float64)
-	SetFontLoader(loader FontLoader)
 	SetFontLocation(fontDirStr string)
 	SetFontSize(size float64)
 	SetFontStyle(styleStr string)
@@ -626,8 +603,7 @@ type Pdf interface {
 	TransformTranslateY(ty float64)
 	UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string) string)
 	UnitToPointConvert(u float64) (pt float64)
-	UseTemplateScaled(t Template, corner PointType, size SizeType)
-	UseTemplate(t Template)
+	// UseTemplate* removed
 	WriteAligned(width, lineHeight float64, textStr, alignStr string)
 	Writef(h float64, fmtStr string, args ...interface{})
 	Write(h float64, txtStr string)
@@ -643,107 +619,117 @@ type PageBox struct {
 
 // TinyPDF is the principal structure for creating a single PDF document
 type TinyPDF struct {
-	isCurrentUTF8    bool                       // is current font used in utf-8 mode
-	isRTL            bool                       // is is right to left mode enabled
-	page             int                        // current page number
-	n                int                        // current object number
-	offsets          []int                      // array of object offsets
-	templates        map[string]Template        // templates used in this document
-	templateObjects  map[string]int             // template object IDs within this document
-	importedObjs     map[string][]byte          // imported template objects (gofpdi)
-	importedObjPos   map[string]map[int]string  // imported template objects hashes and their positions (gofpdi)
-	importedTplObjs  map[string]string          // imported template names and IDs (hashed) (gofpdi)
-	importedTplIDs   map[string]int             // imported template ids hash to object id int (gofpdi)
-	buffer           fmtBuffer                  // buffer holding in-memory PDF
-	pages            []*bytes.Buffer            // slice[page] of page content; 1-based
-	state            int                        // current document state
-	compress         bool                       // compression flag
-	k                float64                    // scale factor (number of points in user unit)
-	defOrientation   orientationType            // default orientation
-	curOrientation   orientationType            // current orientation
-	stdPageSizes     map[string]PageSize        // standard page sizes
-	defPageSize      PageSize                   // default page size
-	defPageBoxes     map[string]PageBox         // default page size
-	curPageSize      PageSize                   // current page size
-	pageSizes        map[int]PageSize           // used for pages with non default sizes or orientations
-	pageBoxes        map[int]map[string]PageBox // used to define the crop, trim, bleed and art boxes
-	unitType         unit                       // unit of measure for all rendered objects except fonts
-	wPt, hPt         float64                    // dimensions of current page in points
-	w, h             float64                    // dimensions of current page in user unit
-	lMargin          float64                    // left margin
-	tMargin          float64                    // top margin
-	rMargin          float64                    // right margin
-	bMargin          float64                    // page break margin
-	cMargin          float64                    // cell margin
-	x, y             float64                    // current position in user unit
-	lasth            float64                    // height of last printed cell
-	lineWidth        float64                    // line width in user unit
-	rootDirectory    RootDirectoryType          // root directory of the executable default is "." for test change
-	fontsDirName     FontsDirName               // fonts directory name default is "fonts"
-	fontsPath        string                     // full path containing fonts directory included rootDirectory eg. "/home/user/docpdf/fonts"
-	fontLoader       FontLoader                 // used to load font files from arbitrary locations
-	coreFonts        map[string]bool            // array of core font names
-	fonts            map[string]fontDefType     // array of used fonts
-	fontFiles        map[string]fontFileType    // array of font files
-	diffs            []string                   // array of encoding differences
-	fontFamily       string                     // current font family
-	fontStyle        string                     // current font style
-	underline        bool                       // underlining flag
-	strikeout        bool                       // strike out flag
-	currentFont      fontDefType                // current font info
-	fontSizePt       float64                    // current font size in points
-	fontSize         float64                    // current font size in user unit
-	ws               float64                    // word spacing
-	images           map[string]*ImageInfoType  // array of used images
-	aliasMap         map[string]string          // map of alias->replacement
-	pageLinks        [][]linkType               // pageLinks[page][link], both 1-based
-	links            []intLinkType              // array of internal links
-	attachments      []Attachment               // slice of content to embed globally
-	pageAttachments  [][]annotationAttach       // 1-based array of annotation for file attachments (per page)
-	outlines         []outlineType              // array of outlines
-	outlineRoot      int                        // root of outlines
-	autoPageBreak    bool                       // automatic page breaking
-	acceptPageBreak  func() bool                // returns true to accept page break
-	pageBreakTrigger float64                    // threshold used to trigger page breaks
-	inHeader         bool                       // flag set when processing header
-	headerFnc        func()                     // function provided by app and called to write header
-	headerHomeMode   bool                       // set position to home after headerFnc is called
-	inFooter         bool                       // flag set when processing footer
-	footerFnc        func()                     // function provided by app and called to write footer
-	footerFncLpi     func(bool)                 // function provided by app and called to write footer with last page flag
-	zoomMode         string                     // zoom display mode
-	layoutMode       string                     // layout display mode
-	nXMP             int                        // XMP object number
-	xmp              []byte                     // XMP metadata
-	producer         string                     // producer
-	title            string                     // title
-	subject          string                     // subject
-	author           string                     // author
-	lang             string                     // lang
-	keywords         string                     // keywords
-	creator          string                     // creator
-	creationDate     time.Time                  // override for document CreationDate value
-	modDate          time.Time                  // override for document ModDate value
-	aliasNbPagesStr  string                     // alias for total number of pages
-	pdfVersion       pdfVersion                 // PDF version number
-	capStyle         int                        // line cap style: butt 0, round 1, square 2
-	joinStyle        int                        // line segment join style: miter 0, round 1, bevel 2
-	dashArray        []float64                  // dash array
-	dashPhase        float64                    // dash phase
-	blendList        []blendModeType            // slice[idx] of alpha transparency modes, 1-based
-	blendMap         map[string]int             // map into blendList
-	blendMode        string                     // current blend mode
-	alpha            float64                    // current transpacency
-	gradientList     []gradientType             // slice[idx] of gradient records
-	clipNest         int                        // Number of active clipping contexts
-	transformNest    int                        // Number of active transformation contexts
-	err              error                      // Set if error occurs during life cycle of instance
-	protect          protectType                // document protection structure
-	layer            layerRecType               // manages optional layers in document
-	catalogSort      bool                       // sort resource catalogs in document
-	nJs              int                        // JavaScript object number
-	javascript       *string                    // JavaScript code to include in the PDF
-	colorFlag        bool                       // indicates whether fill and text colors are different
+	log func(...any)
+
+	isRTL   bool  // is is right to left mode enabled
+	page    int   // current page number
+	n       int   // current object number
+	offsets []int // array of object offsets
+	// Template support removed. Previously this struct contained:
+	// templates, templateObjects and imported template caches which have been removed.
+	importedObjs   map[string][]byte         // imported template objects (gofpdi)
+	importedObjPos map[string]map[int]string // imported template objects hashes and their positions (gofpdi)
+	// importedTplObjs maps imported template names to their internal template id
+	importedTplObjs map[string]string // map tplName -> tplID
+	// importedTplIDs maps tplID (hash) to object id assigned during writing
+	importedTplIDs map[string]int  // map tplHash -> object number
+	buffer         fmtBuffer       // buffer holding in-memory PDF
+	pages          []*bytes.Buffer // slice[page] of page content; 1-based
+	state          int             // current document state
+	compress       bool            // compression flag
+
+	k float64 // scale factor (number of points in user Unit)
+
+	defOrientation orientationType            // default orientation
+	curOrientation orientationType            // current orientation
+	stdPageSizes   map[string]PageSize        // standard page sizes
+	defPageSize    PageSize                   // default page size
+	defPageBoxes   map[string]PageBox         // default page size
+	curPageSize    PageSize                   // current page size
+	pageSizes      map[int]PageSize           // used for pages with non default sizes or orientations
+	pageBoxes      map[int]map[string]PageBox // used to define the crop, trim, bleed and art boxes
+	unitType       Unit                       // Unit of measure for all rendered objects except fonts
+	wPt, hPt       float64                    // dimensions of current page in points
+	w, h           float64                    // dimensions of current page in user Unit
+	lMargin        float64                    // left margin
+	tMargin        float64                    // top margin
+	rMargin        float64                    // right margin
+	bMargin        float64                    // page break margin
+	cMargin        float64                    // cell margin
+	x, y           float64                    // current position in user Unit
+	lasth          float64                    // height of last printed cell
+	lineWidth      float64                    // line width in user Unit
+
+	fm *fontManager.FontManager
+
+	// fonts holds font definitions for this document. Stored as a slice for
+	// stable ordering and tinygo compatibility. Entries have Key populated.
+	fonts []fontManager.FontDefType
+
+	// current font
+	currentFont    fontManager.FontDefType // current font info
+	fontFamily     string                  // current font family
+	textDecoration string                  // current font style flags + decorations (e.g. "BI" plus optional "U"/"S")
+	isCurrentUTF8  bool                    // is current font used in utf-8 mode
+	fontSizePt     float64                 // current font size in points
+	fontSize       float64                 // current font size in user Unit
+
+	rootDirectory RootDirectoryType // root directory of the executable default is "." for test change
+
+	underline bool // underlining flag
+	strikeout bool // strike out flag
+
+	ws               float64                   // word spacing
+	images           map[string]*ImageInfoType // array of used images
+	aliasMap         map[string]string         // map of alias->replacement
+	pageLinks        [][]linkType              // pageLinks[page][link], both 1-based
+	links            []intLinkType             // array of internal links
+	attachments      []Attachment              // slice of content to embed globally
+	pageAttachments  [][]annotationAttach      // 1-based array of annotation for file attachments (per page)
+	outlines         []outlineType             // array of outlines
+	outlineRoot      int                       // root of outlines
+	autoPageBreak    bool                      // automatic page breaking
+	acceptPageBreak  func() bool               // returns true to accept page break
+	pageBreakTrigger float64                   // threshold used to trigger page breaks
+	inHeader         bool                      // flag set when processing header
+	headerFnc        func()                    // function provided by app and called to write header
+	headerHomeMode   bool                      // set position to home after headerFnc is called
+	inFooter         bool                      // flag set when processing footer
+	footerFnc        func()                    // function provided by app and called to write footer
+	footerFncLpi     func(bool)                // function provided by app and called to write footer with last page flag
+	zoomMode         string                    // zoom display mode
+	layoutMode       string                    // layout display mode
+	nXMP             int                       // XMP object number
+	xmp              []byte                    // XMP metadata
+	producer         string                    // producer
+	title            string                    // title
+	subject          string                    // subject
+	author           string                    // author
+	lang             string                    // lang
+	keywords         string                    // keywords
+	creator          string                    // creator
+	creationDate     time.Time                 // override for document CreationDate value
+	modDate          time.Time                 // override for document ModDate value
+	aliasNbPagesStr  string                    // alias for total number of pages
+	pdfVersion       pdfVersion                // PDF version number
+	capStyle         int                       // line cap style: butt 0, round 1, square 2
+	joinStyle        int                       // line segment join style: miter 0, round 1, bevel 2
+	dashArray        []float64                 // dash array
+	dashPhase        float64                   // dash phase
+	blendList        []blendModeType           // slice[idx] of alpha transparency modes, 1-based
+	blendMap         map[string]int            // map into blendList
+	blendMode        string                    // current blend mode
+	alpha            float64                   // current transpacency
+	gradientList     []gradientType            // slice[idx] of gradient records
+	clipNest         int                       // Number of active clipping contexts
+	transformNest    int                       // Number of active transformation contexts
+	err              error                     // Set if error occurs during life cycle of instance
+	protect          protectType               // document protection structure
+	layer            layerRecType              // manages optional layers in document
+	catalogSort      bool                      // sort resource catalogs in document
+	nJs              int                       // JavaScript object number
+	javascript       *string                   // JavaScript code to include in the PDF
+	colorFlag        bool                      // indicates whether fill and text colors are different
 	color            struct {
 		// Composite values of colors
 		draw, fill, text colorType
@@ -780,16 +766,32 @@ func (v pdfVersion) String() string {
 	return tinystring.Fmt("%d.%d", maj, min)
 }
 
+// findFont searches TinyPDF.fonts slice for a font by key (previously map key).
+func (f *TinyPDF) findFont(fontKey string) (fontManager.FontDefType, bool) {
+	for _, fd := range f.fonts {
+		if fd.Key == fontKey {
+			return fd, true
+		}
+	}
+	return fontManager.FontDefType{}, false
+}
+
+// findFontIndex returns the index of a font in the fonts slice, or -1 if not found.
+func (f *TinyPDF) findFontIndex(fontKey string) int {
+	for i, fd := range f.fonts {
+		if fd.Key == fontKey {
+			return i
+		}
+	}
+	return -1
+}
+
 type encType struct {
 	uv   int
 	name string
 }
 
 type encListType [256]encType
-
-type fontBoxType struct {
-	Xmin, Ymin, Xmax, Ymax int
-}
 
 // Font flags for FontDescType.Flags as defined in the pdf specification.
 const (
@@ -831,84 +833,3 @@ const (
 	// may be thickened at small text sizes.
 	ForceBold = 1 << 18
 )
-
-// FontDescType (font descriptor) specifies metrics and other
-// attributes of a font, as distinct from the metrics of individual
-// glyphs (as defined in the pdf specification).
-type FontDescType struct {
-	// The maximum height above the baseline reached by glyphs in this
-	// font (for example for "S"). The height of glyphs for accented
-	// characters shall be excluded.
-	Ascent int
-	// The maximum depth below the baseline reached by glyphs in this
-	// font. The value shall be a negative number.
-	Descent int
-	// The vertical coordinate of the top of flat capital letters,
-	// measured from the baseline (for example "H").
-	CapHeight int
-	// A collection of flags defining various characteristics of the
-	// font. (See the FontFlag* constants.)
-	Flags int
-	// A rectangle, expressed in the glyph coordinate system, that
-	// shall specify the font bounding box. This should be the smallest
-	// rectangle enclosing the shape that would result if all of the
-	// glyphs of the font were placed with their origins coincident
-	// and then filled.
-	FontBBox fontBoxType
-	// The angle, expressed in degrees counterclockwise from the
-	// vertical, of the dominant vertical strokes of the font. (The
-	// 9-o’clock position is 90 degrees, and the 3-o’clock position
-	// is –90 degrees.) The value shall be negative for fonts that
-	// slope to the right, as almost all italic fonts do.
-	ItalicAngle int
-	// The thickness, measured horizontally, of the dominant vertical
-	// stems of glyphs in the font.
-	StemV int
-	// The width to use for character codes whose widths are not
-	// specified in a font dictionary’s Widths array. This shall have
-	// a predictable effect only if all such codes map to glyphs whose
-	// actual widths are the same as the value of the MissingWidth
-	// entry. (Default value: 0.)
-	MissingWidth int
-}
-
-type fontDefType struct {
-	Tp           string        // "Core", "TrueType", ...
-	Name         string        // "Courier-Bold", ...
-	Desc         FontDescType  // Font descriptor
-	Up           int           // Underline position
-	Ut           int           // Underline thickness
-	Cw           []int         // Character width by ordinal
-	Enc          string        // "cp1252", ...
-	Diff         string        // Differences from reference encoding
-	File         string        // "Redressed.z"
-	Size1, Size2 int           // Type1 values
-	OriginalSize int           // Size of uncompressed font file
-	N            int           // Set by font loader
-	DiffN        int           // Position of diff in app array, set by font loader
-	i            string        // 1-based position in font list, set by font loader, not this program
-	utf8File     *utf8FontFile // UTF-8 font
-	usedRunes    map[int]int   // Array of used runes
-}
-
-// generateFontID generates a font Id from the font definition
-func generateFontID(fdt fontDefType) (string, error) {
-	// file can be different if generated in different instance
-	fdt.File = ""
-	b, err := json.Marshal(&fdt)
-	return tinystring.Fmt("%x", sha1.Sum(b)), err
-}
-
-type fontInfoType struct {
-	Data               []byte
-	File               string
-	OriginalSize       int
-	FontName           string
-	Bold               bool
-	IsFixedPitch       bool
-	UnderlineThickness int
-	UnderlinePosition  int
-	Widths             []int
-	Size1, Size2       uint32
-	Desc               FontDescType
-}

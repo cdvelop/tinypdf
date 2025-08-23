@@ -6,11 +6,12 @@ import (
 	"os"
 	"sort"
 
+	"github.com/cdvelop/tinypdf/fontManager"
 	. "github.com/cdvelop/tinystring"
 )
 
 // PageSize returns the width and height of the specified page in the units
-// established in New(). These return values are followed by the unit of
+// established in New(). These return values are followed by the Unit of
 // measure itself. If pageNum is zero or otherwise out of bounds, it returns
 // the default page size, that is, the size of the page that would be added by
 // AddPage().
@@ -43,15 +44,15 @@ func (f *TinyPDF) AddPageFormat(orientationStr orientationType, size PageSize) {
 	if f.state == 0 {
 		f.open()
 	}
-	familyStr := f.fontFamily
-	style := f.fontStyle
+	familyStr := f.GetFontFamily()
+	style := f.textDecoration
 	if f.underline {
 		style += "U"
 	}
 	if f.strikeout {
 		style += "S"
 	}
-	fontsize := f.fontSizePt
+	fontsize := f.GetFontSizePt()
 	lw := f.lineWidth
 	dc := f.color.draw
 	fc := f.color.fill
@@ -552,7 +553,7 @@ func (f *TinyPDF) putpages() {
 	nb := f.page
 	if len(f.aliasNbPagesStr) > 0 {
 		// Replace number of pages
-		f.RegisterAlias(f.aliasNbPagesStr, sprintf("%d", nb))
+		f.RegisterAlias(f.aliasNbPagesStr, Fmt("%d", nb))
 	}
 	f.replaceAliases()
 	// f.defPageSize is already in points, no need to multiply by f.k
@@ -718,7 +719,7 @@ func (f *TinyPDF) putimage(info *ImageInfoType) {
 			cs:    "DeviceGray",
 			bpc:   8,
 			f:     info.f,
-			dp:    sprintf("/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns %d", int(info.w)),
+			dp:    Fmt("/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns %d", int(info.w)),
 			data:  info.smask,
 			scale: f.k,
 		}
@@ -757,44 +758,23 @@ func (f *TinyPDF) putxobjectdict() {
 			f.outf("/I%s %d 0 R", image.i, image.n)
 		}
 	}
-	{
-		var keyList []string
-		var key string
-		var tpl Template
-		keyList = templateKeyList(f.templates, f.catalogSort)
-		for _, key = range keyList {
-			tpl = f.templates[key]
-			// for _, tpl := range f.templates {
-			id := tpl.ID()
-			if objID, ok := f.templateObjects[id]; ok {
-				f.outf("/TPL%s %d 0 R", id, objID)
-			}
-		}
-	}
-	{
-		for tplName, objID := range f.importedTplObjs {
-			// here replace obj id hash with n
-			f.outf("%s %d 0 R", tplName, f.importedTplIDs[objID])
-		}
-	}
+	// Template XObject handling removed.
 }
 
 func (f *TinyPDF) putresourcedict() {
 	f.out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]")
 	f.out("/Font <<")
 	{
-		var keyList []string
-		var font fontDefType
-		var key string
-		for key = range f.fonts {
-			keyList = append(keyList, key)
-		}
+		// Work from a copy of the fonts slice so sorting does not mutate
+		// the document's canonical font order. We emit resource entries
+		// from this list in ListIndex order when catalogSort is enabled.
+		fonts := make([]fontManager.FontDefType, len(f.fonts))
+		copy(fonts, f.fonts)
 		if f.catalogSort {
-			sort.SliceStable(keyList, func(i, j int) bool { return f.fonts[keyList[i]].i < f.fonts[keyList[j]].i })
+			sort.SliceStable(fonts, func(i, j int) bool { return fonts[i].ListIndex < fonts[j].ListIndex })
 		}
-		for _, key = range keyList {
-			font = f.fonts[key]
-			f.outf("/F%s %d 0 R", font.i, font.N)
+		for _, font := range fonts {
+			f.outf("/F%s %d 0 R", font.ListIndex, font.N)
 		}
 	}
 	f.out(">>")
@@ -867,13 +847,12 @@ func (f *TinyPDF) putresources() {
 	f.putBlendModes()
 	f.putGradients()
 	f.putSpotColors()
-	f.putfonts()
+	f.fontsPut()
 	if f.err != nil {
 		return
 	}
 	f.putimages()
 	f.putTemplates()
-	f.putImportedTemplates() // gofpdi
 	// 	Resource dictionary
 	f.offsets[2] = f.buffer.Len()
 	f.out("2 0 obj")
@@ -938,7 +917,7 @@ func (f *TinyPDF) putcatalog() {
 		f.out("/OpenAction [3 0 R /XYZ null null 1]")
 	}
 	// } 	else if !is_string($this->zoomMode))
-	// 		$this->out('/OpenAction [3 0 R /XYZ null null '.sprintf('%.2f',$this->zoomMode/100).']');
+	// 		$this->out('/OpenAction [3 0 R /XYZ null null '.Fmt('%.2f',$this->zoomMode/100).']');
 	switch f.layoutMode {
 	case "single", "SinglePage":
 		f.out("/PageLayout /SinglePage")

@@ -2,7 +2,9 @@ package fontManager
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 
+	"github.com/cdvelop/tinystring"
 	. "github.com/cdvelop/tinystring"
 )
 
@@ -22,4 +24,12 @@ func (fm *FontManager) setFontID(def *FontDef) error {
 	// The hash is used as the font's unique identifier 'i' field.
 	def.I = Fmt("%x", h.Sum(nil))
 	return nil
+}
+
+// generateFontID generates a font Id from the font definition
+func generateFontID(fdt FontDefType) (string, error) {
+	// file can be different if generated in different instance
+	fdt.File = ""
+	b, err := json.Marshal(&fdt)
+	return tinystring.Fmt("%x", sha1.Sum(b)), err
 }

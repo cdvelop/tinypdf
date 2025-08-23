@@ -58,7 +58,7 @@ func (f *TinyPDF) SetDrawSpotColor(nameStr string, tint byte) {
 	if ok {
 		f.color.draw.mode = colorModeSpot
 		f.color.draw.spotStr = nameStr
-		f.color.draw.str = sprintf("/CS%d CS %.3f SCN", clr.id, float64(byteBound(tint))/100)
+		f.color.draw.str = Fmt("/CS%d CS %.3f SCN", clr.id, float64(byteBound(tint))/100)
 		if f.page > 0 {
 			f.out(f.color.draw.str)
 		}
@@ -77,7 +77,7 @@ func (f *TinyPDF) SetFillSpotColor(nameStr string, tint byte) {
 	if ok {
 		f.color.fill.mode = colorModeSpot
 		f.color.fill.spotStr = nameStr
-		f.color.fill.str = sprintf("/CS%d cs %.3f scn", clr.id, float64(byteBound(tint))/100)
+		f.color.fill.str = Fmt("/CS%d cs %.3f scn", clr.id, float64(byteBound(tint))/100)
 		f.colorFlag = f.color.fill.str != f.color.text.str
 		if f.page > 0 {
 			f.out(f.color.fill.str)
@@ -97,7 +97,7 @@ func (f *TinyPDF) SetTextSpotColor(nameStr string, tint byte) {
 	if ok {
 		f.color.text.mode = colorModeSpot
 		f.color.text.spotStr = nameStr
-		f.color.text.str = sprintf("/CS%d cs %.3f scn", clr.id, float64(byteBound(tint))/100)
+		f.color.text.str = Fmt("/CS%d cs %.3f scn", clr.id, float64(byteBound(tint))/100)
 		f.colorFlag = f.color.fill.str != f.color.text.str
 	}
 }

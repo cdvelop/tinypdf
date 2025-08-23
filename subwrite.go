@@ -3,7 +3,7 @@ package tinypdf
 // Adapted from http://www.tinypdf.org/en/script/script61.php by Wirus and released with the FPDF license.
 
 // SubWrite prints text from the current position in the same way as Write().
-// ht is the line height in the unit of measure specified in New(). str
+// ht is the line height in the Unit of measure specified in New(). str
 // specifies the text to write. subFontSize is the size of the font in points.
 // subOffset is the vertical offset of the text in points; a positive value
 // indicates a superscript, a negative value indicates a subscript. link is the
@@ -17,7 +17,7 @@ func (f *TinyPDF) SubWrite(ht float64, str string, subFontSize, subOffset float6
 		return
 	}
 	// resize font
-	subFontSizeOld := f.fontSizePt
+	subFontSizeOld := f.GetFontSizePt()
 	f.SetFontSize(subFontSize)
 	// reposition y
 	subOffset = (((subFontSize - subFontSizeOld) / f.k) * 0.3) + (subOffset / f.k)

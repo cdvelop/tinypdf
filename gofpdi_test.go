@@ -11,8 +11,8 @@ import (
 )
 
 func ExampleNewImporter() {
-	// create new pdf
-	pdf := NewDocPdfTest("pt", "A4")
+	// create new pdf (use helper)
+	pdf := NewDocPdfTest(tinypdf.POINT)
 
 	// for testing purposes, get an arbitrary template pdf as stream
 	rs, _ := getTemplatePdf()
@@ -64,9 +64,9 @@ func TestGofpdiConcurrent(t *testing.T) {
 }
 
 func getTemplatePdf() (io.ReadSeeker, error) {
-	tpdf := tinypdf.New(tinypdf.POINT, "A4", "")
+	tpdf := NewDocPdfTest(tinypdf.POINT)
 	tpdf.AddPage()
-	tpdf.SetFont("Arial", "", 12)
+	tpdf.Font().SetFont("Arial", "", 12)
 	tpdf.Text(20, 20, "Example Page 1")
 	tpdf.AddPage()
 	tpdf.Text(20, 20, "Example Page 2")

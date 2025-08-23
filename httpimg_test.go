@@ -7,7 +7,7 @@ import (
 
 func ExampleRegister() {
 	pdf := NewDocPdfTest("mm", "A4", tinypdf.Landscape)
-	pdf.SetFont("Helvetica", "", 12)
+	pdf.Font().SetFont("Helvetica", "", 12)
 	pdf.SetFillColor(200, 200, 220)
 	pdf.AddPage()
 

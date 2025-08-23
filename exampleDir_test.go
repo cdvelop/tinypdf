@@ -27,11 +27,59 @@ func init() {
 // default docpdf init for testing
 func NewDocPdfTest(options ...any) *tinypdf.TinyPDF {
 
-	// add root directory to the options
-	options = append(options, rootTestDir)
+	// Defaults: use a specific TTF inside the test fonts directory
+	fonts := []string{rootTestDir.MakePath(FontsDirName(), "calligra.ttf")}
+	logger := func(v ...any) { fmt.Println(v...) }
 
-	pdf := tinypdf.New(options...)
+	// Parse optional parameters. If a []string is provided, use it as fonts.
+	// If a single string is provided, treat it as one font path. If a
+	// func(...any) is provided, use it as the logger. If a tinypdf.Unit is
+	// provided, set it on the resulting TinyPDF instance.
+	var unitOpt *tinypdf.Unit
+	for _, opt := range options {
+		switch v := opt.(type) {
+		case []string:
+			if len(v) > 0 {
+				// Ensure each provided path is absolute by prepending the test root
+				resolved := make([]string, 0, len(v))
+				for _, p := range v {
+					if p == "" {
+						continue
+					}
+					if filepath.IsAbs(p) {
+						resolved = append(resolved, p)
+					} else {
+						resolved = append(resolved, rootTestDir.MakePath(p))
+					}
+				}
+				if len(resolved) > 0 {
+					fonts = resolved
+				}
+			}
+		case string:
+			if v != "" {
+				if filepath.IsAbs(v) {
+					fonts = []string{v}
+				} else {
+					fonts = []string{rootTestDir.MakePath(v)}
+				}
+			}
+		case func(...any):
+			logger = v
+		case tinypdf.Unit:
+			tmp := v
+			unitOpt = &tmp
+		default:
+			// ignore unknown option types
+		}
+	}
+
+	// Call the new API: New(fontsPath []string, logger func(...any))
+	pdf := tinypdf.New(fonts, logger)
 	pdf.SetCompression(false)
+	if unitOpt != nil {
+		pdf.SetUnit(*unitOpt)
+	}
 	pdf.SetCatalogSort(true)
 	pdf.SetCreationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
 	pdf.SetModificationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))

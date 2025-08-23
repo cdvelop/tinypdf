@@ -7,74 +7,118 @@ import (
 	. "github.com/cdvelop/tinystring"
 )
 
-// LoadFonts is the single, shared loader for all build targets. Platform-specific
+// loadFonts is the single, shared loader for all build targets. Platform-specific
 // files must provide the helper function `getFontData`.
-func (fm *FontManager) LoadFonts() error {
-	// Clear any previously loaded fonts
-	fm.fontFamilies = make([]FontFamily, 0)
+// It is intentionally unexported; callers should create a FontManager via New
+// which will invoke this during initialization.
+func (fm *FontManager) loadFonts() error {
 
-	// Recorrer directamente fontsPath
-	for _, fontPath := range fm.fontsPath {
+	// Recorrer directamente FontsPath
+	for _, fontPath := range fm.FontsPath {
 		if !HasSuffix(Convert(fontPath).ToLower().String(), ".ttf") {
 			continue
 		}
 
 		fontData, err := fm.getFontData(fontPath)
 		if err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not load font '%s': %v\n", fontPath, err)
-			}
+			fm.Log("Warning: could not load font '%s': %v\n", fontPath, err)
 			continue
 		}
-
-		// Usar la nueva API que recibe []byte directamente
-		ttf, err := TtfParse(fontData)
-		if err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not parse ttf '%s': %v\n", fontPath, err)
-			}
+		// Parse TTF bytes directly and register a FontDef for the family/style
+		familyName, style := parseFontName(fontPath)
+		reader := fileReader{readerPosition: 0, array: fontData}
+		utf8File := newUTF8Font(&reader)
+		if err := utf8File.parseFile(); err != nil {
+			fm.Log("Warning: could not parse ttf '%s': %v\n", fontPath, err)
 			continue
 		}
-
-		fontDef, err := createFontDefFromTtf(ttf, fontData)
-		if err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not create font definition for '%s': %v\n", fontPath, err)
-			}
-			continue
-		}
-		fontDef.File = fontPath
-
-		if err := fm.setFontID(fontDef); err != nil {
-			if fm.log != nil {
-				fm.log("Warning: could not set font id for '%s': %v\n", fontPath, err)
-			}
-			continue
+		desc := FontDesc{
+			Ascent:       int(utf8File.Ascent),
+			Descent:      int(utf8File.Descent),
+			CapHeight:    utf8File.CapHeight,
+			Flags:        utf8File.Flags,
+			FontBBox:     FontBox{Xmin: utf8File.Bbox.Xmin, Ymin: utf8File.Bbox.Ymin, Xmax: utf8File.Bbox.Xmax, Ymax: utf8File.Bbox.Ymax},
+			ItalicAngle:  utf8File.ItalicAngle,
+			StemV:        utf8File.StemV,
+			MissingWidth: round(utf8File.DefaultWidth),
 		}
 
-		fontFamilyName, style := parseFontName(fontPath)
+		// Compress font data for embedding (same approach as createFontDefFromTtf)
+		var zbuf bytes.Buffer
+		zw := zlib.NewWriter(&zbuf)
+		if _, err := zw.Write(fontData); err != nil {
+			zw.Close()
+			fm.Log("Warning: could not compress font data for '%s': %v\n", fontPath, err)
+			continue
+		}
+		zw.Close()
 
-		// Find existing family or create a new one
+		fd := &FontDef{
+			Tp:           "UTF8",
+			Name:         getFontKey(fm.FontFamilyEscape(familyName), ""),
+			Desc:         desc,
+			Up:           int(round(utf8File.UnderlinePosition)),
+			Ut:           round(utf8File.UnderlineThickness),
+			Cw:           utf8File.CharWidths,
+			File:         fontPath,
+			OriginalSize: len(fontData),
+			Data:         zbuf.Bytes(),
+		}
+
+		// Also prepare a FontDefType with utf8-specific fields used by tinypdf
+		var fdt FontDefType
+		fdt.Tp = "UTF8"
+		fdt.Name = fd.Name
+		fdt.Desc = FontDescType{Ascent: fd.Desc.Ascent, Descent: fd.Desc.Descent, CapHeight: fd.Desc.CapHeight, Flags: fd.Desc.Flags, FontBBox: fontBoxType{Xmin: fd.Desc.FontBBox.Xmin, Ymin: fd.Desc.FontBBox.Ymin, Xmax: fd.Desc.FontBBox.Xmax, Ymax: fd.Desc.FontBBox.Ymax}, ItalicAngle: fd.Desc.ItalicAngle, StemV: fd.Desc.StemV, MissingWidth: fd.Desc.MissingWidth}
+		fdt.Up = fd.Up
+		fdt.Ut = fd.Ut
+		fdt.Cw = fd.Cw
+		fdt.File = fd.File
+		fdt.OriginalSize = fd.OriginalSize
+		fdt.utf8File = utf8File
+		// initialize UsedRunes with a sensible default subset range
+		if fm.aliasNbPagesStr == "" {
+			fdt.UsedRunes = makeSubsetRange(57)
+		} else {
+			fdt.UsedRunes = makeSubsetRange(32)
+		}
+		fdt.ListIndex, _ = generateFontID(fdt)
+		// register in fm.fonts for potential later queries (append to slice)
+		fontkey := getFontKey(fm.FontFamilyEscape(familyName), "")
+		fdt.Key = fontkey
+		fm.fonts = append(fm.fonts, fdt)
+		// register fontFiles entries so embedding will work (store as slice entries)
+		ff1 := FontFileType{Length1: int64(fd.OriginalSize), FontType: "UTF8", Key: fontkey, Content: zbuf.Bytes(), Embedded: true}
+		ff2 := FontFileType{FontType: "UTF8", Key: fd.File, Content: zbuf.Bytes(), Embedded: true}
+		fm.fontFiles = append(fm.fontFiles, ff1)
+		fm.fontFiles = append(fm.fontFiles, ff2)
+
+		// Find or create family entry and assign
 		var family *FontFamily
 		for i := range fm.fontFamilies {
-			if fm.fontFamilies[i].Name == fontFamilyName {
+			if fm.fontFamilies[i].Name == familyName {
 				family = &fm.fontFamilies[i]
 				break
 			}
 		}
 		if family == nil {
 			ff := FontFamily{
-				Name:   fontFamilyName,
+				Name:   familyName,
 				Styles: make(map[fontStyle]*FontDef),
 			}
 			fm.fontFamilies = append(fm.fontFamilies, ff)
 			family = &fm.fontFamilies[len(fm.fontFamilies)-1]
 		}
-
-		family.Styles[style] = fontDef
+		family.Styles[style] = fd
 		if style == Regular {
-			family.Regular = fontDef
+			family.Regular = fd
 		}
+	}
+
+	// If no font families were loaded, return an error so callers can detect
+	// the failure to find/parse any fonts from the configured FontsPath.
+	if len(fm.fontFamilies) == 0 {
+		return Errf("no fonts loaded from FontsPath")
 	}
 
 	return nil
@@ -128,7 +172,6 @@ func createFontDefFromTtf(ttf TtfType, fontData []byte) (*FontDef, error) {
 	// Widths (for now, a simple conversion, may need more logic for encoding)
 	def.Cw = make([]int, 256)
 	// This part is complex because it depends on the character map (cmap).
-	// The original `getInfoFromTrueType` did a complex mapping.
 	// For now, we will simplify and assume a basic mapping.
 	// A more robust solution would require handling the cmap properly.
 	if len(ttf.Widths) > 0 {
