@@ -7,7 +7,7 @@
 			"path": ".."
 		},
 		{
-			"path": "../../tinystring"
+			"path": "../../../../Resources"
 		}
 	],
 	"settings": {}
