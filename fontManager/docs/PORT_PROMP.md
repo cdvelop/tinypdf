@@ -1,1 +1,0 @@
-estoy separando la administración de fuentes en fontManager de la librería tinypdf (clone from github.com/jung-kurt/gofpdf) ya que quiero moverla después a un repositorio independiente, esta refactorización debe ser compatible con tinygo, este el el primer test que quiero implementar.

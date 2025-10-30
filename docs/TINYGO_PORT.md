@@ -1,12 +1,12 @@
-# TinyPDF Standard Library Migration Plan
+# Fpdf Standard Library Migration Plan
 
 ## Objective
 
-Migrate TinyPDF library from Go standard library dependencies (`fmt`, `strconv`, `errors`, `strings`) to use exclusively `tinystring` for maximum binary size reduction and TinyGo compatibility.
+Migrate Fpdf library from Go standard library dependencies (`fmt`, `strconv`, `errors`, `strings`) to use exclusively `tinystring` for maximum binary size reduction and TinyGo compatibility.
 
 ## Background
 
-TinyPDF currently imports standard library packages that significantly increase binary size, especially in WebAssembly builds. The goal is to achieve **zero standard library dependencies** for string operations, formatting, and error handling by leveraging the `tinystring` library's comprehensive API.
+Fpdf currently imports standard library packages that significantly increase binary size, especially in WebAssembly builds. The goal is to achieve **zero standard library dependencies** for string operations, formatting, and error handling by leveraging the `tinystring` library's comprehensive API.
 
 ## Migration Strategy
 
@@ -303,4 +303,4 @@ tinygo build -target arduino ./cmd/example
 
 ---
 
-**Note**: This migration eliminates ALL standard library dependencies for string operations, making TinyPDF a truly minimal-footprint PDF library optimized for WebAssembly and embedded deployments.
+**Note**: This migration eliminates ALL standard library dependencies for string operations, making Fpdf a truly minimal-footprint PDF library optimized for WebAssembly and embedded deployments.
