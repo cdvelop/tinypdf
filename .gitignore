@@ -11,7 +11,10 @@ makefont/makefont.exe
 
 open
 **/*.out
-pdf/*.pdf
+# Excluir todos los PDFs generados en fpdf/pdf
+fpdf/pdf/*.pdf
+# Mantener solo el archivo .empty para preservar la carpeta
+!fpdf/pdf/.empty
 pdf.txt
 private
 *.sublime*
