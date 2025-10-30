@@ -5,11 +5,11 @@ package main
 // https://github.com/phpdave11/gofpdf/issues/57#issuecomment-185843315
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 
-	"github.com/cdvelop/tinypdf"
+	tinypdf "github.com/cdvelop/tinypdf/fpdf"
+	. "github.com/cdvelop/tinystring"
 )
 
 func report(fileStr string, err error) {
@@ -17,12 +17,12 @@ func report(fileStr string, err error) {
 		var info os.FileInfo
 		info, err = os.Stat(fileStr)
 		if err == nil {
-			fmt.Printf("%s: OK, size %d\n", fileStr, info.Size())
+			Fmt("%s: OK, size %d\n", fileStr, info.Size())
 		} else {
-			fmt.Printf("%s: bad stat\n", fileStr)
+			Fmt("%s: bad stat\n", fileStr)
 		}
 	} else {
-		fmt.Printf("%s: %s\n", fileStr, err)
+		Fmt("%s: %s\n", fileStr, err)
 	}
 }
 

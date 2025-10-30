@@ -771,12 +771,6 @@ func (f *Fpdf) putxobjectdict() {
 			}
 		}
 	}
-	{
-		for tplName, objID := range f.importedTplObjs {
-			// here replace obj id hash with n
-			f.outf("%s %d 0 R", tplName, f.importedTplIDs[objID])
-		}
-	}
 }
 
 func (f *Fpdf) putresourcedict() {
@@ -873,7 +867,6 @@ func (f *Fpdf) putresources() {
 	}
 	f.putimages()
 	f.putTemplates()
-	f.putImportedTemplates() // gofpdi
 	// 	Resource dictionary
 	f.offsets[2] = f.buffer.Len()
 	f.out("2 0 obj")
