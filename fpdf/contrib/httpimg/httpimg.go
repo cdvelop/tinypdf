@@ -1,6 +1,7 @@
 package httpimg
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -36,7 +37,14 @@ func Register(f httpimgPdf, urlStr, tp string) (info *gofpdf.ImageInfoType) {
 	defer resp.Body.Close()
 
 	if tp == "" {
-		tp = f.ImageTypeFromMime(resp.Header["Content-Type"][0])
+		contentType := resp.Header.Get("Content-Type")
+		if contentType != "" {
+			tp = f.ImageTypeFromMime(contentType)
+		} else {
+			// If Content-Type is missing, cannot determine image type
+			f.SetError(errors.New("missing Content-Type header, cannot determine image type"))
+			return
+		}
 	}
 
 	return f.RegisterImageReader(urlStr, tp, resp.Body)
