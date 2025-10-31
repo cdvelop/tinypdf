@@ -30,6 +30,11 @@ func NewDocPdfTest(options ...any) *tinypdf.Fpdf {
 	// add root directory to the options
 	options = append(options, rootTestDir)
 
+	// add default writeFile function using os for tests
+	options = append(options, tinypdf.WriteFileFunc(func(filePath string, content []byte) error {
+		return os.WriteFile(filePath, content, 0644)
+	}))
+
 	pdf := tinypdf.New(options...)
 	pdf.SetCompression(false)
 	pdf.SetCatalogSort(true)

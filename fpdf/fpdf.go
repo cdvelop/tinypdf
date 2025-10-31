@@ -41,6 +41,10 @@ func New(options ...any) (f *Fpdf) {
 	f.rootDirectory = "."
 	f.fontsDirName = "fonts"
 	f.unitType = MM
+	// Initialize writeFile with a function that returns an error by default
+	f.writeFile = func(filePath string, content []byte) error {
+		return Errf("writeFile function not configured for this environment")
+	}
 
 	for _, opt := range options {
 		switch v := opt.(type) {
@@ -58,6 +62,8 @@ func New(options ...any) (f *Fpdf) {
 			f.rootDirectory = v
 		case FontsDirName:
 			f.fontsDirName = v
+		case WriteFileFunc:
+			f.writeFile = v
 
 		}
 	}

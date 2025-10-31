@@ -3,7 +3,6 @@ package fpdf
 import (
 	"bytes"
 	"io"
-	"os"
 	"sort"
 
 	. "github.com/cdvelop/tinystring"
@@ -415,17 +414,19 @@ func (f *Fpdf) OutputFileAndClose(fileStr string) error {
 		return f.err
 	}
 
-	pdfFile, err := os.Create(fileStr)
-	if err != nil {
-		f.err = err
+	// Generate PDF content to a buffer
+	var buf bytes.Buffer
+	_ = f.Output(&buf)
+
+	if f.err != nil {
 		return f.err
 	}
 
-	_ = f.Output(pdfFile)
-
-	err = pdfFile.Close()
+	// Use the writeFile function to write the content
+	err := f.writeFile(fileStr, buf.Bytes())
 	if err != nil {
-		return Errf("could not close output file: %v", err)
+		f.err = err
+		return f.err
 	}
 
 	return f.err
