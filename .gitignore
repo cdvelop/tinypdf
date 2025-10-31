@@ -34,3 +34,4 @@ FONT_ENV.md
 src/
 deploy/
 .vscode/
+logs.log
