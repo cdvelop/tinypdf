@@ -6,7 +6,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"path/filepath"
 
 	. "github.com/cdvelop/tinystring"
 )
@@ -30,7 +29,7 @@ func round(f float64) int {
 	return int(math.Floor(f + 0.5))
 }
 
-func sprintf(fmtStr string, args ...interface{}) string {
+func sprintf(fmtStr string, args ...any) string {
 	return Fmt(fmtStr, args...)
 }
 
@@ -116,7 +115,7 @@ func doNothing(s string) string {
 }
 
 // Dump the internals of the specified values
-// func dump(fileStr string, a ...interface{}) {
+// func dump(fileStr string, a ...any) {
 // 	fl, err := os.OpenFile(fileStr, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 // 	if err == nil {
 // 		fmt.Fprintf(fl, "----------------\n")
@@ -235,7 +234,7 @@ func (f *Fpdf) UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string) s
 			defer emb.Close()
 			rep, f.err = UnicodeTranslator(emb)
 		} else {
-			rep, f.err = UnicodeTranslatorFromFile(filepath.Join(f.fontsPath, cpStr) + ".map")
+			rep, f.err = UnicodeTranslatorFromFile(PathJoin(f.fontsPath, cpStr, ".map").String())
 		}
 	} else {
 		rep = doNothing
@@ -280,12 +279,12 @@ func (s *SizeType) ScaleToHeight(height float64) SizeType {
 // The untypedKeyMap structure and its methods are copyrighted 2019 by Arteom Korotkiy (Gmail: arteomkorotkiy).
 // Imitation of untyped Map Array
 type untypedKeyMap struct {
-	keySet   []interface{}
+	keySet   []any
 	valueSet []int
 }
 
 // Get position of key=>value in PHP Array
-func (pa *untypedKeyMap) getIndex(key interface{}) int {
+func (pa *untypedKeyMap) getIndex(key any) int {
 	if key != nil {
 		for i, mKey := range pa.keySet {
 			if mKey == key {
@@ -298,7 +297,7 @@ func (pa *untypedKeyMap) getIndex(key interface{}) int {
 }
 
 // Put key=>value in PHP Array
-func (pa *untypedKeyMap) put(key interface{}, value int) {
+func (pa *untypedKeyMap) put(key any, value int) {
 	if key == nil {
 		var i int
 		for n := 0; ; n++ {
@@ -322,7 +321,7 @@ func (pa *untypedKeyMap) put(key interface{}, value int) {
 }
 
 // Delete value in PHP Array
-func (pa *untypedKeyMap) delete(key interface{}) {
+func (pa *untypedKeyMap) delete(key any) {
 	if pa == nil || pa.keySet == nil || pa.valueSet == nil {
 		return
 	}
@@ -342,7 +341,7 @@ func (pa *untypedKeyMap) delete(key interface{}) {
 }
 
 // Get value from PHP Array
-func (pa *untypedKeyMap) get(key interface{}) int {
+func (pa *untypedKeyMap) get(key any) int {
 	i := pa.getIndex(key)
 	if i >= 0 {
 		return pa.valueSet[i]
@@ -361,7 +360,7 @@ func arrayMerge(arr1, arr2 *untypedKeyMap) *untypedKeyMap {
 	answer := untypedKeyMap{}
 	if arr1 == nil && arr2 == nil {
 		answer = untypedKeyMap{
-			make([]interface{}, 0),
+			make([]any, 0),
 			make([]int, 0),
 		}
 	} else if arr2 == nil {

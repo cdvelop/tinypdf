@@ -10,7 +10,7 @@ import (
 
 var xmem = xmempool{
 	Pool: sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			var m membuffer
 			return &m
 		},

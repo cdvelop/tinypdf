@@ -850,7 +850,7 @@ func (f *Fpdf) generateCIDFontMap(font *fontDefType, LastRune int) {
 					rangeID = prevCid
 					r := untypedKeyMap{
 						valueSet: make([]int, 0),
-						keySet:   make([]interface{}, 0),
+						keySet:   make([]any, 0),
 					}
 					cidArray[rangeID] = &r
 					cidArrayKeys = append(cidArrayKeys, rangeID)
@@ -865,7 +865,7 @@ func (f *Fpdf) generateCIDFontMap(font *fontDefType, LastRune int) {
 					rangeID = cid
 					r := untypedKeyMap{
 						valueSet: make([]int, 0),
-						keySet:   make([]interface{}, 0),
+						keySet:   make([]any, 0),
 					}
 					cidArray[rangeID] = &r
 					cidArrayKeys = append(cidArrayKeys, rangeID)
@@ -879,7 +879,7 @@ func (f *Fpdf) generateCIDFontMap(font *fontDefType, LastRune int) {
 			rangeID = cid
 			r := untypedKeyMap{
 				valueSet: make([]int, 0),
-				keySet:   make([]interface{}, 0),
+				keySet:   make([]any, 0),
 			}
 			cidArray[rangeID] = &r
 			cidArrayKeys = append(cidArrayKeys, rangeID)

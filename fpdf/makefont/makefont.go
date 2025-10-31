@@ -8,7 +8,7 @@ import (
 	"github.com/cdvelop/tinypdf/fpdf"
 )
 
-func errPrintf(fmtStr string, args ...interface{}) {
+func errPrintf(fmtStr string, args ...any) {
 	fmt.Fprintf(os.Stderr, fmtStr, args...)
 }
 

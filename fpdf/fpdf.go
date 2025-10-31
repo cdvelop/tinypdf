@@ -254,7 +254,7 @@ func (f *Fpdf) ClearError() {
 //
 // See the documentation for printing in the standard fmt package for details
 // about fmtStr and args.
-func (f *Fpdf) SetErrorf(fmtStr string, args ...interface{}) {
+func (f *Fpdf) SetErrorf(fmtStr string, args ...any) {
 	if f.err == nil {
 		f.err = Errf(fmtStr, args...)
 	}
@@ -883,7 +883,7 @@ func (f *Fpdf) Cell(w, h float64, txtStr string) {
 // Cellf is a simpler printf-style version of CellFormat with no fill, border,
 // links or special alignment. See documentation for the fmt package for
 // details on fmtStr and args.
-func (f *Fpdf) Cellf(w, h float64, fmtStr string, args ...interface{}) {
+func (f *Fpdf) Cellf(w, h float64, fmtStr string, args ...any) {
 	f.CellFormat(w, h, sprintf(fmtStr, args...), "", 0, "L", false, 0, "")
 }
 
@@ -1274,7 +1274,7 @@ func (f *Fpdf) Write(h float64, txtStr string) {
 
 // Writef is like Write but uses printf-style formatting. See the documentation
 // for package fmt for more details on fmtStr and args.
-func (f *Fpdf) Writef(h float64, fmtStr string, args ...interface{}) {
+func (f *Fpdf) Writef(h float64, fmtStr string, args ...any) {
 	f.write(h, sprintf(fmtStr, args...), 0, "")
 }
 
@@ -1845,7 +1845,7 @@ func (f *Fpdf) RawWriteBuf(r io.Reader) {
 }
 
 // outf adds a formatted line to the document
-func (f *Fpdf) outf(fmtStr string, args ...interface{}) {
+func (f *Fpdf) outf(fmtStr string, args ...any) {
 	f.out(sprintf(fmtStr, args...))
 }
 
