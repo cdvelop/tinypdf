@@ -30,3 +30,7 @@ coverage.html
 # macOS
 .DS_Store
 FONT_ENV.md
+
+src/
+deploy/
+.vscode/

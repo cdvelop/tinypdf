@@ -1,4 +1,4 @@
-package tinypdf
+package fpdf
 
 type wbuffer struct {
 	p []byte

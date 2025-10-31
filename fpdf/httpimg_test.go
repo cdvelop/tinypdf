@@ -1,4 +1,4 @@
-package tinypdf_test
+package fpdf_test
 
 import (
 	tinypdf "github.com/cdvelop/tinypdf/fpdf"

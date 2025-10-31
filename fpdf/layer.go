@@ -1,4 +1,4 @@
-package tinypdf
+package fpdf
 
 // Routines in this file are translated from
 // http://www.tinypdf.org/en/script/script97.php

@@ -1,4 +1,4 @@
-package tinypdf
+package fpdf
 
 // Embedded standard fonts
 

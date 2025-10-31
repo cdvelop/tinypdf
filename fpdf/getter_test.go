@@ -1,4 +1,4 @@
-package tinypdf_test
+package fpdf_test
 
 import (
 	"io"
@@ -114,7 +114,7 @@ func TestGetConversionRatio(t *testing.T) {
 		t.Errorf("invalid conversionRatio: got=%v, want=%v", got, want)
 	}
 
-	pdf = tinypdf.New(tinypdf.POINT, "A4", "")
+	pdf = fpdf.New(fpdf.POINT, "A4", "")
 
 	conversionRatio = pdf.GetConversionRatio()
 
@@ -458,7 +458,7 @@ func TestGetModificationDate(t *testing.T) {
 }
 
 func TestGetPageSize(t *testing.T) {
-	pdf := tinypdf.New(tinypdf.POINT, "A4", "")
+	pdf := fpdf.New(fpdf.POINT, "A4", "")
 
 	pageWidth, pageHeight := pdf.GetPageSize()
 

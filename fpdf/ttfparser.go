@@ -1,11 +1,12 @@
-package tinypdf
+package fpdf
 
 import (
 	"encoding/binary"
-	. "github.com/cdvelop/tinystring"
 	"io"
 	"os"
 	"regexp"
+
+	. "github.com/cdvelop/tinystring"
 )
 
 // TtfType contains metrics of a TrueType font.

@@ -1,4 +1,4 @@
-package tinypdf
+package fpdf
 
 // SVGBasicWrite renders the paths encoded in the basic SVG image specified by
 // sb. The scale value is used to convert the coordinates in the path to the

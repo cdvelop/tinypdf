@@ -1,4 +1,4 @@
-package tinypdf
+package fpdf
 
 // Adapted from http://www.tinypdf.org/en/script/script61.php by Wirus and released with the FPDF license.
 

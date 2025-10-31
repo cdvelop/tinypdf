@@ -1,4 +1,4 @@
-package tinypdf_test
+package fpdf_test
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 )
 
 func ExampleTtfParse() {
-	ttf, err := tinypdf.TtfParse(FontsDirPath() + "/calligra.ttf")
+	ttf, err := fpdf.TtfParse(FontsDirPath() + "/calligra.ttf")
 	if err == nil {
 		fmt.Printf("Postscript name:  %s\n", ttf.PostScriptName)
 		fmt.Printf("unitsPerEm:       %8d\n", ttf.UnitsPerEm)
@@ -40,7 +40,7 @@ func hexStr(s string) string {
 }
 
 func TestGetStringWidth(t *testing.T) {
-	pdf := tinypdf.New("", "", "")
+	pdf := fpdf.New("", "", "")
 	pdf.SetFont("Helvetica", "", 12)
 	pdf.AddPage()
 	for _, s := range []string{"Hello", "世界", "\xe7a va?"} {

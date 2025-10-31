@@ -41,7 +41,7 @@ func main() {
 		args := flag.Args()
 		if len(args) > 0 {
 			for _, fileStr := range args {
-				err = tinypdf.MakeFont(fileStr, encodingFileStr, dstDirStr, os.Stderr, embed)
+				err = fpdf.MakeFont(fileStr, encodingFileStr, dstDirStr, os.Stderr, embed)
 				if err != nil {
 					errPrintf("%s\n", err)
 				}
