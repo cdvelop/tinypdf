@@ -1,7 +1,7 @@
 package fpdf
 
 // Routines in this file are translated from
-// http://www.tinypdf.org/en/script/script97.php
+// http://www.fpdf.org/en/script/script97.php
 
 type layerType struct {
 	name    string
