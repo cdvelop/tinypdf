@@ -1,9 +1,9 @@
 package fpdf
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
-	"os"
 	"regexp"
 
 	. "github.com/cdvelop/tinystring"
@@ -29,19 +29,24 @@ type TtfType struct {
 
 type ttfParser struct {
 	rec              TtfType
-	file             *os.File
+	file             io.ReadSeeker
 	tables           map[string]uint32
 	numberOfHMetrics uint16
 	numGlyphs        uint16
 }
 
 // TtfParse extracts various metrics from a TrueType font file.
-func TtfParse(fileStr string) (TtfRec TtfType, err error) {
-	var t ttfParser
-	t.file, err = os.Open(fileStr)
+func TtfParse(fileStr string, readFile func(string) ([]byte, error)) (TtfRec TtfType, err error) {
+	// Read entire font file into memory
+	var data []byte
+	data, err = readFile(fileStr)
 	if err != nil {
 		return
 	}
+
+	var t ttfParser
+	t.file = bytes.NewReader(data)
+
 	version, err := t.ReadStr(4)
 	if err != nil {
 		return
@@ -72,7 +77,6 @@ func TtfParse(fileStr string) (TtfRec TtfType, err error) {
 	if err != nil {
 		return
 	}
-	t.file.Close()
 	TtfRec = t.rec
 	return
 }

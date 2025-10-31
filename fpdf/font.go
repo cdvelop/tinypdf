@@ -60,7 +60,7 @@ func loadMap(encodingFileStr string) (encList encListType, err error) {
 func getInfoFromTrueType(fileStr string, msgWriter io.Writer, embed bool, encList encListType) (info fontInfoType, err error) {
 	info.Widths = make([]int, 256)
 	var ttf TtfType
-	ttf, err = TtfParse(fileStr)
+	ttf, err = TtfParse(fileStr, os.ReadFile)
 	if err != nil {
 		return
 	}

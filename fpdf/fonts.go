@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"os"
 	"path"
 	"path/filepath"
 	"sort"
@@ -470,22 +469,21 @@ func (f *Fpdf) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 		if ok {
 			return
 		}
-		var ttfStat os.FileInfo
+		var originalSize int64
 		var err error
 		// If fileStr is already an absolute path, use it directly
 		// Otherwise, join it with the fonts path
 		if !filepath.IsAbs(fileStr) {
 			fileStr = path.Join(f.fontsPath, fileStr)
 		}
-		ttfStat, err = os.Stat(fileStr)
+		originalSize, err = f.fileSize(fileStr)
 		if err != nil {
 			f.SetError(err)
 			return
 		}
-		originalSize := ttfStat.Size()
 		Type := "UTF8"
 		var utf8Bytes []byte
-		utf8Bytes, err = os.ReadFile(fileStr)
+		utf8Bytes, err = f.readFile(fileStr)
 		if err != nil {
 			f.SetError(err)
 			return
@@ -552,14 +550,13 @@ func (f *Fpdf) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 		if !filepath.IsAbs(fileStr) {
 			fileStr = path.Join(f.fontsPath, fileStr)
 		}
-		file, err := os.Open(fileStr)
+		data, err := f.readFile(fileStr)
 		if err != nil {
 			f.err = err
 			return
 		}
-		defer file.Close()
 
-		f.AddFontFromReader(familyStr, styleStr, file)
+		f.AddFontFromReader(familyStr, styleStr, bytes.NewReader(data))
 	}
 }
 
@@ -586,7 +583,7 @@ func (f *Fpdf) loadFontFile(name string) ([]byte, error) {
 			return data, err
 		}
 	}
-	return os.ReadFile(path.Join(f.fontsPath, name))
+	return f.readFile(path.Join(f.fontsPath, name))
 }
 
 func isAbsolutePath(p string) bool {

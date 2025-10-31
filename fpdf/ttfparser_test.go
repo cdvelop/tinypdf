@@ -3,13 +3,14 @@ package fpdf_test
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/cdvelop/tinypdf/fpdf"
 )
 
 func ExampleTtfParse() {
-	ttf, err := fpdf.TtfParse(FontsDirPath() + "/calligra.ttf")
+	ttf, err := fpdf.TtfParse(FontsDirPath()+"/calligra.ttf", os.ReadFile)
 	if err == nil {
 		fmt.Printf("Postscript name:  %s\n", ttf.PostScriptName)
 		fmt.Printf("unitsPerEm:       %8d\n", ttf.UnitsPerEm)

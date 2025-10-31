@@ -35,6 +35,20 @@ func NewDocPdfTest(options ...any) *tinypdf.Fpdf {
 		return os.WriteFile(filePath, content, 0644)
 	}))
 
+	// add default readFile function using os for tests
+	options = append(options, tinypdf.ReadFileFunc(func(filePath string) ([]byte, error) {
+		return os.ReadFile(filePath)
+	}))
+
+	// add default fileSize function using os for tests
+	options = append(options, tinypdf.FileSizeFunc(func(filePath string) (int64, error) {
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return 0, err
+		}
+		return info.Size(), nil
+	}))
+
 	pdf := tinypdf.New(options...)
 	pdf.SetCompression(false)
 	pdf.SetCatalogSort(true)

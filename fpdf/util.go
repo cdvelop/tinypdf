@@ -191,23 +191,12 @@ func UnicodeTranslator(r io.Reader) (f func(string) string, err error) {
 	return
 }
 
-// UnicodeTranslatorFromFile returns a function that can be used to translate,
+// UnicodeTranslatorFromBytes returns a function that can be used to translate,
 // where possible, utf-8 strings to a form that is compatible with the
-// specified code page. See UnicodeTranslator for more details.
-//
-// fileStr identifies a font descriptor file that maps glyph positions to names.
-//
-// If an error occurs reading the file, the returned function is valid but does
-// not perform any rune translation.
-func UnicodeTranslatorFromFile(fileStr string) (f func(string) string, err error) {
-	var fl *os.File
-	fl, err = os.Open(fileStr)
-	if err == nil {
-		f, err = UnicodeTranslator(fl)
-		fl.Close()
-	} else {
-		f = doNothing
-	}
+// specified code page. This version accepts the font descriptor data as bytes.
+func UnicodeTranslatorFromBytes(data []byte) (f func(string) string, err error) {
+	r := bytes.NewReader(data)
+	f, err = UnicodeTranslator(r)
 	return
 }
 
@@ -234,7 +223,14 @@ func (f *Fpdf) UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string) s
 			defer emb.Close()
 			rep, f.err = UnicodeTranslator(emb)
 		} else {
-			rep, f.err = UnicodeTranslatorFromFile(PathJoin(f.fontsPath, cpStr, ".map").String())
+			// Use f.readFile to read the font descriptor file
+			var data []byte
+			data, f.err = f.readFile(PathJoin(f.fontsPath, cpStr, ".map").String())
+			if f.err == nil {
+				rep, f.err = UnicodeTranslatorFromBytes(data)
+			} else {
+				rep = doNothing
+			}
 		}
 	} else {
 		rep = doNothing

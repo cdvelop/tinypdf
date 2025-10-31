@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"io"
 	"math"
-	"os"
 	"time"
 
 	. "github.com/cdvelop/tinystring"
@@ -45,6 +44,14 @@ func New(options ...any) (f *Fpdf) {
 	f.writeFile = func(filePath string, content []byte) error {
 		return Errf("writeFile function not configured for this environment")
 	}
+	// Initialize readFile with a function that returns an error by default
+	f.readFile = func(filePath string) ([]byte, error) {
+		return nil, Errf("readFile function not configured for this environment")
+	}
+	// Initialize fileSize with a function that returns an error by default
+	f.fileSize = func(filePath string) (int64, error) {
+		return 0, Errf("fileSize function not configured for this environment")
+	}
 
 	for _, opt := range options {
 		switch v := opt.(type) {
@@ -64,6 +71,10 @@ func New(options ...any) (f *Fpdf) {
 			f.fontsDirName = v
 		case WriteFileFunc:
 			f.writeFile = v
+		case ReadFileFunc:
+			f.readFile = v
+		case FileSizeFunc:
+			f.fileSize = v
 
 		}
 	}
@@ -1607,12 +1618,11 @@ func (f *Fpdf) RegisterImageOptions(fileStr string, options ImageOptions) (info 
 		return
 	}
 
-	file, err := os.Open(fileStr)
+	data, err := f.readFile(fileStr)
 	if err != nil {
 		f.err = err
 		return
 	}
-	defer file.Close()
 
 	// First use of this image, get info
 	if options.ImageType == "" {
@@ -1624,7 +1634,7 @@ func (f *Fpdf) RegisterImageOptions(fileStr string, options ImageOptions) (info 
 		options.ImageType = fileStr[pos+1:]
 	}
 
-	return f.RegisterImageOptionsReader(fileStr, options, file)
+	return f.RegisterImageOptionsReader(fileStr, options, bytes.NewReader(data))
 }
 
 // GetImageInfo returns information about the registered image specified by
