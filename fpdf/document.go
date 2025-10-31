@@ -758,20 +758,6 @@ func (f *Fpdf) putxobjectdict() {
 			f.outf("/I%s %d 0 R", image.i, image.n)
 		}
 	}
-	{
-		var keyList []string
-		var key string
-		var tpl Template
-		keyList = templateKeyList(f.templates, f.catalogSort)
-		for _, key = range keyList {
-			tpl = f.templates[key]
-			// for _, tpl := range f.templates {
-			id := tpl.ID()
-			if objID, ok := f.templateObjects[id]; ok {
-				f.outf("/TPL%s %d 0 R", id, objID)
-			}
-		}
-	}
 }
 
 func (f *Fpdf) putresourcedict() {
@@ -867,7 +853,6 @@ func (f *Fpdf) putresources() {
 		return
 	}
 	f.putimages()
-	f.putTemplates()
 	// 	Resource dictionary
 	f.offsets[2] = f.buffer.Len()
 	f.out("2 0 obj")

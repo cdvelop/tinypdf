@@ -103,8 +103,6 @@ func New(options ...any) (f *Fpdf) {
 	f.fonts = make(map[string]fontDefType)
 	f.fontFiles = make(map[string]fontFileType)
 	f.diffs = make([]string, 0, 8)
-	f.templates = make(map[string]Template)
-	f.templateObjects = make(map[string]int)
 	f.images = make(map[string]*ImageInfoType)
 	f.pageLinks = make([][]linkType, 0, 8)
 	f.pageLinks = append(f.pageLinks, make([]linkType, 0)) // pageLinks[0] is unused (1-based)
