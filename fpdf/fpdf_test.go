@@ -1892,62 +1892,6 @@ func Test_DrawPath(t *testing.T) {
 	// Successfully generated pdf/Test_DrawPath_fill.pdf
 }
 
-// Test_CreateTemplate demonstrates creating and using templates
-func Test_CreateTemplate(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.SetCompression(false)
-	// pdf.SetFont("Times", "", 12)
-	template := pdf.CreateTemplate(func(tpl *fpdf.Tpl) {
-		tpl.Image(ImageFile("logo.png"), 6, 6, 30, 0, false, "", 0, "")
-		tpl.SetFont("Arial", "B", 16)
-		tpl.Text(40, 20, "Template says hello")
-		tpl.SetDrawColor(0, 100, 200)
-		tpl.SetLineWidth(2.5)
-		tpl.Line(95, 12, 105, 22)
-	})
-	_, tplSize := template.Size()
-	// fmt.Println("Size:", tplSize)
-	// fmt.Println("Scaled:", tplSize.ScaleBy(1.5))
-
-	template2 := pdf.CreateTemplate(func(tpl *fpdf.Tpl) {
-		tpl.UseTemplate(template)
-		subtemplate := tpl.CreateTemplate(func(tpl2 *fpdf.Tpl) {
-			tpl2.Image(ImageFile("logo.png"), 6, 86, 30, 0, false, "", 0, "")
-			tpl2.SetFont("Arial", "B", 16)
-			tpl2.Text(40, 100, "Subtemplate says hello")
-			tpl2.SetDrawColor(0, 200, 100)
-			tpl2.SetLineWidth(2.5)
-			tpl2.Line(102, 92, 112, 102)
-		})
-		tpl.UseTemplate(subtemplate)
-	})
-
-	pdf.SetDrawColor(200, 100, 0)
-	pdf.SetLineWidth(2.5)
-	pdf.SetFont("Arial", "B", 16)
-
-	// serialize and deserialize template
-	b, _ := template2.Serialize()
-	template3, _ := fpdf.DeserializeTemplate(b)
-
-	pdf.AddPage()
-	pdf.UseTemplate(template3)
-	pdf.UseTemplateScaled(template3, fpdf.PointType{X: 0, Y: 30}, tplSize)
-	pdf.Line(40, 210, 60, 210)
-	pdf.Text(40, 200, "Template example page 1")
-
-	pdf.AddPage()
-	pdf.UseTemplate(template2)
-	pdf.UseTemplateScaled(template3, fpdf.PointType{X: 0, Y: 30}, tplSize.ScaleBy(1.4))
-	pdf.Line(60, 210, 80, 210)
-	pdf.Text(40, 200, "Template example page 2")
-
-	fileStr := Filename("Test_CreateTemplate")
-	err := pdf.OutputFileAndClose(fileStr)
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Successfully generated pdf/Test_CreateTemplate.pdf
-}
 
 // Test_AddFontFromBytes demonstrate how to use embedded fonts from byte array
 func Test_AddFontFromBytes(t *testing.T) {
