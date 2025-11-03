@@ -5,7 +5,7 @@ package tinypdf
 
 import (
 	"encoding/base64"
-	"fmt"
+	. "github.com/cdvelop/tinystring"
 	"syscall/js"
 )
 
@@ -15,7 +15,7 @@ func (tp *TinyPDF) initIO() {
 	tp.logger = func(message ...any) {
 		console := js.Global().Get("console")
 		if !console.IsUndefined() {
-			console.Call("log", fmt.Sprint(message...))
+			console.Call("log", Translate(message...))
 		}
 	}
 }
@@ -24,7 +24,7 @@ func (tp *TinyPDF) initIO() {
 func (tp *TinyPDF) writeFile(filePath string, content []byte) error {
 	localStorage := js.Global().Get("localStorage")
 	if localStorage.IsUndefined() {
-		return fmt.Errorf("localStorage no disponible")
+		return Errf("localStorage no disponible")
 	}
 
 	// Codificar el contenido en base64 para almacenarlo
@@ -38,18 +38,18 @@ func (tp *TinyPDF) writeFile(filePath string, content []byte) error {
 func (tp *TinyPDF) readFile(filePath string) ([]byte, error) {
 	localStorage := js.Global().Get("localStorage")
 	if localStorage.IsUndefined() {
-		return nil, fmt.Errorf("localStorage no disponible")
+		return nil, Errf("localStorage no disponible")
 	}
 
 	encoded := localStorage.Call("getItem", filePath)
 	if encoded.IsNull() {
-		return nil, fmt.Errorf("archivo no encontrado: %s", filePath)
+		return nil, Errf("archivo no encontrado: %s", filePath)
 	}
 
 	// Decodificar de base64
 	decoded, err := base64.StdEncoding.DecodeString(encoded.String())
 	if err != nil {
-		return nil, fmt.Errorf("error decodificando archivo: %v", err)
+		return nil, Errf("error decodificando archivo: %v", err)
 	}
 
 	return decoded, nil

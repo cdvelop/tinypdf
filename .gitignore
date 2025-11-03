@@ -35,3 +35,4 @@ src/
 deploy/
 .vscode/
 logs.log
+test_output.pdf

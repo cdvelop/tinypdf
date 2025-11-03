@@ -86,18 +86,22 @@ Total: 31 standard library packages
 
 ### Priority 1: Remove Image Support (Est. 200-300 KB savings)
 
+**Detailed Plan:** See [MINIMAL_IMAGE_SUPPORT.md](MINIMAL_IMAGE_SUPPORT.md)
+
+**Summary:**
+- Remove Go image codecs (png, jpeg, gif) from WASM build
+- Use browser Canvas API for image decoding
+- Follow `env.front.go` / `env.back.go` pattern for dual implementation
+
 **Action:**
 ```go
-// Create fpdf/fpdf_nowasm.go with build tag
+// fpdf/image_native.go (backend)
 //go:build !wasm
+// Keep: image/png, image/jpeg, image/gif
 
-// Keep image imports
-
-// Create fpdf/fpdf_wasm.go
+// fpdf/image_browser.go (wasm)  
 //go:build wasm
-
-// Remove: image/png, image/jpeg, image/gif imports
-// Stub out: Fpdf.Image(), Fpdf.putimage()
+// Use: syscall/js + Canvas API for decoding
 ```
 
 **Impact:** 200-300 KB reduction (18-27%)
