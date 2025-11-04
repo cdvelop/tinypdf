@@ -70,6 +70,8 @@ func (f fontResourceType) Open(name string) (rdr io.Reader, err error) {
 // application.
 func Test_Basic(t *testing.T) {
 	pdf := NewDocPdfTest()
+	pdf.AddFont("Arial", "", "Arial.ttf")
+	pdf.AddFont("Arial", "B", "Arial_Bold.ttf")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
 	pdf.Cell(40, 10, "Hello World!")
@@ -83,6 +85,10 @@ func Test_Basic(t *testing.T) {
 // Test_AddPage demonstrates the generation of headers, footers and page breaks.
 func Test_AddPage(t *testing.T) {
 	pdf := NewDocPdfTest()
+	pdf.AddFont("Arial", "", "Arial.ttf")
+	pdf.AddFont("Arial", "B", "Arial_Bold.ttf")
+	pdf.AddFont("Arial", "I", "Arial_Italic.ttf")
+	pdf.AddFont("DejaVu", "", "DejaVuSansCondensed.ttf")
 	pdf.SetTopMargin(30)
 	pdf.SetHeaderFuncMode(func() {
 		pdf.Image(ImageFile("logo.png"), 10, 6, 30, 0, false, "", 0, "")
@@ -100,7 +106,7 @@ func Test_AddPage(t *testing.T) {
 	})
 	pdf.AliasNbPages("")
 	pdf.AddPage()
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("DejaVu", "", 12)
 	for j := 1; j <= 40; j++ {
 		pdf.CellFormat(0, 10, fmt.Sprintf("Printing line number %d", j),
 			"", 1, "", false, 0, "")
@@ -516,9 +522,15 @@ func Test_CellFormat_tables(t *testing.T) {
 // HTML.
 func Test_HTMLBasicNew(t *testing.T) {
 	pdf := NewDocPdfTest()
+
+	// Load fonts needed for HTML formatting (bold, italic, underline)
+	pdf.AddFont("Arial", "B", "Arial_Bold.ttf")
+	pdf.AddFont("Arial", "I", "Arial_Italic.ttf")
+	pdf.AddFont("Arial", "BI", "Arial_Bold_Italic.ttf")
+
 	// First page: manual local link
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", 20)
+	pdf.SetFont("Arial", "", 20)
 	_, lineHt := pdf.GetFontSize()
 	pdf.Write(lineHt, "To find out what's new in this tutorial, click ")
 	pdf.SetFont("", "U", 0)
@@ -567,7 +579,7 @@ func Test_WriteAligned(t *testing.T) {
 	pdf.SetLeftMargin(50.0)
 	pdf.SetRightMargin(50.0)
 	pdf.AddPage()
-	pdf.SetFont("Helvetica", "", 12)
+	pdf.SetFont("Arial", "", 12)
 	pdf.WriteAligned(0, 35, "This text is the default alignment, Left", "")
 	pdf.Ln(35)
 	pdf.WriteAligned(0, 35, "This text is aligned Left", "L")
@@ -673,6 +685,10 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 	var crrntCol int
 	loremStr := lorem()
 	pdf := NewDocPdfTest()
+
+	// Load Bold font needed for header
+	pdf.AddFont("Arial", "B", "Arial_Bold.ttf")
+
 	const (
 		pageWd = 297.0 // A4 210.0 x 297.0
 		margin = 10.0
@@ -688,7 +704,7 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 	}
 	pdf.SetHeaderFunc(func() {
 		titleStr := "gofpdf"
-		pdf.SetFont("Helvetica", "B", 48)
+		pdf.SetFont("Arial", "B", 48)
 		wd := pdf.GetStringWidth(titleStr) + 6
 		pdf.SetX((pageWd - wd) / 2)
 		pdf.SetTextColor(128, 128, 160)
@@ -709,10 +725,10 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 		return true
 	})
 	pdf.AddPage()
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("Arial", "", 12)
 	for j := 0; j < 20; j++ {
 		if j == 1 {
-			pdf.Image(ImageFile("fpdf.png"), -1, 0, colWd, 0, true, "", 0, "")
+			pdf.Image(ImageFile("gofpdf.png"), -1, 0, colWd, 0, true, "", 0, "")
 		} else if j == 5 {
 			pdf.Image(ImageFile("golang-gopher.png"),
 				-1, 0, colWd, 0, true, "", 0, "")
@@ -721,6 +737,12 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 		pdf.Ln(-1)
 	}
 	fileStr := Filename("Test_SetAcceptPageBreakFunc_landscape")
+
+	// Check for any PDF generation errors
+	if pdf.Error() != nil {
+		t.Fatalf("PDF generation error: %v", pdf.Error())
+	}
+
 	err := pdf.OutputFileAndClose(fileStr)
 	SummaryCompare(err, fileStr)
 	// Output:
@@ -1185,12 +1207,19 @@ func Test_RegisterImage(t *testing.T) {
 	var imageFileStr string
 	var imgWd, imgHt, lf, tp float64
 	pdf := NewDocPdfTest()
+	pdf.AddFont("Arial", "", "arial.ttf")
 	pdf.AddPage()
 	pdf.SetMargins(10, 10, 10)
-	pdf.SetFont("Helvetica", "", 15)
+	pdf.SetFont("Arial", "", 15)
 	for j, str := range fileList {
 		imageFileStr = ImageFile(str)
 		infoPtr = pdf.RegisterImage(imageFileStr, "")
+		if pdf.Error() != nil {
+			t.Fatalf("RegisterImage failed: %v", pdf.Error())
+		}
+		if infoPtr == nil {
+			t.Fatalf("RegisterImage returned nil for %s", imageFileStr)
+		}
 		imgWd, imgHt = infoPtr.Extent()
 		switch j {
 		case 0:
@@ -1727,7 +1756,6 @@ func Test_Beziergon(t *testing.T) {
 
 }
 
-
 // Test_MoveTo demonstrates the Path Drawing functions, such as: MoveTo,
 // LineTo, CurveTo, ..., ClosePath and DrawPath.
 func Test_MoveTo(t *testing.T) {
@@ -1865,8 +1893,6 @@ func Test_DrawPath(t *testing.T) {
 	// Output:
 	// Successfully generated pdf/Test_DrawPath_fill.pdf
 }
-
-
 
 // This example demonstrate Clipped table cells
 func Test_ClipRect(t *testing.T) {

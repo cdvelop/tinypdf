@@ -12,7 +12,7 @@ func TestGenerateSamplePDF(t *testing.T) {
 	// Crear instancia de TinyPDF
 	tp := New(
 		fpdf.RootDirectoryType("."),
-		fpdf.FontsDirName("fonts"),
+		fpdf.FontsDirName("fpdf/fonts"),
 	)
 
 	// Generar PDF
@@ -91,7 +91,7 @@ func TestPDFStructure(t *testing.T) {
 	// Crear instancia de TinyPDF
 	tp := New(
 		fpdf.RootDirectoryType("."),
-		fpdf.FontsDirName("fonts"),
+		fpdf.FontsDirName("fpdf/fonts"),
 	)
 
 	// Generar PDF

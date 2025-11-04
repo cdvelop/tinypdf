@@ -5,9 +5,11 @@ import (
 )
 
 type TinyPDF struct {
-	Fpdf       *fpdf.Fpdf
-	logger     func(message ...any)
-	fontLoader func(fontPath string) ([]byte, error)
+	Fpdf          *fpdf.Fpdf
+	logger        func(message ...any)
+	fontLoader    func(fontPath string) ([]byte, error)
+	rootDirectory string
+	fontsDirName  string
 }
 
 // Log escribe mensajes de log según el entorno
@@ -20,7 +22,20 @@ func (tp *TinyPDF) Log(message ...any) {
 
 func New(options ...any) *TinyPDF {
 
-	tp := &TinyPDF{}
+	tp := &TinyPDF{
+		rootDirectory: ".",
+		fontsDirName:  "fonts",
+	}
+
+	// Extraer rootDirectory y fontsDirName de las opciones
+	for _, opt := range options {
+		switch v := opt.(type) {
+		case fpdf.RootDirectoryType:
+			tp.rootDirectory = string(v)
+		case fpdf.FontsDirName:
+			tp.fontsDirName = string(v)
+		}
+	}
 
 	// Inicializar las funciones de IO según el entorno
 	tp.initIO()

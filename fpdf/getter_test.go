@@ -242,15 +242,14 @@ func TestGetFillSpotColor(t *testing.T) {
 
 func TestGetFontFamily(t *testing.T) {
 	pdf := NewDocPdfTest()
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("Arial", "", 12)
 
 	fontFamily := pdf.GetFontFamily()
 
-	if got, want := fontFamily, "times"; got != want {
+	if got, want := fontFamily, "arial"; got != want {
 		t.Errorf("invalid fontFamily: got=%v, want=%v", got, want)
 	}
 }
-
 
 func TestGetFontLocation(t *testing.T) {
 	pdf := NewDocPdfTest()
@@ -264,26 +263,44 @@ func TestGetFontLocation(t *testing.T) {
 }
 
 func TestGetFontSize(t *testing.T) {
-	pdf := NewDocPdfTest()
+	// Create PDF with POINT units so size matches directly
+	pdf := NewDocPdfTest(fpdf.POINT)
 	pdf.SetFontSize(19)
 
-	ptSize, _ := pdf.GetFontSize()
+	ptSize, unitSize := pdf.GetFontSize()
 
+	// With POINT units, ptSize should equal the input size
 	if got, want := ptSize, 19.0; !floatEqual(got, want) {
 		t.Errorf("invalid ptSize: got=%v, want=%v", got, want)
 	}
 
+	// unitSize should also equal ptSize when using POINT units
+	if got, want := unitSize, 19.0; !floatEqual(got, want) {
+		t.Errorf("invalid unitSize: got=%v, want=%v", got, want)
+	}
+
 	pdf.SetFontSize(246)
 
-	_, unitSize := pdf.GetFontSize()
+	ptSize2, unitSize2 := pdf.GetFontSize()
 
-	if got, want := unitSize, 246.0; !floatEqual(got, want) {
+	if got, want := ptSize2, 246.0; !floatEqual(got, want) {
+		t.Errorf("invalid ptSize: got=%v, want=%v", got, want)
+	}
+
+	if got, want := unitSize2, 246.0; !floatEqual(got, want) {
 		t.Errorf("invalid unitSize: got=%v, want=%v", got, want)
 	}
 }
 
 func TestGetFontStyle(t *testing.T) {
 	pdf := NewDocPdfTest()
+
+	// Load fonts for Bold and Italic styles
+	pdf.AddFont("Arial", "B", "Arial_Bold.ttf")
+	pdf.AddFont("Arial", "I", "Arial_Italic.ttf")
+	pdf.AddFont("Arial", "BI", "Arial_Bold_Italic.ttf")
+
+	// Set font with Bold+Italic+Underline+Strikeout
 	pdf.SetFont("Arial", "BIUS", 12)
 
 	fontStyle := pdf.GetFontStyle()

@@ -6,6 +6,7 @@ package tinypdf
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // initIO inicializa las funciones de IO para entorno backend (no-wasm)
@@ -16,8 +17,10 @@ func (tp *TinyPDF) initIO() {
 	}
 
 	// Inicializar fontLoader para backend usando os.ReadFile
+	// Construye el path completo usando rootDirectory y fontsDirName
 	tp.fontLoader = func(fontPath string) ([]byte, error) {
-		return os.ReadFile(fontPath)
+		fullPath := filepath.Join(tp.rootDirectory, tp.fontsDirName, fontPath)
+		return os.ReadFile(fullPath)
 	}
 }
 

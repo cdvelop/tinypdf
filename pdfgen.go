@@ -11,21 +11,33 @@ import (
 // Esta función es independiente del entorno (WASM o backend)
 // IMPORTANTE: Crea una nueva instancia de PDF cada vez
 func (tp *TinyPDF) GenerateSamplePDF(title string) (*fpdf.Fpdf, error) {
-	// Crear una nueva instancia de PDF para evitar problemas de estado
-	pdf := fpdf.New(
-		fpdf.FontsDirName("fonts"),
-		fpdf.WriteFileFunc(tp.writeFile),
-		fpdf.ReadFileFunc(tp.readFile),
-		fpdf.FileSizeFunc(tp.fileSize),
-	)
+	// Usar la instancia PDF ya configurada y agregar las fuentes requeridas
+	pdf := tp.Fpdf
+
+	// Agregar las fuentes TTF requeridas
+	pdf.AddFont("Arial", "", "Arial.ttf")
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error adding Arial font: %v", err)
+	}
+	pdf.AddFont("Arial", "B", "Arial_Bold.ttf")
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error adding Arial Bold font: %v", err)
+	}
+	pdf.AddFont("Arial", "I", "Arial_Italic.ttf")
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error adding Arial Italic font: %v", err)
+	}
+	pdf.AddFont("DejaVu", "", "DejaVuSansCondensed.ttf")
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error adding DejaVu font: %v", err)
+	}
 
 	// Configurar márgenes y header/footer
 	pdf.SetTopMargin(30)
 	pdf.SetHeaderFuncMode(func() {
 		pdf.SetY(5)
 		pdf.SetFont("Arial", "B", 15)
-		pdf.Cell(80, 0, "")
-		pdf.CellFormat(80, 10, title, "1", 0, "C", false, 0, "")
+		pdf.CellFormat(0, 10, title, "", 0, "C", false, 0, "")
 		pdf.Ln(20)
 	}, true)
 
@@ -38,17 +50,36 @@ func (tp *TinyPDF) GenerateSamplePDF(title string) (*fpdf.Fpdf, error) {
 
 	pdf.AliasNbPages("")
 	pdf.AddPage()
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("DejaVu", "", 12)
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error setting DejaVu font: %v", err)
+	}
 
 	// Agregar contenido
 	pdf.SetFont("Arial", "B", 14)
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error setting Arial Bold font for content: %v", err)
+	}
 	pdf.CellFormat(0, 10, "Contenido del documento:", "", 1, "", false, 0, "")
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error writing content title: %v", err)
+	}
 	pdf.Ln(5)
 
-	pdf.SetFont("Times", "", 12)
+	pdf.SetFont("DejaVu", "", 12)
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error setting DejaVu font for lines: %v", err)
+	}
 	for j := 1; j <= 40; j++ {
 		pdf.CellFormat(0, 10, fmt.Sprintf("Línea de contenido número %d", j),
 			"", 1, "", false, 0, "")
+		if err := pdf.Error(); err != nil {
+			return nil, fmt.Errorf("error writing line %d: %v", j, err)
+		}
+	}
+
+	if err := pdf.Error(); err != nil {
+		return nil, fmt.Errorf("error generating PDF: %v", err)
 	}
 
 	return pdf, nil

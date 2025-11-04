@@ -13,9 +13,6 @@ func (f *Fpdf) AddFont(family, style, fileStr string) {
 		return
 	}
 	family = Convert(family).ToLower().String()
-	if family == "arial" {
-		family = "helvetica"
-	}
 	style = Convert(style).ToUpper().String()
 	if style == "IB" {
 		style = "BI"
@@ -55,7 +52,7 @@ func (f *Fpdf) AddFont(family, style, fileStr string) {
 	def.Desc.Ascent = int(ttf.TypoAscender)
 	def.Desc.Descent = int(ttf.TypoDescender)
 	def.Desc.CapHeight = int(ttf.CapHeight)
-	def.Desc.Flags = 1<<5 | 1<<2 // Nonsymbolic and Symbolic flags
+	def.Desc.Flags = 1 << 5 // Nonsymbolic (32) - for TrueType fonts with WinAnsiEncoding
 	def.Desc.FontBBox.Xmin = int(ttf.Xmin)
 	def.Desc.FontBBox.Ymin = int(ttf.Ymin)
 	def.Desc.FontBBox.Xmax = int(ttf.Xmax)
@@ -68,12 +65,43 @@ func (f *Fpdf) AddFont(family, style, fileStr string) {
 	def.Up = int(ttf.UnderlinePosition)
 	def.Ut = int(ttf.UnderlineThickness)
 	def.Cw = make([]int, 256)
-	for i := 0; i < 256; i++ {
-		def.Cw[i] = 600 // Default width
+
+	// Get character widths from TTF
+	unitsPerEm := int(ttf.UnitsPerEm)
+	if unitsPerEm == 0 {
+		unitsPerEm = 1000 // Default value
 	}
+
+	for i := 0; i < 256; i++ {
+		// Get glyph index for character
+		if glyphIndex, ok := ttf.Chars[uint16(i)]; ok && glyphIndex < uint16(len(ttf.Widths)) {
+			// Convert from font units to 1000-unit scale
+			width := int(ttf.Widths[glyphIndex])
+			def.Cw[i] = (width * 1000) / unitsPerEm
+		} else {
+			// Character not found in font, use missing glyph width
+			if len(ttf.Widths) > 0 {
+				def.Cw[i] = (int(ttf.Widths[0]) * 1000) / unitsPerEm
+			} else {
+				def.Cw[i] = 600 // Fallback default
+			}
+		}
+	}
+
+	def.Desc.MissingWidth = def.Cw[0] // Use width of glyph 0 as missing width
 	def.File = fontPath
 	def.OriginalSize = len(fontData)
 	def.usedRunes = make(map[int]int)
+
+	// Register the font file for embedding
+	if f.fontFiles == nil {
+		f.fontFiles = make(map[string]fontFileType)
+	}
+	f.fontFiles[fontPath] = fontFileType{
+		embedded: true,
+		content:  fontData,
+		fontType: "TrueType",
+	}
 
 	def.i = Fmt("%d", len(f.fonts)+1)
 	f.fonts[fontkey] = def
@@ -99,12 +127,18 @@ func (f *Fpdf) SetFont(familyStr, styleStr string, size float64) {
 		return
 	}
 	familyStr = Convert(familyStr).ToLower().String()
-	if familyStr == "arial" {
-		familyStr = "helvetica"
-	} else if familyStr == "" {
+	if familyStr == "" {
 		familyStr = f.fontFamily
 	}
 	styleStr = Convert(styleStr).ToUpper().String()
+
+	// Extract underline and strikeout flags from style string
+	f.underline = Contains(styleStr, "U")
+	f.strikeout = Contains(styleStr, "S")
+
+	// Remove U and S from style string as they are not font styles
+	styleStr = Convert(styleStr).Replace("U", "").Replace("S", "").String()
+
 	if styleStr == "IB" {
 		styleStr = "BI"
 	}
@@ -117,7 +151,9 @@ func (f *Fpdf) SetFont(familyStr, styleStr string, size float64) {
 	f.fontStyle = styleStr
 	f.currentFont = f.fonts[fontkey]
 	f.SetFontSize(size)
-	f.isCurrentUTF8 = true
+	// Only use UTF8 encoding for UTF8 fonts (CIDFont/Type0)
+	// TrueType fonts with WinAnsiEncoding should use single-byte encoding
+	f.isCurrentUTF8 = (f.currentFont.Tp == "UTF8")
 }
 
 // SetFontSize defines the size of the current font. size is specified in the
@@ -138,7 +174,6 @@ func (f *Fpdf) SetFontSize(size float64) {
 func (f *Fpdf) GetFontSize() (pt, u float64) {
 	return f.fontSizePt, f.fontSize
 }
-
 
 func (f *Fpdf) loadFontDef(def *fontDefType, data []byte) error {
 	return json.Unmarshal(data, def)

@@ -808,7 +808,7 @@ func (f *Fpdf) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 			}
 			space := f.escape(utf8toutf16(" ", false))
 			strSize := f.GetStringSymbolWidth(txtStr)
-			s.printf("BT 0 Tw %.2f %.2f Td [", (f.x+dx)*k, (f.h-(f.y+.5*h+.3*f.fontSize))*k)
+			s.printf("BT /F%s %.2f Tf 0 Tw %.2f %.2f Td [", f.currentFont.i, f.fontSize, (f.x+dx)*k, (f.h-(f.y+.5*h+.3*f.fontSize))*k)
 			t := Convert(txtStr).Split(" ")
 			shift := float64((wmax - strSize)) / float64(len(t)-1)
 			numt := len(t)
@@ -832,12 +832,13 @@ func (f *Fpdf) CellFormat(w, h float64, txtStr, borderStr string, ln int,
 					f.currentFont.usedRunes[int(uni)] = int(uni)
 				}
 			} else {
-
+				// For TrueType fonts with WinAnsiEncoding, convert UTF-8 to Latin-1
+				txtStr = utf8ToWinAnsi(txtStr)
 				txt2 = Convert(txtStr).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)").String()
 			}
 			bt := (f.x + dx) * k
 			td := (f.h - (f.y + dy + .5*h + .3*f.fontSize)) * k
-			s.printf("BT %.2f %.2f Td (%s)Tj ET", bt, td, txt2)
+			s.printf("BT /F%s %.2f Tf %.2f %.2f Td (%s)Tj ET", f.currentFont.i, f.fontSize, bt, td, txt2)
 			//BT %.2F %.2F Td (%s) Tj ET',(f.x+dx)*k,(f.h-(f.y+.5*h+.3*f.FontSize))*k,txt2);
 		}
 
@@ -906,6 +907,10 @@ func (f *Fpdf) Cellf(w, h float64, fmtStr string, args ...any) {
 // simple way.
 func (f *Fpdf) SplitLines(txt []byte, w float64) [][]byte {
 	// Function contributed by Bruno Michel
+	if f.currentFont.Name == "" || len(f.currentFont.Cw) == 0 {
+		f.SetError(Errf("no font has been set; call SetFont() first"))
+		return [][]byte{}
+	}
 	lines := [][]byte{}
 	cw := f.currentFont.Cw
 	wmax := int(math.Ceil((w - 2*f.cMargin) * 1000 / f.fontSize))
@@ -976,6 +981,10 @@ func (f *Fpdf) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill 
 		return
 	}
 	// dbg("MultiCell")
+	if f.currentFont.Name == "" || len(f.currentFont.Cw) == 0 {
+		f.SetError(Errf("no font has been set; call SetFont() first"))
+		return
+	}
 	if alignStr == "" {
 		alignStr = "J"
 	}
@@ -1165,6 +1174,10 @@ func (f *Fpdf) MultiCell(w, h float64, txtStr, borderStr, alignStr string, fill 
 // write outputs text in flowing mode
 func (f *Fpdf) write(h float64, txtStr string, link int, linkStr string) {
 	// dbg("Write")
+	if f.currentFont.Name == "" || len(f.currentFont.Cw) == 0 {
+		f.SetError(Errf("no font has been set; call SetFont() first"))
+		return
+	}
 	cw := f.currentFont.Cw
 	w := f.w - f.rMargin - f.x
 	wmax := (w - 2*f.cMargin) * 1000 / f.fontSize
@@ -1214,7 +1227,15 @@ func (f *Fpdf) write(h float64, txtStr string, link int, linkStr string) {
 		if c == ' ' {
 			sep = i
 		}
-		l += float64(cw[int(c)])
+		if int(c) >= len(cw) {
+			f.SetError(Errf("character outside the supported range: %s", string(c)))
+			return
+		}
+		if cw[int(c)] == 0 { //Marker width 0 used for missing symbols
+			l += float64(f.currentFont.Desc.MissingWidth)
+		} else if cw[int(c)] != 65535 { //Marker width 65535 used for zero width symbols
+			l += float64(cw[int(c)])
+		}
 		if l > wmax {
 			// Automatic line break
 			if sep == -1 {

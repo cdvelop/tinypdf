@@ -5,7 +5,6 @@ package tinypdf
 
 import (
 	"encoding/base64"
-	"fmt"
 	"syscall/js"
 
 	"github.com/cdvelop/fetchgo"
@@ -23,14 +22,19 @@ func (tp *TinyPDF) initIO() {
 	}
 
 	// Inicializar fontLoader para frontend usando fetchgo
-	tp.fontLoader = tp.loadFontFromURL
+	// Construye el path completo usando rootDirectory y fontsDirName
+	tp.fontLoader = func(fontPath string) ([]byte, error) {
+		// En frontend, construir la ruta completa con el directorio de fuentes
+		fullFontPath := tp.rootDirectory + "/" + tp.fontsDirName + "/" + fontPath
+		return tp.loadFontFromURL(fullFontPath)
+	}
 }
 
 // loadFontFromURL loads TTF fonts from current domain using fetchgo
 func (tp *TinyPDF) loadFontFromURL(fontPath string) ([]byte, error) {
 	location := js.Global().Get("location")
 	if location.IsUndefined() {
-		return nil, fmt.Errorf("window.location not available")
+		return nil, Errf("window.location not available")
 	}
 
 	origin := location.Get("origin").String()
@@ -45,14 +49,14 @@ func (tp *TinyPDF) loadFontFromURL(fontPath string) ([]byte, error) {
 
 	client.SendRequest("GET", fullURL, nil, func(result any, err error) {
 		if err != nil {
-			errorChan <- fmt.Errorf("failed to fetch font %s: %w", fontPath, err)
+			errorChan <- Errf("failed to fetch font %s: %w", fontPath, err)
 			return
 		}
 
 		if fontData, ok := result.([]byte); ok {
 			resultChan <- fontData
 		} else {
-			errorChan <- fmt.Errorf("unexpected result type from fetchgo: %T", result)
+			errorChan <- Errf("unexpected result type from fetchgo: %T", result)
 		}
 	})
 

@@ -93,6 +93,22 @@ func utf8toutf16(s string, withBOM ...bool) string {
 	return string(res)
 }
 
+// utf8ToWinAnsi converts UTF-8 string to WinAnsiEncoding (Latin-1)
+// Characters outside the WinAnsi range (0-255) are replaced with '?'
+func utf8ToWinAnsi(s string) string {
+	runes := []rune(s)
+	result := make([]byte, 0, len(runes))
+	for _, r := range runes {
+		if r < 256 {
+			result = append(result, byte(r))
+		} else {
+			// Character not in WinAnsi range, replace with '?'
+			result = append(result, '?')
+		}
+	}
+	return string(result)
+}
+
 // intIf returns a if cnd is true, otherwise b
 func intIf(cnd bool, a, b int) int {
 	if cnd {
