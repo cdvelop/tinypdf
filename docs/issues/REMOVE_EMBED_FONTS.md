@@ -4,6 +4,10 @@
 
 Remove all embedded font support from `tinypdf/fpdf` package and replace it with a configurable `fontLoader` function that loads TTF fonts from filesystem (backend) or URL (frontend).
 
+## Related Documentation
+
+- **[TTF Font Parsing from Bytes](../TTF_PARSE_BYTES.md)** - Technical documentation on how `tinypdf/fpdf` parses TrueType fonts from `[]byte` data. Essential for understanding how fontLoader integrates with the existing TTF parser.
+
 ## Breaking Changes
 
 - All embedded fonts removed (courier, helvetica, times, symbol, zapfdingbats)
@@ -166,6 +170,54 @@ case func(string) ([]byte, error):
 - JSON font parsing
 - `.z` font file handling
 
+**Important:** Integration with TTF parser documented in [TTF_PARSE_BYTES.md](../TTF_PARSE_BYTES.md)
+
+#### Create TtfParseBytes() wrapper function
+
+**Add to `fpdf/ttfparser.go`:**
+
+```go
+// TtfParseBytes extracts various metrics from a TrueType font byte data.
+// This is a wrapper around TtfParse for direct []byte input.
+func TtfParseBytes(fontData []byte) (TtfRec TtfType, err error) {
+    var t ttfParser
+    t.file = bytes.NewReader(fontData)
+
+    version, err := t.ReadStr(4)
+    if err != nil {
+        return
+    }
+    if version == "OTTO" {
+        err = Errf("fonts based on PostScript outlines are not supported")
+        return
+    }
+    if version != "\x00\x01\x00\x00" {
+        err = Errf("unrecognized file format")
+        return
+    }
+    numTables := int(t.ReadUShort())
+    t.Skip(3 * 2) // searchRange, entrySelector, rangeShift
+    t.tables = make(map[string]uint32)
+    var tag string
+    for j := 0; j < numTables; j++ {
+        tag, err = t.ReadStr(4)
+        if err != nil {
+            return
+        }
+        t.Skip(4) // checkSum
+        offset := t.ReadULong()
+        t.Skip(4) // length
+        t.tables[tag] = offset
+    }
+    err = t.ParseComponents()
+    if err != nil {
+        return
+    }
+    TtfRec = t.rec
+    return
+}
+```
+
 #### Replace coreFontReader() calls
 
 **Find pattern:**
@@ -181,9 +233,17 @@ if err != nil {
     f.SetError(err)
     return
 }
-// Parse TTF font data
-// (use existing TTF parser)
+// Parse TTF font data using existing parser
+// See: docs/TTF_PARSE_BYTES.md for parser details
+ttfInfo, err := TtfParseBytes(fontData)
+if err != nil {
+    f.SetError(err)
+    return
+}
+// Convert ttfInfo to font definition and store in f.fonts
 ```
+
+**Note:** The `TtfParseBytes()` function needs to be created as a wrapper around the existing `TtfParse()` that accepts `[]byte` directly. See [TTF_PARSE_BYTES.md](../TTF_PARSE_BYTES.md) for implementation details.
 
 #### Remove core font checks
 
@@ -333,7 +393,7 @@ func (tp *TinyPDF) initIO() {
     
     // Inicializar fontLoader para backend usando os.ReadFile
     tp.fontLoader = func(fontPath string) ([]byte, error) {
-        // fontPath comes as relative path like "fonts/calligra.ttf"
+        // fontPath comes as relative path like "fonts/Arial.ttf"
         // or "customfonts/MyFont.ttf"
         return os.ReadFile(fontPath)
     }
@@ -393,7 +453,7 @@ func (tp *TinyPDF) initIO() {
 // Note: Caching is handled by fpdf.Fpdf.fontCache, not here
 func (tp *TinyPDF) loadFontFromURL(fontPath string) ([]byte, error) {
     // Build URL using current domain
-    // fontPath comes as "fonts/calligra.ttf"
+    // fontPath comes as "fonts/Arial.ttf"
     location := js.Global().Get("location")
     if location.IsUndefined() {
         return nil, fmt.Errorf("window.location not available")
@@ -502,22 +562,22 @@ func (tp *TinyPDF) loadFontFromURL(fontPath string) ([]byte, error) {
 ```go
 // Test with local TTF file
 pdf := NewDocPdfTest()
-pdf.AddFont("Calligra", "", "fonts/calligra.ttf")
+pdf.AddFont("Arial", "", "fonts/Arial.ttf")
 ```
 
 ### Frontend Tests
 ```go
 // Test with URL fetch (mocked)
 tp := tinypdf.New()
-// Should fetch from current domain/fonts/calligra.ttf
-pdf.AddFont("Calligra", "", "fonts/calligra.ttf")
+// Should fetch from current domain/fonts/Arial.ttf
+pdf.AddFont("Arial", "", "fonts/Arial.ttf")
 ```
 
 ### Error Cases
 ```go
 // Test missing fontLoader
 pdf := fpdf.New() // No fontLoader provided
-pdf.AddFont("Calligra", "", "fonts/calligra.ttf")
+pdf.AddFont("Arial", "", "fonts/Arial.ttf")
 // Should return: "fontLoader function not configured"
 
 // Test missing font file
@@ -531,7 +591,7 @@ pdf.AddFont("Missing", "", "fonts/Missing.ttf")
 1. **No default fonts** - All fonts must be explicitly loaded
 2. **TTF only** - No JSON, MAP, or Z font formats supported
 3. **Caching in Fpdf struct** - Fonts cached in `fontCache` slice (TinyGo compatible, no maps)
-4. **Relative paths** - Font paths are relative (e.g., "fonts/calligra.ttf")
+4. **Relative paths** - Font paths are relative (e.g., "fonts/Arial.ttf")
 5. **Environment-specific** - Backend uses filesystem, frontend uses fetch
 6. **No base64** - Fonts stored as raw []byte in memory
 7. **Breaking change** - Existing code will break if using embedded fonts
@@ -542,23 +602,23 @@ pdf.AddFont("Missing", "", "fonts/Missing.ttf")
 ### Backend (Go)
 ```go
 tp := tinypdf.New()
-// Internally calls os.ReadFile("fonts/calligra.ttf")
-tp.Fpdf.AddFont("Calligra", "", "fonts/calligra.ttf")
+// Internally calls os.ReadFile("fonts/Arial.ttf")
+tp.Fpdf.AddFont("Arial", "", "fonts/Arial.ttf")
 ```
 
 ### Frontend (WASM)
 ```go
 tp := tinypdf.New()
-// Internally fetches https://currentdomain.com/fonts/calligra.ttf
+// Internally fetches https://currentdomain.com/fonts/Arial.ttf
 // Caches in fpdf.Fpdf.fontCache slice for subsequent use
-tp.Fpdf.AddFont("Calligra", "", "fonts/calligra.ttf")
+tp.Fpdf.AddFont("Arial", "", "fonts/Arial.ttf")
 ```
 
 ### Tests
 ```go
 pdf := NewDocPdfTest()
 // Uses rootTestDir/fonts/ as base path
-pdf.AddFont("Calligra", "", "calligra.ttf")
+pdf.AddFont("Arial", "", "Arial.ttf")
 ```
 
 ## Migration Notes for Users
