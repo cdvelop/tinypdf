@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/cdvelop/tinypdf/fpdf"
-	"github.com/cdvelop/tinypdf/fpdf/internal/files"
 )
 
 func loremList() []string {
@@ -550,8 +549,8 @@ func Test_HTMLBasicNew(t *testing.T) {
 
 // Test_AddFont demonstrates the use of a non-standard font.
 func Test_AddFont(t *testing.T) {
-	pdf := fpdf.New(fpdf.MM, "A4", FontsDirName())
-	pdf.AddFont("Calligrapher", "", "calligra.json")
+	pdf := NewDocPdfTest()
+	pdf.AddFont("Calligrapher", "", "calligra.ttf")
 	pdf.AddPage()
 	pdf.SetFont("Calligrapher", "", 35)
 	pdf.Cell(0, 10, "Enjoy new fonts with FPDF!")
@@ -564,7 +563,7 @@ func Test_AddFont(t *testing.T) {
 
 // Test_WriteAligned demonstrates how to align text with the Write function.
 func Test_WriteAligned(t *testing.T) {
-	pdf := fpdf.New(fpdf.MM, "A4", FontsDirName())
+	pdf := NewDocPdfTest()
 	pdf.SetLeftMargin(50.0)
 	pdf.SetRightMargin(50.0)
 	pdf.AddPage()
@@ -732,22 +731,18 @@ func Test_SetAcceptPageBreakFunc(t *testing.T) {
 func Test_SetKeywords(t *testing.T) {
 	var err error
 	fileStr := Filename("Test_SetKeywords")
-	err = fpdf.MakeFont(FontFile("CalligrapherRegular.pfb"),
-		FontFile("cp1252.map"), FontsDirName(), nil, true)
-	if err == nil {
-		pdf := NewDocPdfTest()
-		pdf.SetFontLocation(FontsDirName())
-		pdf.SetTitle("世界", true)
-		pdf.SetAuthor("世界", true)
-		pdf.SetSubject("世界", true)
-		pdf.SetCreator("世界", true)
-		pdf.SetKeywords("世界", true)
-		pdf.AddFont("Calligrapher", "", "CalligrapherRegular.json")
-		pdf.AddPage()
-		pdf.SetFont("Calligrapher", "", 16)
-		pdf.Writef(5, "\x95 %s \x95", pdf)
-		err = pdf.OutputFileAndClose(fileStr)
-	}
+	pdf := NewDocPdfTest()
+	pdf.SetFontLocation(FontsDirName())
+	pdf.SetTitle("世界", true)
+	pdf.SetAuthor("世界", true)
+	pdf.SetSubject("世界", true)
+	pdf.SetCreator("世界", true)
+	pdf.SetKeywords("世界", true)
+	pdf.AddFont("Calligrapher", "", "calligra.ttf")
+	pdf.AddPage()
+	pdf.SetFont("Calligrapher", "", 16)
+	pdf.Writef(5, "\x95 %s \x95", pdf)
+	err = pdf.OutputFileAndClose(fileStr)
 	SummaryCompare(err, fileStr)
 	// Output:
 	// Successfully generated pdf/Test_SetKeywords.pdf
@@ -1409,9 +1404,7 @@ func Test_CellFormat_align(t *testing.T) {
 	pdf.SetFont("Helvetica", "", 16)
 	formatRect(pdf, recList)
 	formatRect(pdf, recListBaseline)
-	var fr fontResourceType
-	pdf.SetFontLoader(fr)
-	pdf.AddFont("Calligrapher", "", "calligra.json")
+	pdf.AddFont("Calligrapher", "", "calligra.ttf")
 	pdf.SetFont("Calligrapher", "", 16)
 	formatRect(pdf, recListBaseline)
 	fileStr := Filename("Test_CellFormat_align")
@@ -1734,25 +1727,6 @@ func Test_Beziergon(t *testing.T) {
 
 }
 
-// Test_SetFontLoader demonstrates loading a non-standard font using a generalized
-// font loader. fontResourceType implements the FontLoader interface and is
-// defined locally in the test source code.
-func Test_SetFontLoader(t *testing.T) {
-	var fr fontResourceType
-	pdf := NewDocPdfTest()
-	pdf.SetFontLoader(fr)
-	pdf.AddFont("Calligrapher", "", "calligra.json")
-	pdf.AddPage()
-	pdf.SetFont("Calligrapher", "", 35)
-	pdf.Cell(0, 10, "Load fonts from any source")
-	fileStr := Filename("Test_SetFontLoader")
-	err := pdf.OutputFileAndClose(fileStr)
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Generalized font loader reading calligra.json
-	// Generalized font loader reading calligra.z
-	// Successfully generated pdf/Test_SetFontLoader.pdf
-}
 
 // Test_MoveTo demonstrates the Path Drawing functions, such as: MoveTo,
 // LineTo, CurveTo, ..., ClosePath and DrawPath.
@@ -1893,19 +1867,6 @@ func Test_DrawPath(t *testing.T) {
 }
 
 
-// Test_AddFontFromBytes demonstrate how to use embedded fonts from byte array
-func Test_AddFontFromBytes(t *testing.T) {
-	pdf := NewDocPdfTest()
-	pdf.AddPage()
-	pdf.AddFontFromBytes("calligra", "", files.CalligraJson, files.CalligraZ)
-	pdf.SetFont("calligra", "", 16)
-	pdf.Cell(40, 10, "Hello World With Embedded Font!")
-	fileStr := Filename("Test_EmbeddedFont")
-	err := pdf.OutputFileAndClose(fileStr)
-	SummaryCompare(err, fileStr)
-	// Output:
-	// Successfully generated pdf/Test_EmbeddedFont.pdf
-}
 
 // This example demonstrate Clipped table cells
 func Test_ClipRect(t *testing.T) {

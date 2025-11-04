@@ -49,11 +49,19 @@ func NewDocPdfTest(options ...any) *tinypdf.Fpdf {
 		return info.Size(), nil
 	}))
 
+	// add default fontLoader function using os for tests
+	options = append(options, func(fontPath string) ([]byte, error) {
+		// Build full path: rootTestDir/fonts/fontPath
+		fullPath := filepath.Join(string(rootTestDir), "fonts", fontPath)
+		return os.ReadFile(fullPath)
+	})
+
 	pdf := tinypdf.New(options...)
 	pdf.SetCompression(false)
 	pdf.SetCatalogSort(true)
 	pdf.SetCreationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
 	pdf.SetModificationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+	pdf.AddFont("Arial", "", "Arial.ttf")
 
 	return pdf
 }

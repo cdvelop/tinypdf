@@ -231,16 +231,16 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 }
 
 func TestAFMFontParser(t *testing.T) {
-	const embed = true
-	err := tinypdf.MakeFont(
-		FontFile("cmmi10.pfb"),
-		FontFile("cp1252.map"),
-		FontsDirName(),
-		nil, embed,
-	)
-	if err != nil {
-		t.Fatalf("could not create cmmi10 font: %v", err)
-	}
+	// const embed = true
+	// err := tinypdf.MakeFont(
+	// 	FontFile("cmmi10.pfb"),
+	// 	FontFile("cp1252.map"),
+	// 	FontsDirName(),
+	// 	nil, embed,
+	// )
+	// if err != nil {
+	// 	t.Fatalf("could not create cmmi10 font: %v", err)
+	// }
 
 }
 

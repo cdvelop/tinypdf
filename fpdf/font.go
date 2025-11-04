@@ -1,405 +1,145 @@
 package fpdf
 
 import (
-	"bufio"
-	"compress/zlib"
-	"encoding/binary"
 	"encoding/json"
-	"io"
-	"os"
-	"path/filepath"
 
 	. "github.com/cdvelop/tinystring"
 )
 
-func baseNoExt(fileStr string) string {
-	str := filepath.Base(fileStr)
-	extLen := len(filepath.Ext(str))
-	if extLen > 0 {
-		str = str[:len(str)-extLen]
+// AddFont loads a TrueType font and makes it available. It is necessary to
+// call this method for every font that is used in the document.
+func (f *Fpdf) AddFont(family, style, fileStr string) {
+	if f.err != nil {
+		return
 	}
-	return str
-}
+	family = Convert(family).ToLower().String()
+	if family == "arial" {
+		family = "helvetica"
+	}
+	style = Convert(style).ToUpper().String()
+	if style == "IB" {
+		style = "BI"
+	}
+	fontkey := family + style
+	if _, ok := f.fonts[fontkey]; ok {
+		return
+	}
 
-func loadMap(encodingFileStr string) (encList encListType, err error) {
-	// printf("Encoding file string [%s]\n", encodingFileStr)
-	var f *os.File
-	// f, err = os.Open(encodingFilepath(encodingFileStr))
-	f, err = os.Open(encodingFileStr)
-	if err == nil {
-		defer f.Close()
-		for j := range encList {
-			encList[j].uv = -1
-			encList[j].name = ".notdef"
-		}
-		scanner := bufio.NewScanner(f)
-		var enc encType
-		var pos int
-		for scanner.Scan() {
-			// "!3F U+003F question"
-			_, err = Sscanf(scanner.Text(), "!%x U+%x %s", &pos, &enc.uv, &enc.name)
-			if err == nil {
-				if pos < 256 {
-					encList[pos] = enc
-				} else {
-					err = Errf("map position 0x%2X exceeds 0xFF", pos)
-					return
-				}
-			} else {
-				return
-			}
-		}
-		if err = scanner.Err(); err != nil {
+	fontPath := fileStr
+	if fontPath == "" {
+		fontPath = Convert(style).Replace("I", "i").Replace("B", "b").String()
+		fontPath = family + fontPath + ".ttf"
+	}
+
+	// Check cache first
+	fontData, found := f.getCachedFont(fontPath)
+	if !found {
+		var err error
+		fontData, err = f.fontLoader(fontPath)
+		if err != nil {
+			f.SetError(Errf("failed to load font %s: %w", fontPath, err))
 			return
 		}
+		f.addFontToCache(fontPath, fontData)
 	}
-	return
-}
 
-// getInfoFromTrueType returns information from a TrueType font
-func getInfoFromTrueType(fileStr string, msgWriter io.Writer, embed bool, encList encListType) (info fontInfoType, err error) {
-	info.Widths = make([]int, 256)
-	var ttf TtfType
-	ttf, err = TtfParse(fileStr, os.ReadFile)
+	ttf, err := TtfParseBytes(fontData)
 	if err != nil {
-		return
-	}
-	if embed {
-		if !ttf.Embeddable {
-			err = Errf("font license does not allow embedding")
-			return
-		}
-		info.Data, err = os.ReadFile(fileStr)
-		if err != nil {
-			return
-		}
-		info.OriginalSize = len(info.Data)
-	}
-	k := 1000.0 / float64(ttf.UnitsPerEm)
-	info.FontName = ttf.PostScriptName
-	info.Bold = ttf.Bold
-	info.Desc.ItalicAngle = int(ttf.ItalicAngle)
-	info.IsFixedPitch = ttf.IsFixedPitch
-	info.Desc.Ascent = round(k * float64(ttf.TypoAscender))
-	info.Desc.Descent = round(k * float64(ttf.TypoDescender))
-	info.UnderlineThickness = round(k * float64(ttf.UnderlineThickness))
-	info.UnderlinePosition = round(k * float64(ttf.UnderlinePosition))
-	info.Desc.FontBBox = fontBoxType{
-		round(k * float64(ttf.Xmin)),
-		round(k * float64(ttf.Ymin)),
-		round(k * float64(ttf.Xmax)),
-		round(k * float64(ttf.Ymax)),
-	}
-	// printf("FontBBox\n")
-	// dump(info.Desc.FontBBox)
-	info.Desc.CapHeight = round(k * float64(ttf.CapHeight))
-	info.Desc.MissingWidth = round(k * float64(ttf.Widths[0]))
-	var wd int
-	for j := 0; j < len(info.Widths); j++ {
-		wd = info.Desc.MissingWidth
-		if encList[j].name != ".notdef" {
-			uv := encList[j].uv
-			pos, ok := ttf.Chars[uint16(uv)]
-			if ok {
-				wd = round(k * float64(ttf.Widths[pos]))
-			} else {
-				Fprintf(msgWriter, "Character %s is missing\n", encList[j].name)
-			}
-		}
-		info.Widths[j] = wd
-	}
-	// printf("getInfoFromTrueType/FontBBox\n")
-	// dump(info.Desc.FontBBox)
-	return
-}
-
-type segmentType struct {
-	marker uint8
-	tp     uint8
-	size   uint32
-	data   []byte
-}
-
-func segmentRead(r io.Reader) (s segmentType, err error) {
-	if err = binary.Read(r, binary.LittleEndian, &s.marker); err != nil {
-		return
-	}
-	if s.marker != 128 {
-		err = Errf("font file is not a valid binary Type1")
-		return
-	}
-	if err = binary.Read(r, binary.LittleEndian, &s.tp); err != nil {
-		return
-	}
-	if err = binary.Read(r, binary.LittleEndian, &s.size); err != nil {
-		return
-	}
-	s.data = make([]byte, s.size)
-	_, err = r.Read(s.data)
-	return
-}
-
-// -rw-r--r-- 1 root root  9532 2010-04-22 11:27 /usr/share/fonts/type1/mathml/Symbol.afm
-// -rw-r--r-- 1 root root 37744 2010-04-22 11:27 /usr/share/fonts/type1/mathml/Symbol.pfb
-
-// getInfoFromType1 return information from a Type1 font
-func getInfoFromType1(fileStr string, msgWriter io.Writer, embed bool, encList encListType) (info fontInfoType, err error) {
-	info.Widths = make([]int, 256)
-	if embed {
-		var f *os.File
-		f, err = os.Open(fileStr)
-		if err != nil {
-			return
-		}
-		defer f.Close()
-		// Read first segment
-		var s1, s2 segmentType
-		s1, err = segmentRead(f)
-		if err != nil {
-			return
-		}
-		s2, err = segmentRead(f)
-		if err != nil {
-			return
-		}
-		info.Data = s1.data
-		info.Data = append(info.Data, s2.data...)
-		info.Size1 = s1.size
-		info.Size2 = s2.size
-	}
-	afmFileStr := fileStr[0:len(fileStr)-3] + "afm"
-	size, ok := fileSize(afmFileStr)
-	if !ok {
-		err = Errf("font file (ATM) %s not found", afmFileStr)
-		return
-	} else if size == 0 {
-		err = Errf("font file (AFM) %s empty or not readable", afmFileStr)
+		f.SetError(err)
 		return
 	}
 
-	f, err := os.Open(afmFileStr)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	p := newAFMParser(f)
-	err = p.parse(&info)
-	if err != nil {
-		return info, err
-	}
-
-	if info.FontName == "" {
-		err = Errf("the field FontName missing in AFM file %s", afmFileStr)
-		return
-	}
-	var (
-		missingWd int
-		wdMap     = p.wdmap
-	)
-	missingWd, ok = wdMap[".notdef"]
-	if ok {
-		info.Desc.MissingWidth = missingWd
-	}
-	for j := 0; j < len(info.Widths); j++ {
-		info.Widths[j] = info.Desc.MissingWidth
-	}
-	for j := 0; j < len(info.Widths); j++ {
-		name := encList[j].name
-		if name != ".notdef" {
-			wd, ok := wdMap[name]
-			if ok {
-				info.Widths[j] = wd
-			} else {
-				Fprintf(msgWriter, "Character %s is missing\n", name)
-			}
-		}
-	}
-	// printf("getInfoFromType1/FontBBox\n")
-	// dump(info.Desc.FontBBox)
-	return
-}
-
-func makeFontDescriptor(info *fontInfoType) {
-	if info.Desc.CapHeight == 0 {
-		info.Desc.CapHeight = info.Desc.Ascent
-	}
-	info.Desc.Flags = 1 << 5
-	if info.IsFixedPitch {
-		info.Desc.Flags |= 1
-	}
-	if info.Desc.ItalicAngle != 0 {
-		info.Desc.Flags |= 1 << 6
-	}
-	if info.Desc.StemV == 0 {
-		if info.Bold {
-			info.Desc.StemV = 120
-		} else {
-			info.Desc.StemV = 70
-		}
-	}
-	// printf("makeFontDescriptor/FontBBox\n")
-	// dump(info.Desc.FontBBox)
-}
-
-// makeFontEncoding builds differences from reference encoding
-func makeFontEncoding(encList encListType, refEncFileStr string) (diffStr string, err error) {
-	var refList encListType
-	if refList, err = loadMap(refEncFileStr); err != nil {
-		return
-	}
-	var buf fmtBuffer
-	last := 0
-	for j := 32; j < 256; j++ {
-		if encList[j].name != refList[j].name {
-			if j != last+1 {
-				buf.printf("%d ", j)
-			}
-			last = j
-			buf.printf("/%s ", encList[j].name)
-		}
-	}
-	diffStr = Convert(buf.String()).TrimSpace().String()
-	return
-}
-
-func makeDefinitionFile(fileStr, tpStr, encodingFileStr string, embed bool, encList encListType, info fontInfoType) error {
-	var err error
 	var def fontDefType
-	def.Tp = tpStr
-	def.Name = info.FontName
-	makeFontDescriptor(&info)
-	def.Desc = info.Desc
-	// printf("makeDefinitionFile/FontBBox\n")
-	// dump(def.Desc.FontBBox)
-	def.Up = info.UnderlinePosition
-	def.Ut = info.UnderlineThickness
-	def.Cw = info.Widths
-	def.Enc = baseNoExt(encodingFileStr)
-	// fmt.Printf("encodingFileStr [%s], def.Enc [%s]\n", encodingFileStr, def.Enc)
-	// fmt.Printf("reference [%s]\n", filepath.Join(filepath.Dir(encodingFileStr), "cp1252.map"))
-	def.Diff, err = makeFontEncoding(encList, filepath.Join(filepath.Dir(encodingFileStr), "cp1252.map"))
-	if err != nil {
-		return err
+	def.Tp = "TrueType"
+	def.Name = ttf.PostScriptName
+	def.Desc.Ascent = int(ttf.TypoAscender)
+	def.Desc.Descent = int(ttf.TypoDescender)
+	def.Desc.CapHeight = int(ttf.CapHeight)
+	def.Desc.Flags = 1<<5 | 1<<2 // Nonsymbolic and Symbolic flags
+	def.Desc.FontBBox.Xmin = int(ttf.Xmin)
+	def.Desc.FontBBox.Ymin = int(ttf.Ymin)
+	def.Desc.FontBBox.Xmax = int(ttf.Xmax)
+	def.Desc.FontBBox.Ymax = int(ttf.Ymax)
+	def.Desc.ItalicAngle = int(ttf.ItalicAngle)
+	def.Desc.StemV = 70
+	if ttf.Bold {
+		def.Desc.StemV = 120
 	}
-	def.File = info.File
-	def.Size1 = int(info.Size1)
-	def.Size2 = int(info.Size2)
-	def.OriginalSize = info.OriginalSize
-	// printf("Font definition file [%s]\n", fileStr)
-	var buf []byte
-	buf, err = json.Marshal(def)
-	if err != nil {
-		return err
+	def.Up = int(ttf.UnderlinePosition)
+	def.Ut = int(ttf.UnderlineThickness)
+	def.Cw = make([]int, 256)
+	for i := 0; i < 256; i++ {
+		def.Cw[i] = 600 // Default width
 	}
-	var f *os.File
-	f, err = os.Create(fileStr)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.Write(buf)
-	if err != nil {
-		return err
-	}
+	def.File = fontPath
+	def.OriginalSize = len(fontData)
+	def.usedRunes = make(map[int]int)
 
-	err = f.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	def.i = Fmt("%d", len(f.fonts)+1)
+	f.fonts[fontkey] = def
 }
 
-// MakeFont generates a font definition file in JSON format. A definition file
-// of this type is required to use non-core fonts in the PDF documents that
-// gofpdf generates. See the makefont utility in the gofpdf package for a
-// command line interface to this function.
+// SetFont sets the font used to print character strings. It is mandatory to
+// call this method at least once before printing text or the resulting
+// document will not be valid.
 //
-// fontFileStr is the name of the TrueType file (extension .ttf), OpenType file
-// (extension .otf) or binary Type1 file (extension .pfb) from which to
-// generate a definition file. If an OpenType file is specified, it must be one
-// that is based on TrueType outlines, not PostScript outlines; this cannot be
-// determined from the file extension alone. If a Type1 file is specified, a
-// metric file with the same pathname except with the extension .afm must be
-// present.
+// The font can be either a standard one or a font added by AddFont(). Standard
+// fonts use the Windows encoding cp1252 (Western Europe).
 //
-// encodingFileStr is the name of the encoding file that corresponds to the
-// font.
+// The font is selected by specifying its family and a style in any
+// combination.
 //
-// dstDirStr is the name of the directory in which to save the definition file
-// and, if embed is true, the compressed font file.
+// It is also possible to modify the current size. If the given size is not
+// specified (or is zero), the size of the current font is retained.
 //
-// msgWriter is the writer that is called to display messages throughout the
-// process. Use nil to turn off messages.
-//
-// embed is true if the font is to be embedded in the PDF files.
-func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Writer, embed bool) error {
-	if msgWriter == nil {
-		msgWriter = io.Discard
+// If a font has not been loaded by a prior call to AddFont(), an error is
+// returned.
+func (f *Fpdf) SetFont(familyStr, styleStr string, size float64) {
+	if f.err != nil {
+		return
 	}
-	if !fileExist(fontFileStr) {
-		return Errf("font file not found: %s", fontFileStr)
+	familyStr = Convert(familyStr).ToLower().String()
+	if familyStr == "arial" {
+		familyStr = "helvetica"
+	} else if familyStr == "" {
+		familyStr = f.fontFamily
 	}
-	extStr := Convert(fontFileStr[len(fontFileStr)-3:]).ToLower().String()
-	// printf("Font file extension [%s]\n", extStr)
-	var tpStr string
-	switch extStr {
-	case "ttf":
-		fallthrough
-	case "otf":
-		tpStr = "TrueType"
-	case "pfb":
-		tpStr = "Type1"
-	default:
-		return Errf("unrecognized font file extension: %s", extStr)
+	styleStr = Convert(styleStr).ToUpper().String()
+	if styleStr == "IB" {
+		styleStr = "BI"
 	}
+	fontkey := familyStr + styleStr
+	if _, ok := f.fonts[fontkey]; !ok {
+		f.err = Errf("font not found: %s %s", familyStr, styleStr)
+		return
+	}
+	f.fontFamily = familyStr
+	f.fontStyle = styleStr
+	f.currentFont = f.fonts[fontkey]
+	f.SetFontSize(size)
+	f.isCurrentUTF8 = true
+}
 
-	var info fontInfoType
-	encList, err := loadMap(encodingFileStr)
-	if err != nil {
-		return err
-	}
-	// printf("Encoding table\n")
-	// dump(encList)
-	if tpStr == "TrueType" {
-		info, err = getInfoFromTrueType(fontFileStr, msgWriter, embed, encList)
-		if err != nil {
-			return err
-		}
+// SetFontSize defines the size of the current font. size is specified in the
+// unit of measure passed to New().
+func (f *Fpdf) SetFontSize(size float64) {
+	if size == 0.0 {
+		size = f.fontSize
 	} else {
-		info, err = getInfoFromType1(fontFileStr, msgWriter, embed, encList)
-		if err != nil {
-			return err
-		}
+		f.fontSize = size
 	}
-	baseStr := baseNoExt(fontFileStr)
-	// fmt.Printf("Base [%s]\n", baseStr)
-	if embed {
-		var f *os.File
-		info.File = baseStr + ".z"
-		zFileStr := filepath.Join(dstDirStr, info.File)
-		f, err = os.Create(zFileStr)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		cmp := zlib.NewWriter(f)
-		_, err = cmp.Write(info.Data)
-		if err != nil {
-			return err
-		}
-		err = cmp.Close()
-		if err != nil {
-			return err
-		}
-		Fprintf(msgWriter, "Font file compressed: %s\n", zFileStr)
+	if f.k > 0 {
+		f.fontSizePt = f.fontSize * f.k
 	}
-	defFileStr := filepath.Join(dstDirStr, baseStr+".json")
-	err = makeDefinitionFile(defFileStr, tpStr, encodingFileStr, embed, encList, info)
-	if err != nil {
-		return err
-	}
-	Fprintf(msgWriter, "Font definition file successfully generated: %s\n", defFileStr)
-	return nil
+}
+
+// GetFontSize returns the size of the current font in both points (pt) and
+// the unit of measure specified in New() (u).
+func (f *Fpdf) GetFontSize() (pt, u float64) {
+	return f.fontSizePt, f.fontSize
+}
+
+
+func (f *Fpdf) loadFontDef(def *fontDefType, data []byte) error {
+	return json.Unmarshal(data, def)
 }

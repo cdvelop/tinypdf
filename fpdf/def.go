@@ -384,14 +384,6 @@ type InitType struct {
 	FontDirName    string            // name to the font directory default is "fonts"
 }
 
-// FontLoader is used to read fonts (JSON font specification and zlib compressed font binaries)
-// from arbitrary locations (e.g. files, zip files, embedded font resources).
-//
-// Open provides an io.Reader for the specified font file (.json or .z). The file name
-// never includes a path. Open returns an error if the specified file cannot be opened.
-type FontLoader interface {
-	Open(name string) (io.Reader, error)
-}
 
 // OutputIntentSubtype any of the pre defined types below or a value defined by ISO 32000 extension.
 type OutputIntentSubtype string
@@ -414,6 +406,12 @@ type OutputIntentType struct {
 type PageBox struct {
 	SizeType
 	PointType
+}
+
+// fontCacheEntry stores cached font data
+type fontCacheEntry struct {
+	path string
+	data []byte
 }
 
 // Fpdf is the principal structure for creating a single PDF document
@@ -450,11 +448,11 @@ type Fpdf struct {
 	rootDirectory    RootDirectoryType                           // root directory of the executable default is "." for test change
 	fontsDirName     FontsDirName                                // fonts directory name default is "fonts"
 	fontsPath        string                                      // full path containing fonts directory included rootDirectory eg. "/home/user/docpdf/fonts"
-	fontLoader       FontLoader                                  // used to load font files from arbitrary locations
+	fontLoader       func(fontPath string) ([]byte, error)       // function to load TTF font files
+	fontCache        []fontCacheEntry                            // slice to cache loaded fonts (TinyGo compatible)
 	writeFile        func(filePath string, content []byte) error // function to write files, can be customized for WebAssembly
 	readFile         func(filePath string) ([]byte, error)       // function to read files, can be customized for WebAssembly
 	fileSize         func(filePath string) (int64, error)        // function to get file size, can be customized for WebAssembly
-	coreFonts        map[string]bool                             // array of core font names
 	fonts            map[string]fontDefType                      // array of used fonts
 	fontFiles        map[string]fontFileType                     // array of font files
 	diffs            []string                                    // array of encoding differences

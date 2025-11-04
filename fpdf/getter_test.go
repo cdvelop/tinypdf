@@ -1,14 +1,12 @@
 package fpdf_test
 
 import (
-	"io"
 	"math"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/cdvelop/tinypdf/fpdf"
-	. "github.com/cdvelop/tinystring"
 )
 
 var floatEpsilon = math.Nextafter(1.0, 2.0) - 1.0
@@ -253,44 +251,6 @@ func TestGetFontFamily(t *testing.T) {
 	}
 }
 
-type testFontLoader struct {
-	reader io.Reader
-	err    error
-}
-
-func (tfl *testFontLoader) Open(name string) (io.Reader, error) {
-	return tfl.reader, tfl.err
-}
-
-func TestGetFontLoader(t *testing.T) {
-	testErr := Err(D.Invalid, "TestGetFontLoader error")
-	tfl := &testFontLoader{
-		reader: strings.NewReader("TestGetFontLoader reader"),
-		err:    testErr,
-	}
-
-	pdf := NewDocPdfTest()
-	pdf.SetFontLoader(tfl)
-
-	fontLoader := pdf.GetFontLoader()
-
-	reader, err := fontLoader.Open("test")
-
-	if got := reader; got == nil {
-		t.Fatalf("invalid reader: got=nil, want non-nil")
-	}
-	if got, want := err, testErr; got != want {
-		t.Errorf("invalid error: got=%v, want=%v", got, want)
-	}
-
-	read, err := io.ReadAll(reader)
-	if err != nil {
-		t.Errorf("reading error: got=%v, want=nil", err)
-	}
-	if got, want := string(read[:]), "TestGetFontLoader reader"; got != want {
-		t.Errorf("invalid reader content: got=%v, want=%v", got, want)
-	}
-}
 
 func TestGetFontLocation(t *testing.T) {
 	pdf := NewDocPdfTest()
@@ -313,7 +273,7 @@ func TestGetFontSize(t *testing.T) {
 		t.Errorf("invalid ptSize: got=%v, want=%v", got, want)
 	}
 
-	pdf.SetFontUnitSize(246)
+	pdf.SetFontSize(246)
 
 	_, unitSize := pdf.GetFontSize()
 

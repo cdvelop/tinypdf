@@ -235,113 +235,6 @@ func (f *Fpdf) GetFontDesc(familyStr, styleStr string) FontDescType {
 	return f.fonts[getFontKey(fontFamilyEscape(familyStr), styleStr)].Desc
 }
 
-// SetFont sets the font used to print character strings. It is mandatory to
-// call this method at least once before printing text or the resulting
-// document will not be valid.
-//
-// The font can be either a standard one or a font added via the AddFont()
-// method or AddFontFromReader() method. Standard fonts use the Windows
-// encoding cp1252 (Western Europe).
-//
-// The method can be called before the first page is created and the font is
-// kept from page to page. If you just wish to change the current font size, it
-// is simpler to call SetFontSize().
-//
-// Note: the font definition file must be accessible. An error is set if the
-// file cannot be read.
-//
-// familyStr specifies the font family. It can be either a name defined by
-// AddFont(), AddFontFromReader() or one of the standard families (case
-// insensitive): "Courier" for fixed-width, "Helvetica" or "Arial" for sans
-// serif, "Times" for serif, "Symbol" or "ZapfDingbats" for symbolic.
-//
-// styleStr can be "B" (bold), "I" (italic), "U" (underscore), "S" (strike-out)
-// or any combination. The default value (specified with an empty string) is
-// regular. Bold and italic styles do not apply to Symbol and ZapfDingbats.
-//
-// size is the font size measured in points. The default value is the current
-// size. If no size has been specified since the beginning of the document, the
-// value taken is 12.
-func (f *Fpdf) SetFont(familyStr, styleStr string, size float64) {
-	// dbg("SetFont x %.2f, lMargin %.2f", f.x, f.lMargin)
-
-	if f.err != nil {
-		return
-	}
-	// dbg("SetFont")
-	familyStr = fontFamilyEscape(familyStr)
-	var ok bool
-	if familyStr == "" {
-		familyStr = f.fontFamily
-	} else {
-		familyStr = Convert(familyStr).ToLower().String()
-	}
-	styleStr = Convert(styleStr).ToUpper().String()
-	f.underline = Contains(styleStr, "U")
-	if f.underline {
-		styleStr = Convert(styleStr).Replace("U", "").String()
-	}
-	f.strikeout = Contains(styleStr, "S")
-	if f.strikeout {
-		styleStr = Convert(styleStr).Replace("S", "").String()
-	}
-	if styleStr == "IB" {
-		styleStr = "BI"
-	}
-	if size == 0.0 {
-		size = f.fontSizePt
-	}
-
-	// Test if font is already loaded
-	fontKey := familyStr + styleStr
-	_, ok = f.fonts[fontKey]
-	if !ok {
-		// Test if one of the core fonts
-		if familyStr == "arial" {
-			familyStr = "helvetica"
-		}
-		_, ok = f.coreFonts[familyStr]
-		if ok {
-			if familyStr == "symbol" {
-				familyStr = "zapfdingbats"
-			}
-			if familyStr == "zapfdingbats" {
-				styleStr = ""
-			}
-			fontKey = familyStr + styleStr
-			_, ok = f.fonts[fontKey]
-			if !ok {
-				rdr := f.coreFontReader(familyStr, styleStr)
-				if f.err == nil {
-					defer rdr.Close()
-					f.AddFontFromReader(familyStr, styleStr, rdr)
-				}
-				if f.err != nil {
-					return
-				}
-			}
-		} else {
-			f.err = Errf("undefined font: %s %s", familyStr, styleStr)
-			return
-		}
-	}
-	// Select it
-	f.fontFamily = familyStr
-	f.fontStyle = styleStr
-	f.fontSizePt = size
-	f.fontSize = size / f.k
-	f.currentFont = f.fonts[fontKey]
-	if f.currentFont.Tp == "UTF8" {
-		f.isCurrentUTF8 = true
-	} else {
-		f.isCurrentUTF8 = false
-	}
-	if f.page > 0 {
-		f.outf("BT /F%s %.2f Tf ET", f.currentFont.i, f.fontSizePt)
-	}
-}
-
-// GetFontFamily returns the family of the current font. See SetFont() for details.
 func (f *Fpdf) GetFontFamily() string {
 	return f.fontFamily
 }
@@ -363,72 +256,6 @@ func (f *Fpdf) GetFontStyle() string {
 // SetFontStyle sets the style of the current font. See also SetFont()
 func (f *Fpdf) SetFontStyle(styleStr string) {
 	f.SetFont(f.fontFamily, styleStr, f.fontSizePt)
-}
-
-// SetFontSize defines the size of the current font. Size is specified in
-// points (1/ 72 inch). See also SetFontUnitSize().
-func (f *Fpdf) SetFontSize(size float64) {
-	f.fontSizePt = size
-	f.fontSize = size / f.k
-	if f.page > 0 {
-		f.outf("BT /F%s %.2f Tf ET", f.currentFont.i, f.fontSizePt)
-	}
-}
-
-// SetFontUnitSize defines the size of the current font. Size is specified in
-// the unit of measure specified in New(). See also SetFontSize().
-func (f *Fpdf) SetFontUnitSize(size float64) {
-	f.fontSizePt = size * f.k
-	f.fontSize = size
-	if f.page > 0 {
-		f.outf("BT /F%s %.2f Tf ET", f.currentFont.i, f.fontSizePt)
-	}
-}
-
-// GetFontSize returns the size of the current font in points followed by the
-// size in the unit of measure specified in New(). The second value can be used
-// as a line height value in drawing operations.
-func (f *Fpdf) GetFontSize() (ptSize, unitSize float64) {
-	return f.fontSizePt, f.fontSize
-}
-
-// GetFontLoader returns the loader used to read font files (.json and .z) from
-// an arbitrary source.
-func (f *Fpdf) GetFontLoader() FontLoader {
-	return f.fontLoader
-}
-
-// SetFontLoader sets a loader used to read font files (.json and .z) from an
-// arbitrary source. If a font loader has been specified, it is used to load
-// the named font resources when AddFont() is called. If this operation fails,
-// an attempt is made to load the resources from the configured font directory
-// (see SetFontLocation()).
-func (f *Fpdf) SetFontLoader(loader FontLoader) {
-	f.fontLoader = loader
-}
-
-// AddFont imports a TrueType, OpenType or Type1 font and makes it available.
-// It is necessary to generate a font definition file first with the makefont
-// utility. It is not necessary to call this function for the core PDF fonts
-// (courier, helvetica, times, zapfdingbats).
-//
-// The JSON definition file (and the font file itself when embedding) must be
-// present in the font directory. If it is not found, the error "Could not
-// include font definition file" is set.
-//
-// family specifies the font family. The name can be chosen arbitrarily. If it
-// is a standard family name, it will override the corresponding font. This
-// string is used to subsequently set the font with the SetFont method.
-//
-// style specifies the font style. Acceptable values are (case insensitive) the
-// empty string for regular style, "B" for bold, "I" for italic, or "BI" or
-// "IB" for bold and italic combined.
-//
-// fileStr specifies the base name with ".json" extension of the font
-// definition file to be added. The file will be loaded from the font directory
-// specified in the call to New() or SetFontLocation().
-func (f *Fpdf) AddFont(familyStr, styleStr, fileStr string) {
-	f.addFont(fontFamilyEscape(familyStr), styleStr, fileStr, false)
 }
 
 // AddUTF8Font imports a TrueType font with utf-8 symbols and makes it available.
@@ -534,23 +361,7 @@ func (f *Fpdf) addFont(familyStr, styleStr, fileStr string, isUTF8 bool) {
 			fontType: "UTF8",
 		}
 	} else {
-		if f.fontLoader != nil {
-			reader, err := f.fontLoader.Open(fileStr)
-			if err == nil {
-				f.AddFontFromReader(familyStr, styleStr, reader)
-				if closer, ok := reader.(io.Closer); ok {
-					closer.Close()
-				}
-				return
-			}
-		}
-
-		// If fileStr is already an absolute path, use it directly
-		// Otherwise, join it with the fonts path
-		if !filepath.IsAbs(fileStr) {
-			fileStr = path.Join(f.fontsPath, fileStr)
-		}
-		data, err := f.readFile(fileStr)
+		data, err := f.fontLoader(fileStr)
 		if err != nil {
 			f.err = err
 			return
@@ -574,14 +385,7 @@ func (f *Fpdf) SetFontLocation(fontDirStr string) {
 
 func (f *Fpdf) loadFontFile(name string) ([]byte, error) {
 	if f.fontLoader != nil {
-		reader, err := f.fontLoader.Open(name)
-		if err == nil {
-			data, err := io.ReadAll(reader)
-			if closer, ok := reader.(io.Closer); ok {
-				closer.Close()
-			}
-			return data, err
-		}
+		return f.fontLoader(name)
 	}
 	return f.readFile(path.Join(f.fontsPath, name))
 }

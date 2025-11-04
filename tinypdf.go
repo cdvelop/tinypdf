@@ -5,8 +5,9 @@ import (
 )
 
 type TinyPDF struct {
-	Fpdf   *fpdf.Fpdf
-	logger func(message ...any)
+	Fpdf       *fpdf.Fpdf
+	logger     func(message ...any)
+	fontLoader func(fontPath string) ([]byte, error)
 }
 
 // Log escribe mensajes de log según el entorno
@@ -28,6 +29,7 @@ func New(options ...any) *TinyPDF {
 	options = append(options, fpdf.WriteFileFunc(tp.writeFile))
 	options = append(options, fpdf.ReadFileFunc(tp.readFile))
 	options = append(options, fpdf.FileSizeFunc(tp.fileSize))
+	options = append(options, tp.fontLoader)
 
 	tp.Fpdf = fpdf.New(options...)
 

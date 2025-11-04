@@ -5,8 +5,11 @@ package tinypdf
 
 import (
 	"encoding/base64"
-	. "github.com/cdvelop/tinystring"
+	"fmt"
 	"syscall/js"
+
+	"github.com/cdvelop/fetchgo"
+	. "github.com/cdvelop/tinystring"
 )
 
 // initIO inicializa las funciones de IO para entorno frontend (wasm)
@@ -17,6 +20,47 @@ func (tp *TinyPDF) initIO() {
 		if !console.IsUndefined() {
 			console.Call("log", Translate(message...))
 		}
+	}
+
+	// Inicializar fontLoader para frontend usando fetchgo
+	tp.fontLoader = tp.loadFontFromURL
+}
+
+// loadFontFromURL loads TTF fonts from current domain using fetchgo
+func (tp *TinyPDF) loadFontFromURL(fontPath string) ([]byte, error) {
+	location := js.Global().Get("location")
+	if location.IsUndefined() {
+		return nil, fmt.Errorf("window.location not available")
+	}
+
+	origin := location.Get("origin").String()
+	fullURL := origin + "/" + fontPath
+
+	client := &fetchgo.Client{
+		RequestType: fetchgo.RequestRaw,
+	}
+
+	resultChan := make(chan []byte, 1)
+	errorChan := make(chan error, 1)
+
+	client.SendRequest("GET", fullURL, nil, func(result any, err error) {
+		if err != nil {
+			errorChan <- fmt.Errorf("failed to fetch font %s: %w", fontPath, err)
+			return
+		}
+
+		if fontData, ok := result.([]byte); ok {
+			resultChan <- fontData
+		} else {
+			errorChan <- fmt.Errorf("unexpected result type from fetchgo: %T", result)
+		}
+	})
+
+	select {
+	case data := <-resultChan:
+		return data, nil
+	case err := <-errorChan:
+		return nil, err
 	}
 }
 

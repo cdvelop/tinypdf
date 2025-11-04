@@ -43,9 +43,14 @@ func TtfParse(fileStr string, readFile func(string) ([]byte, error)) (TtfRec Ttf
 	if err != nil {
 		return
 	}
+	return TtfParseBytes(data)
+}
 
+// TtfParseBytes extracts various metrics from a TrueType font byte data.
+// This is a wrapper around TtfParse for direct []byte input.
+func TtfParseBytes(fontData []byte) (TtfRec TtfType, err error) {
 	var t ttfParser
-	t.file = bytes.NewReader(data)
+	t.file = bytes.NewReader(fontData)
 
 	version, err := t.ReadStr(4)
 	if err != nil {

@@ -1,2 +1,4 @@
+github.com/cdvelop/fetchgo v0.0.10 h1:Re/A+gnbEW0XhiDWGJE6JLEcqXutxXEBKeXfo9t/HqE=
+github.com/cdvelop/fetchgo v0.0.10/go.mod h1:XeFlJRLtrH5aeJAGXJbqYp1WDEOFe+TH0MZArhFXTpQ=
 github.com/cdvelop/tinystring v0.10.2 h1:1451YriIyN1sODCOLOAt8RJqHuqbPzCD4dYPoqvwAQM=
 github.com/cdvelop/tinystring v0.10.2/go.mod h1:v6+hdP7eaOZn9qoaPm4GQnX8cRzUzD2mEjILAkPLkyo=

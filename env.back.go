@@ -14,6 +14,11 @@ func (tp *TinyPDF) initIO() {
 	tp.logger = func(message ...any) {
 		fmt.Println(message...)
 	}
+
+	// Inicializar fontLoader para backend usando os.ReadFile
+	tp.fontLoader = func(fontPath string) ([]byte, error) {
+		return os.ReadFile(fontPath)
+	}
 }
 
 // writeFile escribe un archivo en el sistema de archivos usando os

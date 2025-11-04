@@ -218,19 +218,13 @@ func (f *Fpdf) UnicodeTranslatorFromDescriptor(cpStr string) (rep func(string) s
 		if len(cpStr) == 0 {
 			cpStr = "cp1252"
 		}
-		emb, err := embFS.Open("font_embed/" + cpStr + ".map")
-		if err == nil {
-			defer emb.Close()
-			rep, f.err = UnicodeTranslator(emb)
+		// Use f.readFile to read the font descriptor file
+		var data []byte
+		data, f.err = f.readFile(PathJoin(f.fontsPath, cpStr, ".map").String())
+		if f.err == nil {
+			rep, f.err = UnicodeTranslatorFromBytes(data)
 		} else {
-			// Use f.readFile to read the font descriptor file
-			var data []byte
-			data, f.err = f.readFile(PathJoin(f.fontsPath, cpStr, ".map").String())
-			if f.err == nil {
-				rep, f.err = UnicodeTranslatorFromBytes(data)
-			} else {
-				rep = doNothing
-			}
+			rep = doNothing
 		}
 	} else {
 		rep = doNothing

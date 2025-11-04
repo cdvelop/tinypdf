@@ -52,6 +52,12 @@ func New(options ...any) (f *Fpdf) {
 	f.fileSize = func(filePath string) (int64, error) {
 		return 0, Errf("fileSize function not configured for this environment")
 	}
+	// Initialize fontLoader with a function that returns an error by default
+	f.fontLoader = func(fontPath string) ([]byte, error) {
+		return nil, Errf("fontLoader function not configured for this environment")
+	}
+	// Initialize fontCache as empty slice
+	f.fontCache = make([]fontCacheEntry, 0, 8)
 
 	for _, opt := range options {
 		switch v := opt.(type) {
@@ -75,7 +81,8 @@ func New(options ...any) (f *Fpdf) {
 			f.readFile = v
 		case FileSizeFunc:
 			f.fileSize = v
-
+		case func(string) ([]byte, error):
+			f.fontLoader = v
 		}
 	}
 	if initType != nil {
@@ -126,15 +133,6 @@ func New(options ...any) (f *Fpdf) {
 	f.ws = 0
 	// Set fontsPath instance
 	f.fontsPath = f.rootDirectory.MakePath(string(f.fontsDirName))
-
-	// Core fonts
-	f.coreFonts = map[string]bool{
-		"courier":      true,
-		"helvetica":    true,
-		"times":        true,
-		"symbol":       true,
-		"zapfdingbats": true,
-	}
 	// Scale factor
 	switch f.unitType {
 	case POINT:
@@ -1267,6 +1265,24 @@ func (f *Fpdf) write(h float64, txtStr string, link int, linkStr string) {
 			f.CellFormat(l/1000*f.fontSize, h, s[j:], "", 0, "", false, link, linkStr)
 		}
 	}
+}
+
+// getCachedFont checks if a font with the given path is already in the cache.
+func (f *Fpdf) getCachedFont(fontPath string) ([]byte, bool) {
+	for i := 0; i < len(f.fontCache); i++ {
+		if f.fontCache[i].path == fontPath {
+			return f.fontCache[i].data, true
+		}
+	}
+	return nil, false
+}
+
+// addFontToCache adds a font's data to the cache.
+func (f *Fpdf) addFontToCache(fontPath string, data []byte) {
+	f.fontCache = append(f.fontCache, fontCacheEntry{
+		path: fontPath,
+		data: data,
+	})
 }
 
 // Write prints text from the current position. When the right margin is

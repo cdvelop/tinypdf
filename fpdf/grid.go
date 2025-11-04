@@ -47,7 +47,7 @@ func (st StateType) Put(pdf *Fpdf) {
 	pdf.SetFillColor(st.clrFill.R, st.clrFill.G, st.clrFill.B)
 	pdf.SetTextColor(st.clrText.R, st.clrText.G, st.clrText.B)
 	pdf.SetLineWidth(st.lineWd)
-	pdf.SetFontUnitSize(st.fontSize)
+	pdf.SetFontSize(st.fontSize)
 	pdf.SetAlpha(st.alpha, st.blendStr)
 	pdf.SetCellMargin(st.cellMargin)
 }
@@ -316,7 +316,7 @@ func (g GridType) Grid(pdf *Fpdf) {
 		halfTextSz = textSz / 2
 
 		pdf.SetAutoPageBreak(false, 0)
-		pdf.SetFontUnitSize(textSz)
+		pdf.SetFontSize(textSz)
 		strOfs = pdf.GetStringWidth("0")
 		pdf.SetFillColor(255, 255, 255)
 		pdf.SetCellMargin(0)
