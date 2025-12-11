@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/tinypdf/fpdf"
-	"github.com/cdvelop/tinypdf/fpdf/internal/files"
+	"github.com/tinywasm/pdf/fpdf"
+	"github.com/tinywasm/pdf/fpdf/internal/files"
 )
 
 func loremList() []string {
@@ -1402,7 +1402,7 @@ func Test_CellFormat_align(t *testing.T) {
 				pdf.CellFormat(170, 257, rec.txt, borderStr, 0, rec.align, false, 0, linkStr)
 				borderStr = ""
 			}
-			linkStr = "https://github.com/cdvelop/tinypdf"
+			linkStr = "https://github.com/tinywasm/pdf"
 		}
 	}
 	pdf := NewDocPdfTest() // A4 210.0 x 297.0
@@ -1610,7 +1610,7 @@ func Test_RegisterImageReader(t *testing.T) {
 		wd       = 210
 		ht       = 297
 		fontSize = 15
-		urlStr   = "https://github.com/cdvelop/tinypdf/raw/main/image/fpdf.png"
+		urlStr   = "https://github.com/tinywasm/pdf/raw/main/image/fpdf.png"
 		msgStr   = `Images from the web can be easily embedded when a PDF document is generated.`
 	)
 

@@ -1,7 +1,7 @@
 package fpdf
 
 import (
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 func (f *Fpdf) pngColorSpace(ct byte) (colspace string, colorVal int) {

@@ -1,9 +1,9 @@
-package tinypdf
+package pdf
 
 import (
 	"testing"
 
-	"github.com/cdvelop/tinystring"
+	"github.com/tinywasm/fmt"
 )
 
 // Test para verificar el problema con pdfVersion.String()
@@ -12,7 +12,7 @@ func TestPDFVersionFormatting(t *testing.T) {
 	// pdfVersion es un tipo interno, pero podemos probar el formateo
 
 	// Simular lo que hace putheader()
-	result := tinystring.Fmt("%%PDF-%s", "1.3")
+	result := fmt.Fmt("%%PDF-%s", "1.3")
 	expected := "%PDF-1.3"
 
 	if result != expected {
@@ -25,7 +25,7 @@ func TestPDFVersionFormatting(t *testing.T) {
 	type customVersion string
 
 	ver := customVersion("1.4")
-	result2 := tinystring.Fmt("%%PDF-%s", ver)
+	result2 := fmt.Fmt("%%PDF-%s", ver)
 	t.Logf("Resultado con custom type: %q", result2)
 
 	if result2 == "%PDF-" {

@@ -6,7 +6,7 @@ import (
 	"math"
 	"sort"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 // flags

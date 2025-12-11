@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cdvelop/tinypdf/fpdf"
+	"github.com/tinywasm/pdf/fpdf"
 )
 
 func errPrintf(fmtStr string, args ...any) {

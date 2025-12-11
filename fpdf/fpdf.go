@@ -11,7 +11,7 @@ import (
 	"math"
 	"time"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 var gl struct {

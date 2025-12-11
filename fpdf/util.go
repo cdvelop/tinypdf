@@ -7,7 +7,7 @@ import (
 	"math"
 	"os"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 func must(n int, err error) {

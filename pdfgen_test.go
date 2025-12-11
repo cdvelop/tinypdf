@@ -1,11 +1,11 @@
-package tinypdf
+package pdf
 
 import (
 	"bytes"
 	"os"
 	"testing"
 
-	"github.com/cdvelop/tinypdf/fpdf"
+	"github.com/tinywasm/pdf/fpdf"
 )
 
 func TestGenerateSamplePDF(t *testing.T) {

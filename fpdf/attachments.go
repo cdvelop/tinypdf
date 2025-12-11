@@ -8,7 +8,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 // Attachment defines a content to be included in the pdf, in one

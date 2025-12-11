@@ -1,11 +1,11 @@
 //go:build wasm
 // +build wasm
 
-package tinypdf
+package pdf
 
 import (
 	"encoding/base64"
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 	"syscall/js"
 )
 

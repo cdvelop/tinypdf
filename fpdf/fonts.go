@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 // AddFontFromBytes imports a TrueType, OpenType or Type1 font from static

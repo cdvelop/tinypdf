@@ -45,7 +45,7 @@ err = Errf("invalid format: %s", value).Error()
 ```
 
 **Implementation Steps:**
-1. Add `tinystring` import: `import . "github.com/cdvelop/tinystring"`
+1. Add `tinystring` import: `import . "github.com/tinywasm/fmt"`
 2. Replace all `fmt.Errorf()` calls with `Errf().Error()`
 3. Remove `"fmt"` import when no other fmt usage remains
 4. Test functionality to ensure error messages remain consistent
@@ -186,7 +186,7 @@ str := Convert(3.14159).Round(2).String()
    - `"errors"`
    - `"strings"`
 2. Ensure only essential imports remain (io, os, etc.)
-3. Add single tinystring import: `import . "github.com/cdvelop/tinystring"`
+3. Add single tinystring import: `import . "github.com/tinywasm/fmt"`
 
 ## File-by-File Migration Checklist
 

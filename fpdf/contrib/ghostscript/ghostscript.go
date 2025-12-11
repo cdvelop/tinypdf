@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 
-	tinypdf "github.com/cdvelop/tinypdf/fpdf"
-	. "github.com/cdvelop/tinystring"
+	tinypdf "github.com/tinywasm/pdf/fpdf"
+	. "github.com/tinywasm/fmt"
 )
 
 func report(fileStr string, err error) {
@@ -26,8 +26,8 @@ func report(fileStr string, err error) {
 	}
 }
 
-func newPdf() (pdf *tinypdf.Fpdf) {
-	pdf = tinypdf.New("mm", "A4", "../../font")
+func newPdf() (pdf *pdf.Fpdf) {
+	pdf = pdf.New("mm", "A4", "../../font")
 	pdf.SetCompression(false)
 	pdf.AddFont("Calligrapher", "", "calligra.json")
 	pdf.AddPage()

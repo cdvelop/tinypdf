@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/tinypdf/fpdf"
-	. "github.com/cdvelop/tinystring"
+	"github.com/tinywasm/pdf/fpdf"
+	. "github.com/tinywasm/fmt"
 )
 
 var floatEpsilon = math.Nextafter(1.0, 2.0) - 1.0

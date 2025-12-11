@@ -1,1 +1,1 @@
-package fpdf // import "github.com/cdvelop/tinypdf"
+package fpdf // import "github.com/tinywasm/pdf"

@@ -1,10 +1,10 @@
-package tinypdf
+package pdf
 
 import (
 	"fmt"
 	"io"
 
-	"github.com/cdvelop/tinypdf/fpdf"
+	"github.com/tinywasm/pdf/fpdf"
 )
 
 // GenerateSamplePDF genera un PDF de ejemplo con el título especificado

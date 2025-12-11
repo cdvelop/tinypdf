@@ -414,7 +414,7 @@ func (tp *TinyPDF) initIO() {
 
 **Important:** Add dependency to `go.mod`:
 ```bash
-go get github.com/cdvelop/fetchgo
+go get github.com/tinywasm/fetch
 ```
 
 #### Add imports
@@ -424,7 +424,7 @@ go get github.com/cdvelop/fetchgo
 import (
     "fmt"
     "syscall/js"
-    "github.com/cdvelop/fetchgo"
+    "github.com/tinywasm/fetch"
 )
 ```
 

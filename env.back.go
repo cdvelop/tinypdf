@@ -1,7 +1,7 @@
 //go:build !wasm
 // +build !wasm
 
-package tinypdf
+package pdf
 
 import (
 	"fmt"

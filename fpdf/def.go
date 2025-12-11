@@ -10,7 +10,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/cdvelop/tinystring"
+	"github.com/tinywasm/fmt"
 )
 
 // Version of FPDF from which this package is derived
@@ -296,7 +296,7 @@ func generateImageID(info *ImageInfoType) (string, error) {
 	enc.f64(info.dpi)
 	enc.str(info.i)
 
-	return tinystring.Fmt("%x", sha.Sum(nil)), nil
+	return fmt.Fmt("%x", sha.Sum(nil)), nil
 }
 
 // PointConvert returns the value of pt, expressed in points (1/72 inch), as a
@@ -541,7 +541,7 @@ type pdfVersion uint16
 
 func pdfVersionFrom(maj, min uint) pdfVersion {
 	if min > 255 {
-		panic(tinystring.Err(tinystring.D.Format, tinystring.D.Invalid, maj, min))
+		panic(fmt.Err(fmt.D.Format, fmt.D.Invalid, maj, min))
 	}
 	return pdfVersion(uint16(maj)<<8 | uint16(min))
 }
@@ -549,7 +549,7 @@ func pdfVersionFrom(maj, min uint) pdfVersion {
 func (v pdfVersion) String() string {
 	maj := int64(byte(v >> 8))
 	min := int64(byte(v))
-	return tinystring.Fmt("%d.%d", maj, min)
+	return fmt.Fmt("%d.%d", maj, min)
 }
 
 type encType struct {
@@ -668,7 +668,7 @@ func generateFontID(fdt fontDefType) (string, error) {
 	// file can be different if generated in different instance
 	fdt.File = ""
 	b, err := json.Marshal(&fdt)
-	return tinystring.Fmt("%x", sha1.Sum(b)), err
+	return fmt.Fmt("%x", sha1.Sum(b)), err
 }
 
 type fontInfoType struct {

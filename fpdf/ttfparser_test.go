@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cdvelop/tinypdf/fpdf"
+	"github.com/tinywasm/pdf/fpdf"
 )
 
 func ExampleTtfParse() {

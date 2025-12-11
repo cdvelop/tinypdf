@@ -5,7 +5,7 @@ import (
 	"io"
 	"sort"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 // PageSize returns the width and height of the specified page in the units

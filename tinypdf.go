@@ -1,7 +1,7 @@
-package tinypdf
+package pdf
 
 import (
-	"github.com/cdvelop/tinypdf/fpdf"
+	"github.com/tinywasm/pdf/fpdf"
 )
 
 type TinyPDF struct {

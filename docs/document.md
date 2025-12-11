@@ -47,13 +47,13 @@ encodings for languages that have fewer than 256 glyphs.
 To install the package on your system, run
 
 ```shell
-go get github.com/cdvelop/docpdf
+go get github.com/tinywasm/docpdf
 ```
 
 Later, to receive updates, run
 
 ```shell
-go get -u -v github.com/cdvelop/docpdf/...
+go get -u -v github.com/tinywasm/docpdf/...
 ```
 
 ## Quick Start
@@ -243,27 +243,27 @@ for file attachments and annotations.
 [badge-github]: https://img.shields.io/badge/project-Git_Hub-blue.svg
 [badge-mit]: https://img.shields.io/badge/license-MIT-blue.svg
 [badge-no-maintain]: http://unmaintained.tech/badge.svg
-[badge-report]: https://goreportcard.com/badge/github.com/cdvelop/docpdf
+[badge-report]: https://goreportcard.com/badge/github.com/tinywasm/docpdf
 [badge-status]: https://travis-ci.org/go-pdf/tinypdf.svg?branch=master
 [coverage]: https://blog.golang.org/cover
 [dfont]: http://dejavu-fonts.org/
 [draw2d-site]: https://github.com/llgcode/draw2d
 [effective-go]: https://golang.org/doc/effective_go.html 
 [docpdf-site]: http://www.tinypdf.org/
-[docpdf-test]: https://github.com/cdvelop/docpdf/blob/master/fpdf_test.go
+[docpdf-test]: https://github.com/tinywasm/docpdf/blob/master/fpdf_test.go
 [gfont]: https://fonts.google.com/
-[github]: https://github.com/cdvelop/docpdf
-[godoc]: https://godoc.org/github.com/cdvelop/docpdf
+[github]: https://github.com/tinywasm/docpdf
+[godoc]: https://godoc.org/github.com/tinywasm/docpdf
 [issue109]: https://github.com/phpdave11/gofpdf/issues/109
 [jung]: https://github.com/phpdave11/
-[last-commit]: https://github.com/cdvelop/docpdf/commit/603f56990463f011cb1dbb64ef7f872c1adc009a
+[last-commit]: https://github.com/tinywasm/docpdf/commit/603f56990463f011cb1dbb64ef7f872c1adc009a
 [license]: https://raw.githubusercontent.com/go-pdf/docpdf/master/LICENSE
 [lint]: https://github.com/golang/lint
-[logo]: https://github.com/cdvelop/docpdf/raw/master/image/logo_gofpdf.jpg
+[logo]: https://github.com/tinywasm/docpdf/raw/master/image/logo_gofpdf.jpg
 [noto]: https://github.com/jsntn/webfonts/blob/master/NotoSansSC-Regular.ttf
 [pr]: https://help.github.com/articles/using-pull-requests/
-[report]: https://goreportcard.com/report/github.com/cdvelop/docpdf
+[report]: https://goreportcard.com/report/github.com/tinywasm/docpdf
 [status]: https://travis-ci.org/go-pdf/docpdf
-[test]: https://github.com/cdvelop/docpdf/blob/master/fpdf_test.go
+[test]: https://github.com/tinywasm/docpdf/blob/master/fpdf_test.go
 [unmaintained]: http://unmaintained.tech/
 [vet]: https://golang.org/cmd/vet/

@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 func baseNoExt(fileStr string) string {

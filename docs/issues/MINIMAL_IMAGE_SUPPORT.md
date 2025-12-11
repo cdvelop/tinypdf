@@ -193,7 +193,7 @@ package fpdf
 import (
     "syscall/js"
     
-    . "github.com/cdvelop/tinystring"
+    . "github.com/tinywasm/fmt"
 )
 
 type BrowserImageProcessor struct {
@@ -381,7 +381,7 @@ func (f *Fpdf) RegisterImageReader(imgName, tp string, r io.Reader) (info *Image
 
 package fpdf
 
-import . "github.com/cdvelop/tinystring"
+import . "github.com/tinywasm/fmt"
 
 func (info *ImageInfoType) GobEncode() (buf []byte, err error) {
     return nil, Err("error", "gob encoding not supported in WASM")
@@ -457,7 +457,7 @@ echo "Reduction: ~200-300 KB"
 
 package fpdf
 
-import "github.com/cdvelop/tinystring"
+import "github.com/tinywasm/fmt"
 
 func (f *Fpdf) Image(...) {
     f.err = tinystring.Fmt("error", "images not supported in WASM build")

@@ -263,7 +263,7 @@ package main
 
 import (
     "syscall/js"
-    "github.com/cdvelop/tinystring"
+    "github.com/tinywasm/fmt"
 )
 
 type customVersion uint16

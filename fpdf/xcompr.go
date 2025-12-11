@@ -5,7 +5,7 @@ import (
 	"compress/zlib"
 	"sync"
 
-	. "github.com/cdvelop/tinystring"
+	. "github.com/tinywasm/fmt"
 )
 
 var xmem = xmempool{
