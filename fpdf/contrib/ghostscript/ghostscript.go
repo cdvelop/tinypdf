@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 
-	tinypdf "github.com/tinywasm/pdf/fpdf"
 	. "github.com/tinywasm/fmt"
+	fpdf "github.com/tinywasm/pdf/fpdf"
 )
 
 func report(fileStr string, err error) {
@@ -17,22 +17,22 @@ func report(fileStr string, err error) {
 		var info os.FileInfo
 		info, err = os.Stat(fileStr)
 		if err == nil {
-			Fmt("%s: OK, size %d\n", fileStr, info.Size())
+			Sprintf("%s: OK, size %d\n", fileStr, info.Size())
 		} else {
-			Fmt("%s: bad stat\n", fileStr)
+			Sprintf("%s: bad stat\n", fileStr)
 		}
 	} else {
-		Fmt("%s: %s\n", fileStr, err)
+		Sprintf("%s: %s\n", fileStr, err)
 	}
 }
 
-func newPdf() (pdf *pdf.Fpdf) {
-	pdf = pdf.New("mm", "A4", "../../font")
-	pdf.SetCompression(false)
-	pdf.AddFont("Calligrapher", "", "calligra.json")
-	pdf.AddPage()
-	pdf.SetFont("Calligrapher", "", 35)
-	pdf.Cell(0, 10, "Enjoy new fonts with FPDF!")
+func newPdf() (f *fpdf.Fpdf) {
+	f = fpdf.New("mm", "A4", "../../font")
+	f.SetCompression(false)
+	f.AddFont("Calligrapher", "", "calligra.json")
+	f.AddPage()
+	f.SetFont("Calligrapher", "", 35)
+	f.Cell(0, 10, "Enjoy new fonts with FPDF!")
 	return
 }
 

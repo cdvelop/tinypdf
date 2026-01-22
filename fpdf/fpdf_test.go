@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinywasm/pdf/fpdf"
+	fpdf "github.com/tinywasm/pdf/fpdf"
 	"github.com/tinywasm/pdf/fpdf/internal/files"
 )
 
@@ -1891,7 +1891,6 @@ func Test_DrawPath(t *testing.T) {
 	// Output:
 	// Successfully generated pdf/Test_DrawPath_fill.pdf
 }
-
 
 // Test_AddFontFromBytes demonstrate how to use embedded fonts from byte array
 func Test_AddFontFromBytes(t *testing.T) {

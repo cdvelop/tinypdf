@@ -265,7 +265,7 @@ func (utf *utf8FontFile) parseNAMETable() int {
 	namePosition := utf.SeekTable("name")
 	format := utf.readUint16()
 	if format != 0 {
-		println(Fmt("Illegal format %d", format))
+		println(Sprintf("Illegal format %d", format))
 		return format
 	}
 	nameCount := utf.readUint16()
@@ -332,7 +332,7 @@ func (utf *utf8FontFile) parseHEADTable() {
 	_ = utf.readUint16()
 	symbolDataFormat := utf.readUint16()
 	if symbolDataFormat != 0 {
-		println(Fmt("Unknown symbol data format %d", symbolDataFormat))
+		println(Sprintf("Unknown symbol data format %d", symbolDataFormat))
 		return
 	}
 }
@@ -350,7 +350,7 @@ func (utf *utf8FontFile) parseHHEATable() int {
 		utf.skip(24)
 		metricDataFormat := utf.readUint16()
 		if metricDataFormat != 0 {
-			println(Fmt("Unknown horizontal metric data format %d", metricDataFormat))
+			println(Sprintf("Unknown horizontal metric data format %d", metricDataFormat))
 			return 0
 		}
 		metricsCount = utf.readUint16()
@@ -897,7 +897,7 @@ func (utf *utf8FontFile) parseLOCATable(format, numSymbols int) {
 			utf.symbolPosition = append(utf.symbolPosition, arr[n+1])
 		}
 	} else {
-		println(Fmt("Unknown loca table format %d", format))
+		println(Sprintf("Unknown loca table format %d", format))
 		return
 	}
 }

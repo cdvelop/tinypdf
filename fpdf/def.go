@@ -296,7 +296,7 @@ func generateImageID(info *ImageInfoType) (string, error) {
 	enc.f64(info.dpi)
 	enc.str(info.i)
 
-	return fmt.Fmt("%x", sha.Sum(nil)), nil
+	return fmt.Sprintf("%x", sha.Sum(nil)), nil
 }
 
 // PointConvert returns the value of pt, expressed in points (1/72 inch), as a
@@ -549,7 +549,7 @@ func pdfVersionFrom(maj, min uint) pdfVersion {
 func (v pdfVersion) String() string {
 	maj := int64(byte(v >> 8))
 	min := int64(byte(v))
-	return fmt.Fmt("%d.%d", maj, min)
+	return fmt.Sprintf("%d.%d", maj, min)
 }
 
 type encType struct {
@@ -668,7 +668,7 @@ func generateFontID(fdt fontDefType) (string, error) {
 	// file can be different if generated in different instance
 	fdt.File = ""
 	b, err := json.Marshal(&fdt)
-	return fmt.Fmt("%x", sha1.Sum(b)), err
+	return fmt.Sprintf("%x", sha1.Sum(b)), err
 }
 
 type fontInfoType struct {

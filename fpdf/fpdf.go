@@ -26,7 +26,7 @@ type fmtBuffer struct {
 }
 
 func (b *fmtBuffer) printf(fmtStr string, args ...any) {
-	b.Buffer.WriteString(Fmt(fmtStr, args...))
+	b.Buffer.WriteString(Sprintf(fmtStr, args...))
 }
 
 func New(options ...any) (f *Fpdf) {

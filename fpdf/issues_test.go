@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"testing"
 
-	tinypdf "github.com/tinywasm/pdf/fpdf"
+	fpdf "github.com/tinywasm/pdf/fpdf"
 )
 
 func init() {
@@ -54,7 +54,7 @@ func TestIssue0116(t *testing.T) {
 		t.Fatalf("not expecting error when rendering text")
 	}
 
-	pdf = pdf.New(pdf.MM, "A4", "")
+	pdf = fpdf.New(fpdf.MM, "A4", "")
 	pdf.AddPage()
 	pdf.Cell(40, 10, "Not OK") // Font not set
 	if pdf.Error() == nil {
@@ -66,16 +66,16 @@ func TestIssue0116(t *testing.T) {
 // assigned to the FPDF instance error.
 func TestIssue0193(t *testing.T) {
 	var png []byte
-	var pdf *pdf.Fpdf
+	var pdf *fpdf.Fpdf
 	var err error
 	var rdr *bytes.Reader
 
 	png, err = os.ReadFile(ImageFile("sweden.png"))
 	if err == nil {
 		rdr = bytes.NewReader(png)
-		pdf = pdf.New(pdf.MM, "A4", "")
+		pdf = fpdf.New(fpdf.MM, "A4", "")
 		pdf.AddPage()
-		_ = pdf.RegisterImageOptionsReader("sweden", pdf.ImageOptions{ImageType: "png", ReadDpi: true}, rdr)
+		_ = pdf.RegisterImageOptionsReader("sweden", fpdf.ImageOptions{ImageType: "png", ReadDpi: true}, rdr)
 		err = pdf.Error()
 	}
 	if err != nil {
@@ -232,7 +232,7 @@ func TestSplitTextHandleCharacterNotInFontRange(t *testing.T) {
 
 func TestAFMFontParser(t *testing.T) {
 	const embed = true
-	err := pdf.MakeFont(
+	err := fpdf.MakeFont(
 		FontFile("cmmi10.pfb"),
 		FontFile("cp1252.map"),
 		FontsDirName(),

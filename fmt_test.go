@@ -12,7 +12,7 @@ func TestPDFVersionFormatting(t *testing.T) {
 	// pdfVersion es un tipo interno, pero podemos probar el formateo
 
 	// Simular lo que hace putheader()
-	result := fmt.Fmt("%%PDF-%s", "1.3")
+	result := fmt.Sprintf("%%PDF-%s", "1.3")
 	expected := "%PDF-1.3"
 
 	if result != expected {
@@ -25,7 +25,7 @@ func TestPDFVersionFormatting(t *testing.T) {
 	type customVersion string
 
 	ver := customVersion("1.4")
-	result2 := fmt.Fmt("%%PDF-%s", ver)
+	result2 := fmt.Sprintf("%%PDF-%s", ver)
 	t.Logf("Resultado con custom type: %q", result2)
 
 	if result2 == "%PDF-" {

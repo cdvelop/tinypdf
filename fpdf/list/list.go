@@ -42,11 +42,11 @@ func main() {
 				name = Convert(name).Replace("_", " ").String()
 				ok, showStr = matchHead(name, "Fpdf ")
 				if ok {
-					println(Fmt("[%s](%s)", showStr, path))
+					println(Sprintf("[%s](%s)", showStr, path))
 				} else {
 					ok, showStr = matchHead(name, "contrib ")
 					if ok {
-						println(Fmt("[%s](%s)", showStr, path))
+						println(Sprintf("[%s](%s)", showStr, path))
 					}
 				}
 			}

@@ -92,9 +92,9 @@ func (f *Fpdf) putAttachments() {
 func (f Fpdf) getEmbeddedFiles() string {
 	names := make([]string, len(f.attachments))
 	for i, as := range f.attachments {
-		names[i] = Fmt("(Attachement%d) %d 0 R ", i+1, as.objectNumber)
+		names[i] = Sprintf("(Attachement%d) %d 0 R ", i+1, as.objectNumber)
 	}
-	nameTree := Fmt("<< /Names [\n %s \n] >>", Convert(names).Join("\n").String())
+	nameTree := Sprintf("<< /Names [\n %s \n] >>", Convert(names).Join("\n").String())
 	return nameTree
 }
 
@@ -145,7 +145,7 @@ func (f *Fpdf) putAnnotationsAttachments() {
 func (f *Fpdf) putAttachmentAnnotationLinks(out *fmtBuffer, page int) {
 	for _, an := range f.pageAttachments[page] {
 		x1, y1, x2, y2 := an.x, an.y, an.x+an.w, an.y-an.h
-		as := Fmt("<< /Type /XObject /Subtype /Form /BBox [%.2f %.2f %.2f %.2f] /Length 0 >>",
+		as := Sprintf("<< /Type /XObject /Subtype /Form /BBox [%.2f %.2f %.2f %.2f] /Length 0 >>",
 			x1, y1, x2, y2)
 		as += "\nstream\nendstream"
 

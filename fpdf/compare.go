@@ -34,13 +34,13 @@ func gensort(Len int, Less func(int, int) bool, Swap func(int, int)) {
 func writeBytes(leadStr string, startPos int, sl []byte) {
 	var pos, max int
 	var b byte
-	out := Fmt("%s %07x", leadStr, startPos)
+	out := Sprintf("%s %07x", leadStr, startPos)
 	max = len(sl)
 	for pos < max {
 		out += " "
 		for k := 0; k < 8; k++ {
 			if pos < max {
-				out += Fmt(" %02x", sl[pos])
+				out += Sprintf(" %02x", sl[pos])
 			} else {
 				out += "   "
 			}
@@ -54,7 +54,7 @@ func writeBytes(leadStr string, startPos int, sl []byte) {
 		if b < 32 || b >= 128 {
 			b = '.'
 		}
-		out += Fmt("%c", b)
+		out += Sprintf("%c", b)
 		pos++
 	}
 	out += "|"

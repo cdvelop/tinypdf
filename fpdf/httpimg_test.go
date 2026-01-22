@@ -1,12 +1,12 @@
 package fpdf_test
 
 import (
-	tinypdf "github.com/tinywasm/pdf/fpdf"
+	fpdf "github.com/tinywasm/pdf/fpdf"
 	"github.com/tinywasm/pdf/fpdf/contrib/httpimg"
 )
 
 func ExampleRegister() {
-	pdf := NewDocPdfTest("mm", "A4", pdf.Landscape)
+	pdf := NewDocPdfTest("mm", "A4", fpdf.Landscape)
 	pdf.SetFont("Helvetica", "", 12)
 	pdf.SetFillColor(200, 200, 220)
 	pdf.AddPage()

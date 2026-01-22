@@ -6,42 +6,42 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tinywasm/fmt"
+	tf "github.com/tinywasm/fmt"
 
-	tinypdf "github.com/tinywasm/pdf/fpdf"
+	fpdf "github.com/tinywasm/pdf/fpdf"
 )
 
-var rootTestDir pdf.RootDirectoryType
+var rootTestDir fpdf.RootDirectoryType
 
 // setRoot assigns the relative path to the rootTestDir directory based on current working
 // directory
 func init() {
 	wdStr, err := os.Getwd()
 	if err == nil {
-		rootTestDir = pdf.RootDirectoryType(wdStr)
+		rootTestDir = fpdf.RootDirectoryType(wdStr)
 	} else {
 		panic(err)
 	}
 }
 
 // default docpdf init for testing
-func NewDocPdfTest(options ...any) *pdf.Fpdf {
+func NewDocPdfTest(options ...any) *fpdf.Fpdf {
 
 	// add root directory to the options
 	options = append(options, rootTestDir)
 
 	// add default writeFile function using os for tests
-	options = append(options, pdf.WriteFileFunc(func(filePath string, content []byte) error {
+	options = append(options, fpdf.WriteFileFunc(func(filePath string, content []byte) error {
 		return os.WriteFile(filePath, content, 0644)
 	}))
 
 	// add default readFile function using os for tests
-	options = append(options, pdf.ReadFileFunc(func(filePath string) ([]byte, error) {
+	options = append(options, fpdf.ReadFileFunc(func(filePath string) ([]byte, error) {
 		return os.ReadFile(filePath)
 	}))
 
 	// add default fileSize function using os for tests
-	options = append(options, pdf.FileSizeFunc(func(filePath string) (int64, error) {
+	options = append(options, fpdf.FileSizeFunc(func(filePath string) (int64, error) {
 		info, err := os.Stat(filePath)
 		if err != nil {
 			return 0, err
@@ -49,7 +49,7 @@ func NewDocPdfTest(options ...any) *pdf.Fpdf {
 		return info.Size(), nil
 	}))
 
-	pdf := pdf.New(options...)
+	pdf := fpdf.New(options...)
 	pdf.SetCompression(false)
 	pdf.SetCatalogSort(true)
 	pdf.SetCreationDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
@@ -122,7 +122,7 @@ func referenceCompare(fileStr string) (err error) {
 	err = os.MkdirAll(refDirStr, 0755)
 	if err == nil {
 		refFileStr = filepath.Join(refDirStr, baseFileStr)
-		err = pdf.ComparePDFFiles(fileStr, refFileStr, false)
+		err = fpdf.ComparePDFFiles(fileStr, refFileStr, false)
 	}
 	return
 }
@@ -170,7 +170,7 @@ func SummaryCompare(err error, fileStr string) {
 // ExampleFilename tests the Filename() and Summary() functions.
 func ExampleFilename() {
 	fileStr := Filename("example")
-	Summary(fmt.Err("printer on fire"), fileStr)
+	Summary(tf.Err("printer on fire"), fileStr)
 	// Output:
 	// printer on fire
 }

@@ -30,7 +30,7 @@ func round(f float64) int {
 }
 
 func sprintf(fmtStr string, args ...any) string {
-	return Fmt(fmtStr, args...)
+	return Sprintf(fmtStr, args...)
 }
 
 // fileExist returns true if the specified normal file exists

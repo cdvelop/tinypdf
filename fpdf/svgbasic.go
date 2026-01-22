@@ -150,7 +150,7 @@ func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, 
 				case 'Z', 'z': // closepath instruction (takes no arguments)
 					segs = append(segs, seg)
 				default:
-					err = Err(D.Invalid, Fmt("SVG path command at position %d, got %s", j, str))
+					err = Err(D.Invalid, Sprintf("SVG path command at position %d, got %s", j, str))
 				}
 			} else {
 				seg.Arg[argJ], err = strconv.ParseFloat(str, 64)
@@ -169,7 +169,7 @@ func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, 
 		if argCount == 0 {
 			absolutizePath(segs)
 		} else {
-			err = Err(D.Invalid, Fmt("expecting additional (%d) numeric arguments", argCount))
+			err = Err(D.Invalid, Sprintf("expecting additional (%d) numeric arguments", argCount))
 		}
 	}
 	return
@@ -293,7 +293,7 @@ func SVGBasicParse(buf []byte) (sig SVGBasicType, err error) {
 				sig.Segments = append(sig.Segments, segs)
 			}
 		} else {
-			err = Err(D.Invalid, Fmt("unacceptable values for basic SVG extent: %.2f x %.2f", sig.Wd, sig.Ht))
+			err = Err(D.Invalid, Sprintf("unacceptable values for basic SVG extent: %.2f x %.2f", sig.Wd, sig.Ht))
 		}
 	}
 	return

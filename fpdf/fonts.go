@@ -76,7 +76,7 @@ func (f *Fpdf) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFile
 
 		err := utf8File.parseFile()
 		if err != nil {
-			println(Fmt("get metrics Error: %v", err))
+			println(Sprintf("get metrics Error: %v", err))
 			return
 		}
 		desc := FontDescType{
@@ -737,7 +737,7 @@ func (f *Fpdf) putfonts() {
 				delete(CodeSignDictionary, 0)
 
 				f.newobj()
-				f.out(Fmt("<</Type /Font\n/Subtype /Type0\n/BaseFont /%s\n/Encoding /Identity-H\n/DescendantFonts [%d 0 R]\n/ToUnicode %d 0 R>>\nendobj", fontName, f.n+1, f.n+2))
+				f.out(Sprintf("<</Type /Font\n/Subtype /Type0\n/BaseFont /%s\n/Encoding /Identity-H\n/DescendantFonts [%d 0 R]\n/ToUnicode %d 0 R>>\nendobj", fontName, f.n+1, f.n+2))
 
 				f.newobj()
 				f.out("<</Type /Font\n/Subtype /CIDFontType2\n/BaseFont /" + fontName + "\n" +

@@ -1045,7 +1045,7 @@ func (f *Fpdf) putOutputIntents() {
 	for index, oi := range f.outputIntents {
 		infoSegment := ""
 		if oi.Info != "" {
-			infoSegment = Fmt("/Info (%s) ", oi.Info)
+			infoSegment = Sprintf("/Info (%s) ", oi.Info)
 		}
 		f.outf(
 			`<< /Type /OutputIntent /S /%s /OutputConditionIdentifier (%s) %s/DestOutputProfile %d 0 R >>`,
