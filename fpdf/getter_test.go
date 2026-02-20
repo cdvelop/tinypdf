@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinywasm/pdf/fpdf"
 	. "github.com/tinywasm/fmt"
+	"github.com/tinywasm/pdf/fpdf"
 )
 
 var floatEpsilon = math.Nextafter(1.0, 2.0) - 1.0
@@ -263,7 +263,7 @@ func (tfl *testFontLoader) Open(name string) (io.Reader, error) {
 }
 
 func TestGetFontLoader(t *testing.T) {
-	testErr := Err(D.Invalid, "TestGetFontLoader error")
+	testErr := Err("error", "invalid", "TestGetFontLoader")
 	tfl := &testFontLoader{
 		reader: strings.NewReader("TestGetFontLoader reader"),
 		err:    testErr,

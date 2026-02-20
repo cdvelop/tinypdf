@@ -146,7 +146,7 @@ func New(options ...any) (f *Fpdf) {
 	case IN:
 		f.k = 72.0
 	default:
-		f.err = Err(D.Invalid, D.Format)
+		f.err = Err("format", "invalid")
 		return
 	}
 	f.stdPageSizes = make(map[string]PageSize)
@@ -190,7 +190,7 @@ func New(options ...any) (f *Fpdf) {
 		f.w = f.defPageSize.Ht / f.k
 		f.h = f.defPageSize.Wd / f.k
 	default:
-		f.err = Err(D.Invalid, D.Format)
+		f.err = Err("format", "invalid")
 		return
 	}
 	f.curOrientation = f.defOrientation

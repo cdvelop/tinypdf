@@ -541,7 +541,7 @@ type pdfVersion uint16
 
 func pdfVersionFrom(maj, min uint) pdfVersion {
 	if min > 255 {
-		panic(fmt.Err(fmt.D.Format, fmt.D.Invalid, maj, min))
+		panic(fmt.Err("format", "invalid", maj, min))
 	}
 	return pdfVersion(uint16(maj)<<8 | uint16(min))
 }
