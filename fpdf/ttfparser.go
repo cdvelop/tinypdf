@@ -35,15 +35,8 @@ type ttfParser struct {
 	numGlyphs        uint16
 }
 
-// TtfParse extracts various metrics from a TrueType font file.
-func TtfParse(fileStr string, readFile func(string) ([]byte, error)) (TtfRec TtfType, err error) {
-	// Read entire font file into memory
-	var data []byte
-	data, err = readFile(fileStr)
-	if err != nil {
-		return
-	}
-
+// TtfParseBytes extracts various metrics from a TrueType font file given as a byte slice.
+func TtfParseBytes(data []byte) (TtfRec TtfType, err error) {
 	var t ttfParser
 	t.file = bytes.NewReader(data)
 
@@ -79,6 +72,18 @@ func TtfParse(fileStr string, readFile func(string) ([]byte, error)) (TtfRec Ttf
 	}
 	TtfRec = t.rec
 	return
+}
+
+// TtfParse extracts various metrics from a TrueType font file.
+func TtfParse(fileStr string, readFile func(string) ([]byte, error)) (TtfRec TtfType, err error) {
+	// Read entire font file into memory
+	var data []byte
+	data, err = readFile(fileStr)
+	if err != nil {
+		return
+	}
+
+	return TtfParseBytes(data)
 }
 
 func (t *ttfParser) ParseComponents() (err error) {
