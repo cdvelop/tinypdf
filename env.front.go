@@ -5,7 +5,9 @@ package pdf
 
 import (
 	"encoding/base64"
+	"github.com/tinywasm/fetch"
 	. "github.com/tinywasm/fmt"
+	"io"
 	"syscall/js"
 )
 
@@ -20,39 +22,48 @@ func (tp *TinyPDF) initIO() {
 	}
 }
 
-// writeFile escribe un archivo en localStorage
+// writeFile escribe un archivo en localStorage y dispara una descarga
 func (tp *TinyPDF) writeFile(filePath string, content []byte) error {
+	// 1. Guardar en localStorage (como backup/persistencia simple)
 	localStorage := js.Global().Get("localStorage")
-	if localStorage.IsUndefined() {
-		return Errf("localStorage no disponible")
+	if !localStorage.IsUndefined() {
+		encoded := base64.StdEncoding.EncodeToString(content)
+		localStorage.Call("setItem", filePath, encoded)
 	}
 
-	// Codificar el contenido en base64 para almacenarlo
-	encoded := base64.StdEncoding.EncodeToString(content)
-	localStorage.Call("setItem", filePath, encoded)
+	// 2. Disparar descarga del navegador
+	uint8Array := js.Global().Get("Uint8Array").New(len(content))
+	js.CopyBytesToJS(uint8Array, content)
+
+	blob := js.Global().Get("Blob").New([]any{uint8Array}, map[string]any{"type": "application/pdf"})
+	url := js.Global().Get("URL").Call("createObjectURL", blob)
+
+	link := js.Global().Get("document").Call("createElement", "a")
+	link.Set("href", url)
+	link.Set("download", filePath)
+	link.Call("click")
 
 	return nil
 }
 
-// readFile lee un archivo de localStorage
+// readFile lee un archivo usando fetch (para cargar recursos estáticos como fuentes e imágenes)
 func (tp *TinyPDF) readFile(filePath string) ([]byte, error) {
-	localStorage := js.Global().Get("localStorage")
-	if localStorage.IsUndefined() {
-		return nil, Errf("localStorage no disponible")
-	}
-
-	encoded := localStorage.Call("getItem", filePath)
-	if encoded.IsNull() {
-		return nil, Errf("archivo no encontrado: %s", filePath)
-	}
-
-	// Decodificar de base64
-	decoded, err := base64.StdEncoding.DecodeString(encoded.String())
+	resp, err := fetch.Get(filePath)
 	if err != nil {
-		return nil, Errf("error decodificando archivo: %v", err)
+		return nil, Errf("error fetching file %s: %v", filePath, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, Errf("error fetching file %s: status %d", filePath, resp.StatusCode)
 	}
 
-	return decoded, nil
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, Errf("error reading response body for %s: %v", filePath, err)
+	}
+
+	return data, nil
 }
 
 // fileSize obtiene el tamaño de un archivo de localStorage

@@ -1,2 +1,4 @@
+github.com/tinywasm/fetch v0.1.22 h1:HYz0IA2doZ5bpIZoO5Vju9hmbR3wKENwb5kKUDilBzo=
+github.com/tinywasm/fetch v0.1.22/go.mod h1:AtYRsIZTZAdN5XyWVEA9jq2ks1Q9656DG49ccBe1WRs=
 github.com/tinywasm/fmt v0.18.4 h1:rzc+IPMHXDRXLPY0LrQSQWZW9gQwu6W5ii4pIPSncqI=
 github.com/tinywasm/fmt v0.18.4/go.mod h1:L2GCAi6asgytPV6TVvGrRq5Ml+DkUt1Ijo5i/2J1jOY=
