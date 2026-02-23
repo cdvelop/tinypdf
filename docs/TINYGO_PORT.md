@@ -2,15 +2,15 @@
 
 ## Objective
 
-Migrate Fpdf library from Go standard library dependencies (`fmt`, `strconv`, `errors`, `strings`) to use exclusively `tinystring` for maximum binary size reduction and TinyGo compatibility.
+Migrate Fpdf library from Go standard library dependencies (`fmt`, `strconv`, `errors`, `strings`) to use exclusively `github.com/tinywasm/fmt` for maximum binary size reduction and TinyGo compatibility.
 
 ## Background
 
-Fpdf currently imports standard library packages that significantly increase binary size, especially in WebAssembly builds. The goal is to achieve **zero standard library dependencies** for string operations, formatting, and error handling by leveraging the `tinystring` library's comprehensive API.
+Fpdf currently imports standard library packages that significantly increase binary size, especially in WebAssembly builds. The goal is to achieve **zero standard library dependencies** for string operations, formatting, and error handling by leveraging the `github.com/tinywasm/fmt` library's comprehensive API.
 
 ## Migration Strategy
 
-### Phase 1: Error Handling Migration (`fmt.Errorf` → `tinystring.Errf`)
+### Phase 1: Error Handling Migration (`fmt.Errorf` → `Errf`)
 
 **Target Files:**
 - [x] `spotcolor.go` (2 instances)
@@ -45,12 +45,12 @@ err = Errf("invalid format: %s", value).Error()
 ```
 
 **Implementation Steps:**
-1. Add `tinystring` import: `import . "github.com/tinywasm/fmt"`
+1. Add `github.com/tinywasm/fmt` import: `import . "github.com/tinywasm/fmt"`
 2. Replace all `fmt.Errorf()` calls with `Errf().Error()`
 3. Remove `"fmt"` import when no other fmt usage remains
 4. Test functionality to ensure error messages remain consistent
 
-### Phase 2: String Formatting Migration (`fmt.Sprintf` → `tinystring.Fmt`)
+### Phase 2: String Formatting Migration (`fmt.Sprintf` → `Sprintf`)
 
 **Target Files:**
 - `util.go` (1 instance)
@@ -64,11 +64,11 @@ err = Errf("invalid format: %s", value).Error()
 result := fmt.Sprintf("Hello %s, count: %d", name, count)
 
 // AFTER
-result := Fmt("Hello %s, count: %d", name, count)
+result := Sprintf("Hello %s, count: %d", name, count)
 ```
 
 **Implementation Steps:**
-1. Replace `fmt.Sprintf()` with `Fmt()`
+1. Replace `fmt.Sprintf()` with `Sprintf()`
 2. Replace `fmt.Sprint()` with `Convert().String()`
 3. Test format specifiers compatibility (%s, %d, %f, %x, etc.)
 
@@ -88,7 +88,7 @@ fmt.Printf("Debug: %s\n", message)
 // (Remove entirely for production)
 
 // AFTER - Option 2: Use println for critical debugging
-println(Fmt("Debug: %s", message))
+println(Sprintf("Debug: %s", message))
 ```
 
 ### Phase 4: String Parsing Migration (`fmt.Sscanf` → Custom Parser)
@@ -102,7 +102,7 @@ println(Fmt("Debug: %s", message))
 // BEFORE
 _, err = fmt.Sscanf(lineStr, "!%2X U+%4X %s", &cPos, &uPos, &nameStr)
 
-// AFTER - Custom parsing using tinystring
+// AFTER - Custom parsing using github.com/tinywasm/fmt
 parts := Convert(lineStr).Split()
 if len(parts) >= 3 && Contains(parts[0], "!") {
     // Parse hex values and strings manually
@@ -148,7 +148,7 @@ result := strings.ToLower(text)
 result := Convert(text).Low().String()
 ```
 
-### Phase 6: Type Conversion Migration (`strconv` → `tinystring`)
+### Phase 6: Type Conversion Migration (`strconv` → `github.com/tinywasm/fmt`)
 
 **Migration Patterns:**
 ```go
@@ -186,7 +186,7 @@ str := Convert(3.14159).Round(2).String()
    - `"errors"`
    - `"strings"`
 2. Ensure only essential imports remain (io, os, etc.)
-3. Add single tinystring import: `import . "github.com/tinywasm/fmt"`
+3. Add single tinywasm/fmt import: `import . "github.com/tinywasm/fmt"`
 
 ## File-by-File Migration Checklist
 
@@ -250,7 +250,7 @@ tinygo build -target arduino ./cmd/example
 - **Embedded targets**: Maximum compatibility with TinyGo constraints
 
 ### Performance Improvements  
-- Reduced memory allocations through tinystring's buffer pooling
+- Reduced memory allocations through fmt's buffer pooling
 - Faster string operations optimized for small devices
 - Predictable memory usage patterns
 
@@ -262,7 +262,7 @@ tinygo build -target arduino ./cmd/example
 ## Risk Mitigation
 
 ### Compatibility Risks
-- **Format specifier differences**: Test all `Fmt()` calls against original `fmt.Sprintf()`
+- **Format specifier differences**: Test all `Sprintf()` calls against original `fmt.Sprintf()`
 - **Error message changes**: Verify client code doesn't depend on exact error text
 - **Numeric precision**: Validate floating-point conversion accuracy
 
