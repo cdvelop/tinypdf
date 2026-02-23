@@ -23,11 +23,11 @@ Fpdf currently imports standard library packages that significantly increase bin
 - [x] `font_afm.go` (6 instances)
 - [x] `utf8fontfile.go` (2 instances)
 - [x] `fonts.go` (2 instances)
-- [ ] `svgbasic.go` 
-- [ ] `htmlbasic.go` 
-- [ ] `grid.go` 
-- [ ] `embedded.go` 
-- [ ] `makefont.go` 
+- [x] `svgbasic.go`
+- [x] `htmlbasic.go`
+- [x] `grid.go`
+- [x] `embedded.go`
+- [x] `makefont.go`
 - [ ] `gofpdi/helper.go` 
 - [ ] `gofpdi/importer.go` 
 - [ ] `gofpdi/writer.go` 
@@ -191,9 +191,9 @@ str := Convert(3.14159).Round(2).String()
 ## File-by-File Migration Checklist
 
 ### Core Files (Priority 1)
-- [ ] `util.go` - Remove `fmt.Sprintf`
-- [ ] `document.go` - Replace 5x `fmt.Errorf`, 1x `fmt.Sprintf`  
-- [ ] `fonts.go` - Replace 2x `fmt.Errorf`, 1x `fmt.Printf`, 1x `fmt.Sprintf`
+- [x] `util.go` - Remove `fmt.Sprintf`
+- [x] `document.go` - Replace 5x `fmt.Errorf`, 1x `fmt.Sprintf`
+- [x] `fonts.go` - Replace 2x `fmt.Errorf`, 1x `fmt.Printf`, 1x `fmt.Sprintf`
 - [ ] `drawing.go` - Replace 3x `fmt.Errorf`
 - [ ] `spotcolor.go` - Replace 2x `fmt.Errorf`
 

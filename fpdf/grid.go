@@ -2,7 +2,8 @@ package fpdf
 
 import (
 	"math"
-	"strconv"
+
+	. "github.com/tinywasm/fmt"
 )
 
 // RGBType holds fields for red, green and blue color components (0..255)
@@ -57,7 +58,7 @@ type TickFormatFncType func(val float64, precision int) string
 
 // defaultFormatter returns the string form of val with precision decimal places.
 func defaultFormatter(val float64, precision int) string {
-	return strconv.FormatFloat(val, 'f', precision, 64)
+	return Convert(val).Round(precision).String()
 }
 
 // GridType assists with the generation of graphs. It allows the application to

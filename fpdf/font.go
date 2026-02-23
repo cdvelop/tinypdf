@@ -35,14 +35,30 @@ func loadMap(encodingFileStr string) (encList encListType, err error) {
 		scanner := bufio.NewScanner(f)
 		var enc encType
 		var pos int
+		var parts []string
 		for scanner.Scan() {
 			// "!3F U+003F question"
-			_, err = Sscanf(scanner.Text(), "!%x U+%x %s", &pos, &enc.uv, &enc.name)
+			// _, err = Sscanf(scanner.Text(), "!%x U+%x %s", &pos, &enc.uv, &enc.name)
+			parts = Convert(scanner.Text()).Split()
+			if len(parts) >= 3 && HasPrefix(parts[0], "!") && HasPrefix(parts[1], "U+") {
+				pos, err = Convert(parts[0][1:]).Int(16)
+				if err == nil {
+					enc.uv, err = Convert(parts[1][2:]).Int(16)
+				}
+				if err == nil {
+					enc.name = parts[2]
+				}
+			} else {
+				// skip or error? Sscanf would return error if format doesn't match
+				// assuming we skip invalid lines or lines not matching format
+				continue
+			}
+
 			if err == nil {
 				if pos < 256 {
 					encList[pos] = enc
 				} else {
-					err = Errf("map position 0x%2X exceeds 0xFF", pos)
+					err = Err("map position", pos, "exceeds 0xFF")
 					return
 				}
 			} else {
@@ -66,7 +82,7 @@ func getInfoFromTrueType(fileStr string, msgWriter io.Writer, embed bool, encLis
 	}
 	if embed {
 		if !ttf.Embeddable {
-			err = Errf("font license does not allow embedding")
+			err = Err("font license embedding", "denied")
 			return
 		}
 		info.Data, err = os.ReadFile(fileStr)
@@ -125,7 +141,7 @@ func segmentRead(r io.Reader) (s segmentType, err error) {
 		return
 	}
 	if s.marker != 128 {
-		err = Errf("font file is not a valid binary Type1")
+		err = Err("font file binary Type1", "invalid")
 		return
 	}
 	if err = binary.Read(r, binary.LittleEndian, &s.tp); err != nil {
@@ -170,10 +186,10 @@ func getInfoFromType1(fileStr string, msgWriter io.Writer, embed bool, encList e
 	afmFileStr := fileStr[0:len(fileStr)-3] + "afm"
 	size, ok := fileSize(afmFileStr)
 	if !ok {
-		err = Errf("font file (ATM) %s not found", afmFileStr)
+		err = Err("font file ATM", afmFileStr, "missing")
 		return
 	} else if size == 0 {
-		err = Errf("font file (AFM) %s empty or not readable", afmFileStr)
+		err = Err("font file AFM", afmFileStr, "empty/unreadable")
 		return
 	}
 
@@ -190,7 +206,7 @@ func getInfoFromType1(fileStr string, msgWriter io.Writer, embed bool, encList e
 	}
 
 	if info.FontName == "" {
-		err = Errf("the field FontName missing in AFM file %s", afmFileStr)
+		err = Err("AFM field FontName", "missing", "in file", afmFileStr)
 		return
 	}
 	var (
@@ -339,7 +355,7 @@ func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Write
 		msgWriter = io.Discard
 	}
 	if !fileExist(fontFileStr) {
-		return Errf("font file not found: %s", fontFileStr)
+		return Err("font file", fontFileStr, "missing")
 	}
 	extStr := Convert(fontFileStr[len(fontFileStr)-3:]).ToLower().String()
 	// printf("Font file extension [%s]\n", extStr)
@@ -352,7 +368,7 @@ func MakeFont(fontFileStr, encodingFileStr, dstDirStr string, msgWriter io.Write
 	case "pfb":
 		tpStr = "Type1"
 	default:
-		return Errf("unrecognized font file extension: %s", extStr)
+		return Err("font file extension", extStr, "unrecognized")
 	}
 
 	var info fontInfoType

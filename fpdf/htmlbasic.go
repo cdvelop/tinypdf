@@ -2,7 +2,8 @@ package fpdf
 
 import (
 	"regexp"
-	"strings"
+
+	. "github.com/tinywasm/fmt"
 )
 
 // HTMLBasicSegmentType defines a segment of literal text in which the current
@@ -19,8 +20,7 @@ type HTMLBasicSegmentType struct {
 func HTMLBasicTokenize(htmlStr string) (list []HTMLBasicSegmentType) {
 	// This routine is adapted from http://www.fpdf.org/
 	list = make([]HTMLBasicSegmentType, 0, 16)
-	htmlStr = strings.Replace(htmlStr, "\n", " ", -1)
-	htmlStr = strings.Replace(htmlStr, "\r", "", -1)
+	htmlStr = Convert(htmlStr).Replace("\n", " ").Replace("\r", "").String()
 	tagRe, _ := regexp.Compile(`(?U)<.*>`)
 	attrRe, _ := regexp.Compile(`([^=]+)=["']?([^"']+)`)
 	capList := tagRe.FindAllStringIndex(htmlStr, -1)
@@ -37,22 +37,22 @@ func HTMLBasicTokenize(htmlStr string) (list []HTMLBasicSegmentType) {
 			}
 			if htmlStr[cap[0]+1] == '/' {
 				seg.Cat = 'C'
-				seg.Str = strings.ToLower(htmlStr[cap[0]+2 : cap[1]-1])
+				seg.Str = Convert(htmlStr[cap[0]+2 : cap[1]-1]).Low().String()
 				seg.Attr = nil
 				list = append(list, seg)
 			} else {
 				// Extract attributes
-				parts = strings.Split(htmlStr[cap[0]+1:cap[1]-1], " ")
+				parts = Convert(htmlStr[cap[0]+1 : cap[1]-1]).Split(" ")
 				if len(parts) > 0 {
 					for j, part := range parts {
 						if j == 0 {
 							seg.Cat = 'O'
-							seg.Str = strings.ToLower(parts[0])
+							seg.Str = Convert(parts[0]).Low().String()
 							seg.Attr = make(map[string]string)
 						} else {
 							attrList := attrRe.FindAllStringSubmatch(part, -1)
 							for _, attr := range attrList {
-								seg.Attr[strings.ToLower(attr[1])] = attr[2]
+								seg.Attr[Convert(attr[1]).Low().String()] = attr[2]
 							}
 						}
 					}

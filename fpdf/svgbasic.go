@@ -3,25 +3,9 @@ package fpdf
 import (
 	"encoding/xml"
 	"os"
-	"strconv"
-	"strings"
 
 	. "github.com/tinywasm/fmt"
 )
-
-var pathCmdSub *strings.Replacer
-
-func init() {
-	// Handle permitted constructions like "100L200,230"
-	pathCmdSub = strings.NewReplacer(",", " ",
-		"L", " L ", "l", " l ",
-		"C", " C ", "c", " c ",
-		"M", " M ", "m", " m ",
-		"H", " H ", "h", " h ",
-		"V", " V ", "v", " v ",
-		"Q", " Q ", "q", " q ",
-		"Z", " Z ", "z", " z ")
-}
 
 // SVGBasicSegmentType describes a single curve or position segment
 type SVGBasicSegmentType struct {
@@ -95,6 +79,18 @@ func absolutizePath(segs []SVGBasicSegmentType) {
 	}
 }
 
+func normalizePath(s string) string {
+	return Convert(s).Replace(",", " ").
+		Replace("L", " L ").Replace("l", " l ").
+		Replace("C", " C ").Replace("c", " c ").
+		Replace("M", " M ").Replace("m", " m ").
+		Replace("H", " H ").Replace("h", " h ").
+		Replace("V", " V ").Replace("v", " v ").
+		Replace("Q", " Q ").Replace("q", " q ").
+		Replace("Z", " Z ").Replace("z", " z ").
+		String()
+}
+
 func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, err error) {
 	var seg SVGBasicSegmentType
 	var j, argJ, argCount, prevArgCount int
@@ -110,8 +106,8 @@ func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, 
 	}
 	var str string
 	var c byte
-	pathStr = pathCmdSub.Replace(pathStr)
-	strList := strings.Fields(pathStr)
+	pathStr = normalizePath(pathStr)
+	strList := Convert(pathStr).Split()
 	count := len(strList)
 	for j = 0; j < count && err == nil; j++ {
 		str = strList[j]
@@ -127,7 +123,7 @@ func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, 
 						seg.Cmd = 'l'
 					}
 				} else {
-					err = Err("SVG", "path", "command", "invalid", "at first position, got", str)
+					err = Err("SVG path command", "invalid", "at first position got", str)
 				}
 			}
 		}
@@ -150,10 +146,10 @@ func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, 
 				case 'Z', 'z': // closepath instruction (takes no arguments)
 					segs = append(segs, seg)
 				default:
-					err = Err("SVG", "path", "command", "invalid", Sprintf("at position %d, got %s", j, str))
+					err = Err("SVG path command", "invalid", Sprintf("at position %d got %s", j, str))
 				}
 			} else {
-				seg.Arg[argJ], err = strconv.ParseFloat(str, 64)
+				seg.Arg[argJ], err = Convert(str).Float64()
 				if err == nil {
 					seg.Arg[argJ] *= adjustToPt
 					argJ++
@@ -169,7 +165,7 @@ func pathParse(pathStr string, adjustToPt float64) (segs []SVGBasicSegmentType, 
 		if argCount == 0 {
 			absolutizePath(segs)
 		} else {
-			err = Err("arguments", "numeric", "invalid", Sprintf("expecting additional (%d)", argCount))
+			err = Err("arguments numeric", "invalid", Sprintf("expecting additional (%d)", argCount))
 		}
 	}
 	return
@@ -194,19 +190,19 @@ func parseFloatWithUnit(val string) (float64, float64, error) {
 	var err error
 
 	switch {
-	case strings.HasSuffix(val, "pt"):
+	case HasSuffix(val, "pt"):
 		removeUnitChar = 2
 		adjustToPt = 1.0
-	case strings.HasSuffix(val, "in"):
+	case HasSuffix(val, "in"):
 		removeUnitChar = 2
 		adjustToPt = 72.0
-	case strings.HasSuffix(val, "mm"):
+	case HasSuffix(val, "mm"):
 		removeUnitChar = 2
 		adjustToPt = 72.0 / 25.4
-	case strings.HasSuffix(val, "cm"):
+	case HasSuffix(val, "cm"):
 		removeUnitChar = 2
 		adjustToPt = 72.0 / 2.54
-	case strings.HasSuffix(val, "pc"):
+	case HasSuffix(val, "pc"):
 		removeUnitChar = 2
 		adjustToPt = 12.0
 	default: // default is pixel
@@ -214,7 +210,7 @@ func parseFloatWithUnit(val string) (float64, float64, error) {
 		adjustToPt = 1.0 / 96.0
 	}
 
-	floatValue, err = strconv.ParseFloat(val[:len(val)-removeUnitChar], 64)
+	floatValue, err = Convert(val[:len(val)-removeUnitChar]).Float64()
 	if err != nil {
 		return 0.0, 0.0, err
 	}
@@ -293,7 +289,7 @@ func SVGBasicParse(buf []byte) (sig SVGBasicType, err error) {
 				sig.Segments = append(sig.Segments, segs)
 			}
 		} else {
-			err = Err("SVG", "extent", "invalid", Sprintf("unacceptable values for basic: %.2f x %.2f", sig.Wd, sig.Ht))
+			err = Err("SVG extent", "invalid", Sprintf("unacceptable values for basic: %.2f x %.2f", sig.Wd, sig.Ht))
 		}
 	}
 	return
