@@ -37,7 +37,7 @@ func HTMLBasicTokenize(htmlStr string) (list []HTMLBasicSegmentType) {
 			}
 			if htmlStr[cap[0]+1] == '/' {
 				seg.Cat = 'C'
-				seg.Str = Convert(htmlStr[cap[0]+2 : cap[1]-1]).Low().String()
+				seg.Str = Convert(htmlStr[cap[0]+2 : cap[1]-1]).ToLower().String()
 				seg.Attr = nil
 				list = append(list, seg)
 			} else {
@@ -47,12 +47,12 @@ func HTMLBasicTokenize(htmlStr string) (list []HTMLBasicSegmentType) {
 					for j, part := range parts {
 						if j == 0 {
 							seg.Cat = 'O'
-							seg.Str = Convert(parts[0]).Low().String()
+							seg.Str = Convert(parts[0]).ToLower().String()
 							seg.Attr = make(map[string]string)
 						} else {
 							attrList := attrRe.FindAllStringSubmatch(part, -1)
 							for _, attr := range attrList {
-								seg.Attr[Convert(attr[1]).Low().String()] = attr[2]
+								seg.Attr[Convert(attr[1]).ToLower().String()] = attr[2]
 							}
 						}
 					}

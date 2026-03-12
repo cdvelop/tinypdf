@@ -14,7 +14,7 @@ var embFS embed.FS
 
 func (f *Fpdf) coreFontReader(familyStr, styleStr string) (r io.ReadCloser) {
 	key := familyStr + styleStr
-	key = Convert(key).Low().String()
+	key = Convert(key).ToLower().String()
 	emb, err := embFS.Open("font_embed/" + key + ".json")
 	if err == nil {
 		r = emb
