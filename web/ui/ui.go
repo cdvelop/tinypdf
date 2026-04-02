@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	TP        *pdf.TinyPDF
+	Doc       *pdf.Document
 	textInput js.Value
 	pdfEmbed  js.Value
 )
 
 // Setup inicializa y configura toda la interfaz de usuario
-func Setup(tp *pdf.TinyPDF) {
-	TP = tp
+func Setup(doc *pdf.Document) {
+	Doc = doc
 	setupUI()
 }
 
@@ -32,7 +32,7 @@ func setupUI() {
 
 	// Título
 	title := document.Call("createElement", "h1")
-	title.Set("textContent", "Generador de PDF con TinyPDF")
+	title.Set("textContent", "Generador de PDF con Document API")
 	container.Call("appendChild", title)
 
 	// Sección del formulario
@@ -105,13 +105,13 @@ func ShowError(message string) {
 
 // ShowPDF muestra el PDF en el embed
 func ShowPDF(dataURL string) {
-	TP.Log("ShowPDF llamado con URL:", dataURL)
+	Doc.Log("ShowPDF llamado con URL:", dataURL)
 
 	document := js.Global().Get("document")
 	pdfContainer := document.Call("getElementById", "pdf-container")
 
 	if pdfContainer.IsNull() {
-		TP.Log("ERROR: pdf-container no encontrado")
+		Doc.Log("ERROR: pdf-container no encontrado")
 		return
 	}
 
@@ -126,7 +126,7 @@ func ShowPDF(dataURL string) {
 
 	pdfContainer.Call("appendChild", pdfEmbed)
 
-	TP.Log("Embed creado y agregado al contenedor")
+	Doc.Log("Embed creado y agregado al contenedor")
 }
 
 // GetTitleText obtiene el texto del campo de entrada

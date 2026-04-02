@@ -8,15 +8,23 @@ import (
 )
 
 func main() {
-	// Crear instancia de TinyWasmPDF
-	tp := pdf.New()
+	// Crear instancia de Document
+	doc := pdf.NewDocument()
+	doc.SetLog(func(msg ...any) {
+		// En WASM initIO ya configura un logger por defecto que usa console.log
+		// Pero si queremos personalizarlo:
+		// console := js.Global().Get("console")
+		// if !console.IsUndefined() {
+		// 	console.Call("log", Translate(msg...))
+		// }
+	})
 
-	tp.Log("TinyWasmPDF inicializado...")
+	doc.Log("Document inicializado...")
 
 	// Configurar UI
-	ui.Setup(tp)
+	ui.Setup(doc)
 
-	tp.Log("Aplicación lista")
+	doc.Log("Aplicación lista")
 
 	// Mantener el programa ejecutándose
 	select {}

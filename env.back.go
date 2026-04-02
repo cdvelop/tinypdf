@@ -4,30 +4,30 @@
 package pdf
 
 import (
-	"fmt"
+	"github.com/tinywasm/fmt"
 	"os"
 )
 
 // initIO inicializa las funciones de IO para entorno backend (no-wasm)
-func (tp *TinyPDF) initIO() {
+func (d *Document) initIO() {
 	// Inicializar logger para backend usando fmt.Println
-	tp.logger = func(message ...any) {
+	d.logger = func(message ...any) {
 		fmt.Println(message...)
 	}
 }
 
 // writeFile escribe un archivo en el sistema de archivos usando os
-func (tp *TinyPDF) writeFile(filePath string, content []byte) error {
+func (d *Document) writeFile(filePath string, content []byte) error {
 	return os.WriteFile(filePath, content, 0644)
 }
 
 // readFile lee un archivo del sistema de archivos usando os
-func (tp *TinyPDF) readFile(filePath string) ([]byte, error) {
+func (d *Document) readFile(filePath string) ([]byte, error) {
 	return os.ReadFile(filePath)
 }
 
 // fileSize obtiene el tamaño de un archivo usando os.Stat
-func (tp *TinyPDF) fileSize(filePath string) (int64, error) {
+func (d *Document) fileSize(filePath string) (int64, error) {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		return 0, err

@@ -656,15 +656,18 @@ func (utf *utf8FontFile) GenerateCutFont(usedRunes map[int]int) []byte {
 	metricsCount = len(symbolCollection)
 	numSymbols = metricsCount
 
-	utf.setOutTable("name", utf.getTableData("name"))
-	utf.setOutTable("cvt ", utf.getTableData("cvt "))
-	utf.setOutTable("fpgm", utf.getTableData("fpgm"))
-	utf.setOutTable("prep", utf.getTableData("prep"))
-	utf.setOutTable("gasp", utf.getTableData("gasp"))
-
-	postTable := utf.getTableData("post")
-	postTable = append(append([]byte{0x00, 0x03, 0x00, 0x00}, postTable[4:16]...), []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}...)
-	utf.setOutTable("post", postTable)
+	// Minimal post table (format 3 = no glyph names)
+	utf.setOutTable("post", []byte{
+		0x00, 0x03, 0x00, 0x00, // format 3.0
+		0x00, 0x00, 0x00, 0x00, // italicAngle
+		0x00, 0x00, // underlinePosition
+		0x00, 0x00, // underlineThickness
+		0x00, 0x00, 0x00, 0x00, // isFixedPitch
+		0x00, 0x00, 0x00, 0x00, // minMemType42
+		0x00, 0x00, 0x00, 0x00, // maxMemType42
+		0x00, 0x00, 0x00, 0x00, // minMemType1
+		0x00, 0x00, 0x00, 0x00, // maxMemType1
+	})
 
 	delete(cidSymbolPairCollection, 0)
 

@@ -36,3 +36,6 @@ deploy/
 .vscode/
 logs.log
 test_output.pdf
+demo.pdf
+demo
+*.wasm

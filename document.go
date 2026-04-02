@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"bytes"
+	"io"
 	"strings"
 
 	. "github.com/tinywasm/fmt"
@@ -11,21 +12,51 @@ import (
 // Document wraps the internal fpdf.Fpdf to provide a fluent API.
 type Document struct {
 	internal *fpdf.Fpdf
-	tp       *TinyPDF
+	logger   func(message ...any)
 
 	// Resource registries
 	fonts  map[string]string // family -> path
 	images map[string]string // name -> path
 }
 
-// NewDocument creates a new Document instance.
+// DefaultFontPath is the default path to the Arial UTF-8 font.
+const DefaultFontPath = "fpdf/fonts/Arial.ttf"
+
+// NewDocument creates a new Document instance with UTF-8 support.
 func NewDocument() *Document {
-	tp := New()
-	return &Document{
-		internal: tp.Fpdf,
-		tp:       tp,
-		fonts:    make(map[string]string),
-		images:   make(map[string]string),
+	d := &Document{
+		fonts:  make(map[string]string),
+		images: make(map[string]string),
+	}
+	d.initIO() // initializes logger + IO depending on build tag
+	d.internal = fpdf.New(
+		fpdf.WriteFileFunc(d.writeFile),
+		fpdf.ReadFileFunc(d.readFile),
+		fpdf.FileSizeFunc(d.fileSize),
+	)
+	d.loadDefaultFont()
+	return d
+}
+
+// loadDefaultFont loads Arial as UTF-8 font so the default "Arial" supports unicode.
+func (d *Document) loadDefaultFont() {
+	data, err := d.readFile(DefaultFontPath)
+	if err != nil {
+		return // fallback to built-in Arial (Latin-1 only)
+	}
+	d.internal.AddUTF8FontFromBytes("Arial", "", data)
+}
+
+// SetLog sets the logger function.
+func (d *Document) SetLog(fn func(...any)) *Document {
+	d.logger = fn
+	return d
+}
+
+// Log writes a message to the logger.
+func (d *Document) Log(message ...any) {
+	if d.logger != nil {
+		d.logger(message...)
 	}
 }
 
@@ -45,7 +76,7 @@ func (d *Document) RegisterImage(name, path string) *Document {
 // Load loads all registered resources.
 func (d *Document) Load(cb func(error)) {
 	for family, path := range d.fonts {
-		data, err := d.tp.readFile(path)
+		data, err := d.readFile(path)
 		if err != nil {
 			cb(err)
 			return
@@ -55,7 +86,7 @@ func (d *Document) Load(cb func(error)) {
 	}
 
 	for name, path := range d.images {
-		data, err := d.tp.readFile(path)
+		data, err := d.readFile(path)
 		if err != nil {
 			cb(err)
 			return
@@ -81,6 +112,11 @@ func (d *Document) Draw() *Document {
 // WritePdf generates the PDF and writes it to the specified path.
 func (d *Document) WritePdf(path string) error {
 	return d.internal.OutputFileAndClose(path)
+}
+
+// OutputTo writes the generated PDF into the provided writer.
+func (d *Document) OutputTo(w io.Writer) error {
+	return d.internal.Output(w)
 }
 
 // --- Base Components ---

@@ -1,6 +1,6 @@
-// GOLITE JavaScript
+// TinyWasm JavaScript
 
-console.log('GOLITE initialized');
+console.log('TinyWasm initialized');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM fully loaded');
