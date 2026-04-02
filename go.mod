@@ -4,5 +4,5 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/fetch v0.1.23
-	github.com/tinywasm/fmt v0.22.0
+	github.com/tinywasm/fmt v0.22.1
 )
