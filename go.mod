@@ -8,3 +8,5 @@ require (
 	github.com/tinywasm/json v0.4.1
 	github.com/tinywasm/time v0.4.0
 )
+
+require github.com/tinywasm/unixid v0.2.23 // indirect
