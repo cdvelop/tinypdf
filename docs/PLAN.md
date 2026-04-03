@@ -2,7 +2,7 @@
 
 ## Current Status: 423.5 KB (post-optimization, down from 738 KB — 43% reduction)
 
-## Remaining target: ~150 KB
+## Remaining target: ~390-400 KB (this round) → ~150 KB requires Round 2 (Stage 8 candidates)
 
 ---
 
@@ -82,7 +82,7 @@ The backend version uses `crypto/sha1` + `encoding/json` for `generateFontID` an
        return fdt.Tp + "_" + fdt.Name, nil
    }
    ```
-3. For `generateImageID`: use `tinywasm/unixid.GetNewID()` — unique, thread-safe, no crypto. Each image gets a unique ID regardless of content.
+3. For `generateImageID`: use `tinywasm/unixid` — unique, thread-safe, no crypto dependency.
    ```go
    func generateImageID(info *ImageInfoType) (string, error) {
        var id string
@@ -90,7 +90,7 @@ The backend version uses `crypto/sha1` + `encoding/json` for `generateFontID` an
        return id, nil
    }
    ```
-   Where `uid` is a package-level `*unixid.UnixID` instance initialized once.
+   Where `uid` is a package-level `*unixid.UnixID` instance initialized once. IDs are unique per session, not deterministic — this is correct since image IDs only need to be unique map keys within a document lifecycle.
 
 **Files**:
 - Delete `fpdf/fontid_back.go`
@@ -130,10 +130,13 @@ The backend version uses `crypto/sha1` + `encoding/json` for `generateFontID` an
 - Delete `fpdf/fonts_json_wasm.go`
 - Create `fpdf/fonts_json.go` — unified, no build tags
 
+**Important**: `fontDefType` must conform to what `tinywasm/json.Decode` supports. If `fontDefType` has fields with types not supported by `tinywasm/json`, adjust the struct — the library adapts to `tinywasm/json`, not the other way around.
+
 **Validation**:
 1. `wasmbuild` compiles
 2. `go test ./...` passes — fonts load correctly with tinywasm/json on backend
 3. Generate PDF with multiple fonts to verify character widths (Cw) parse correctly
+4. Verify all `fontDefType` fields decode correctly (compare output with `encoding/json` in a one-off test)
 
 ---
 
@@ -156,7 +159,7 @@ TinyGo eliminates it via dead code elimination, but this is fragile — any futu
 ### Stage 5: Unify time — Remove time stdlib duplication
 **Risk**: low | **Complexity**: low
 
-**Context**: `fpdf/time_back.go` uses `time.Time` (stdlib) and `fpdf/time_wasm.go` uses `int64` (tinywasm/time). The underlying type `pdfTime` is also split: `types_back.go` defines it as `time.Time`, `types_wasm.go` as `int64`. Since `tinywasm/time` is platform-agnostic and uses `int64` everywhere, unify to `int64` only.
+**Context**: `fpdf/time_back.go` uses `time.Time` (stdlib) and `fpdf/time_wasm.go` uses `int64` (tinywasm/time). The underlying type `pdfTime` is also split: `types_back.go` defines it as `time.Time`, `types_wasm.go` as `int64`. The tinywasm ecosystem mandates `int64` (unix nano) for all time operations — this is a design constraint, not optional. Unify to `int64` only.
 
 **Files to unify/delete**:
 - Delete `fpdf/types_back.go` and `fpdf/types_wasm.go` → create `fpdf/types.go`: `type pdfTime int64`
@@ -192,15 +195,14 @@ TinyGo eliminates it via dead code elimination, but this is fragile — any futu
 | `fpdf/list/list.go:37` | `filepath.Walk` + `os.FileInfo` | Backend-only tooling, add `!wasm` build tag |
 
 **What to do**:
-1. **svgbasic.go**: remove `os` import and `SVGBasicFileParse`. Create `fpdf/svgbasic_back.go` (!wasm) with the file-path variant using `os.ReadFile`.
-2. **util.go**: move `fileExist()` and `fileSize()` to `fpdf/util_back.go` (!wasm). Remove `os` import from `util.go`.
+1. **svgbasic.go**: `SVGBasicFileParse` should use the injected `readFile` function (same pattern as `WriteFileFunc`/`ReadFileFunc`/`FileSizeFunc`). This requires `SVGBasicFileParse` to be a method on `Fpdf` (or receive the readFile func). Remove direct `os.ReadFile` import.
+2. **util.go**: `fileExist()` and `fileSize()` are only called from `font.go` (already `!wasm` after Stage 4). Move them into `font.go` directly — no need for a separate file. Remove `os` import from `util.go`.
 3. **list/list.go**: add `//go:build !wasm`.
 
 **Files**:
-- `fpdf/svgbasic.go` → remove `os` import, remove `SVGBasicFileParse`
-- `fpdf/svgbasic_back.go` → new (!wasm), `SVGBasicFileParse` with `os.ReadFile`
+- `fpdf/svgbasic.go` → replace `os.ReadFile` with injected `f.readFile` in `SVGBasicFileParse`
 - `fpdf/util.go` → remove `os` import, remove `fileExist`/`fileSize`
-- `fpdf/util_back.go` → new (!wasm), `fileExist`/`fileSize` with `os.Stat`
+- `fpdf/font.go` → absorb `fileExist`/`fileSize` (already `!wasm` from Stage 4)
 - `fpdf/list/list.go` → add `//go:build !wasm`
 
 **Validation**:
@@ -210,7 +212,7 @@ TinyGo eliminates it via dead code elimination, but this is fragile — any futu
 
 ---
 
-### Stage 6: Verify xcompr_wasm.go imports compress/zlib — Bug fix
+### Stage 7: Verify xcompr_wasm.go imports compress/zlib — Cleanup / Verification
 **Risk**: low | **Complexity**: low
 
 **Context**: `fpdf/xcompr_wasm.go` currently imports `compress/zlib` for the `uncompress()` function.
@@ -229,10 +231,10 @@ twiggy shows compress/* at only 0.1 KB, suggesting TinyGo may be eliminating mos
 
 ---
 
-### Stage 7: Analyze remaining size for Round 2 candidates
+### Stage 8: Analyze remaining size for Round 2 candidates
 **Risk**: N/A | **Complexity**: analysis only
 
-After Stages 1-6, run full twiggy analysis to identify next optimization targets:
+After Stages 1-7, run full twiggy analysis to identify next optimization targets:
 ```bash
 twiggy top web/public/client.wasm -n 50
 ```
