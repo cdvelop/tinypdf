@@ -1,4 +1,4 @@
-//go:build !wasm
+//go:build wasm
 
 package fpdf
 
@@ -6,8 +6,6 @@ import (
 	"bytes"
 	"compress/zlib"
 	"sync"
-
-	. "github.com/tinywasm/fmt"
 )
 
 var xmem = xmempool{
@@ -23,22 +21,8 @@ type xmempool struct{ sync.Pool }
 
 func (pool *xmempool) compress(data []byte) *membuffer {
 	mem := pool.Get().(*membuffer)
-	buf := &mem.buf
-	buf.Grow(len(data))
-
-	zw, err := zlib.NewWriterLevel(buf, zlib.BestSpeed)
-	if err != nil {
-		panic(Errf("could not create zlib writer: %v", err))
-	}
-	_, err = zw.Write(data)
-	if err != nil {
-		panic(Errf("could not zlib-compress slice: %v", err))
-	}
-
-	err = zw.Close()
-	if err != nil {
-		panic(Errf("could not close zlib writer: %v", err))
-	}
+	mem.buf.Reset()
+	mem.buf.Write(data)
 	return mem
 }
 

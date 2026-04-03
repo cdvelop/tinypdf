@@ -2,14 +2,10 @@ package fpdf
 
 import (
 	"bytes"
-	"image"
 	"image/color"
-	"image/gif"
 	"image/jpeg"
-	"image/png"
 	"io"
 	"math"
-	"time"
 
 	. "github.com/tinywasm/fmt"
 )
@@ -17,8 +13,8 @@ import (
 var gl struct {
 	catalogSort  bool
 	noCompress   bool // Initial zero value indicates compression
-	creationDate time.Time
-	modDate      time.Time
+	creationDate pdfTime
+	modDate      pdfTime
 }
 
 type fmtBuffer struct {
@@ -1763,27 +1759,6 @@ func (f *Fpdf) parsepng(r io.Reader, readdpi bool) (info *ImageInfoType) {
 	return f.parsepngstream(buf, readdpi)
 }
 
-// parsegif extracts info from a GIF data (via PNG conversion)
-func (f *Fpdf) parsegif(r io.Reader) (info *ImageInfoType) {
-	data, err := newRBuffer(r)
-	if err != nil {
-		f.err = err
-		return
-	}
-	var img image.Image
-	img, err = gif.Decode(data)
-	if err != nil {
-		f.err = err
-		return
-	}
-	pngBuf := new(bytes.Buffer)
-	err = png.Encode(pngBuf, img)
-	if err != nil {
-		f.err = err
-		return
-	}
-	return f.parsepngstream(&rbuffer{p: pngBuf.Bytes()}, false)
-}
 
 // newobj begins a new object
 func (f *Fpdf) newobj() {

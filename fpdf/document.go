@@ -895,10 +895,8 @@ func (f *Fpdf) putinfo() {
 	if len(f.creator) > 0 {
 		f.outf("/Creator %s", f.textstring(f.creator))
 	}
-	creation := timeOrNow(f.creationDate)
-	f.outf("/CreationDate %s", f.textstring("D:"+creation.Format("20060102150405")))
-	mod := timeOrNow(f.modDate)
-	f.outf("/ModDate %s", f.textstring("D:"+mod.Format("20060102150405")))
+	f.outf("/CreationDate %s", f.textstring(formatPDFDate(f.creationDate)))
+	f.outf("/ModDate %s", f.textstring(formatPDFDate(f.modDate)))
 }
 
 func (f *Fpdf) putcatalog() {

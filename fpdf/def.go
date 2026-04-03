@@ -2,13 +2,10 @@ package fpdf
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/binary"
-	"encoding/json"
 	"io"
 	"math"
 	"path"
-	"time"
 
 	"github.com/tinywasm/fmt"
 )
@@ -276,28 +273,6 @@ func (enc *idEncoder) bytes(v []byte) {
 	_, enc.err = enc.w.Write(v)
 }
 
-func generateImageID(info *ImageInfoType) (string, error) {
-	sha := sha1.New()
-	enc := newIDEncoder(sha)
-	enc.bytes(info.data)
-	enc.bytes(info.smask)
-	enc.i64(int64(info.n))
-	enc.f64(info.w)
-	enc.f64(info.h)
-	enc.str(info.cs)
-	enc.bytes(info.pal)
-	enc.i64(int64(info.bpc))
-	enc.str(info.f)
-	enc.str(info.dp)
-	for _, v := range info.trns {
-		enc.i64(int64(v))
-	}
-	enc.f64(info.scale)
-	enc.f64(info.dpi)
-	enc.str(info.i)
-
-	return fmt.Sprintf("%x", sha.Sum(nil)), nil
-}
 
 // PointConvert returns the value of pt, expressed in points (1/72 inch), as a
 // value expressed in the unit of measure specified in New(). Since font
@@ -494,8 +469,8 @@ type Fpdf struct {
 	lang             string                                      // lang
 	keywords         string                                      // keywords
 	creator          string                                      // creator
-	creationDate     time.Time                                   // override for document CreationDate value
-	modDate          time.Time                                   // override for document ModDate value
+	creationDate     pdfTime                                     // override for document CreationDate value
+	modDate          pdfTime                                     // override for document ModDate value
 	aliasNbPagesStr  string                                      // alias for total number of pages
 	pdfVersion       pdfVersion                                  // PDF version number
 	capStyle         int                                         // line cap style: butt 0, round 1, square 2
@@ -561,6 +536,19 @@ type encListType [256]encType
 
 type fontBoxType struct {
 	Xmin, Ymin, Xmax, Ymax int
+}
+
+func (f *fontBoxType) Schema() []fmt.Field {
+	return []fmt.Field{
+		{Name: "Xmin", Type: fmt.FieldInt},
+		{Name: "Ymin", Type: fmt.FieldInt},
+		{Name: "Xmax", Type: fmt.FieldInt},
+		{Name: "Ymax", Type: fmt.FieldInt},
+	}
+}
+
+func (f *fontBoxType) Pointers() []any {
+	return []any{&f.Xmin, &f.Ymin, &f.Xmax, &f.Ymax}
 }
 
 // Font flags for FontDescType.Flags as defined in the pdf specification.
@@ -644,6 +632,23 @@ type FontDescType struct {
 	MissingWidth int
 }
 
+func (f *FontDescType) Schema() []fmt.Field {
+	return []fmt.Field{
+		{Name: "Ascent", Type: fmt.FieldInt},
+		{Name: "Descent", Type: fmt.FieldInt},
+		{Name: "CapHeight", Type: fmt.FieldInt},
+		{Name: "Flags", Type: fmt.FieldInt},
+		{Name: "FontBBox", Type: fmt.FieldStruct},
+		{Name: "ItalicAngle", Type: fmt.FieldFloat},
+		{Name: "StemV", Type: fmt.FieldInt},
+		{Name: "MissingWidth", Type: fmt.FieldInt},
+	}
+}
+
+func (f *FontDescType) Pointers() []any {
+	return []any{&f.Ascent, &f.Descent, &f.CapHeight, &f.Flags, &f.FontBBox, &f.ItalicAngle, &f.StemV, &f.MissingWidth}
+}
+
 type fontDefType struct {
 	Tp           string        // "Core", "TrueType", ...
 	Name         string        // "Courier-Bold", ...
@@ -663,13 +668,30 @@ type fontDefType struct {
 	usedRunes    map[int]int   // Array of used runes
 }
 
-// generateFontID generates a font Id from the font definition
-func generateFontID(fdt fontDefType) (string, error) {
-	// file can be different if generated in different instance
-	fdt.File = ""
-	b, err := json.Marshal(&fdt)
-	return fmt.Sprintf("%x", sha1.Sum(b)), err
+func (f *fontDefType) Schema() []fmt.Field {
+	return []fmt.Field{
+		{Name: "Tp", Type: fmt.FieldText},
+		{Name: "Name", Type: fmt.FieldText},
+		{Name: "Desc", Type: fmt.FieldStruct},
+		{Name: "Up", Type: fmt.FieldInt},
+		{Name: "Ut", Type: fmt.FieldInt},
+		{Name: "Cw", Type: fmt.FieldInt},
+		{Name: "Enc", Type: fmt.FieldText},
+		{Name: "Diff", Type: fmt.FieldText},
+		{Name: "File", Type: fmt.FieldText},
+		{Name: "Size1", Type: fmt.FieldInt},
+		{Name: "Size2", Type: fmt.FieldInt},
+		{Name: "OriginalSize", Type: fmt.FieldInt},
+		{Name: "N", Type: fmt.FieldInt},
+		{Name: "DiffN", Type: fmt.FieldInt},
+		{Name: "i", Type: fmt.FieldText},
+	}
 }
+
+func (f *fontDefType) Pointers() []any {
+	return []any{&f.Tp, &f.Name, &f.Desc, &f.Up, &f.Ut, &f.Cw, &f.Enc, &f.Diff, &f.File, &f.Size1, &f.Size2, &f.OriginalSize, &f.N, &f.DiffN, &f.i}
+}
+
 
 type fontInfoType struct {
 	Data               []byte

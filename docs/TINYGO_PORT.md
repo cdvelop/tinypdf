@@ -194,18 +194,18 @@ str := Convert(3.14159).Round(2).String()
 - [x] `util.go` - Remove `fmt.Sprintf`
 - [x] `document.go` - Replace 5x `fmt.Errorf`, 1x `fmt.Sprintf`
 - [x] `fonts.go` - Replace 2x `fmt.Errorf`, 1x `fmt.Printf`, 1x `fmt.Sprintf`
-- [ ] `drawing.go` - Replace 3x `fmt.Errorf`
-- [ ] `spotcolor.go` - Replace 2x `fmt.Errorf`
+- [x] `drawing.go` - Replace 3x `fmt.Errorf`
+- [x] `spotcolor.go` - Replace 2x `fmt.Errorf`
 
 ### Parser Files (Priority 2)  
-- [ ] `ttfparser.go` - Replace 12x `fmt.Errorf`
-- [ ] `font_afm.go` - Replace 6x `fmt.Errorf`
-- [ ] `font.go` - Replace 8x `fmt.Errorf`, 1x `fmt.Sscanf`, 1x `fmt.Fprintf`
-- [ ] `utf8fontfile.go` - Replace 2x `fmt.Errorf`, multiple `fmt.Printf`
+- [x] `ttfparser.go` - Replace 12x `fmt.Errorf`
+- [x] `font_afm.go` - Replace 6x `fmt.Errorf`
+- [x] `font.go` - Replace 8x `fmt.Errorf`, 1x `fmt.Sscanf`, 1x `fmt.Fprintf`
+- [x] `utf8fontfile.go` - Replace 2x `fmt.Errorf`, multiple `fmt.Printf`
 
 ### Image & Graphics (Priority 3)
-- [ ] `png.go` - Replace 8x `fmt.Errorf`
-- [ ] `fpdftrans.go` - Replace 4x `fmt.Errorf`
+- [x] `png.go` - Replace 8x `fmt.Errorf`
+- [x] `fpdftrans.go` - Replace 4x `fmt.Errorf`
 
 ### External Dependencies (Priority 4)
 - [ ] `gofpdi/` subdirectory - Multiple `fmt.Sprintf` instances
