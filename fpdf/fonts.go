@@ -2,7 +2,6 @@ package fpdf
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"path"
 	"path/filepath"
@@ -111,7 +110,7 @@ func (f *Fpdf) addFontFromBytes(familyStr, styleStr string, jsonFileBytes, zFile
 	} else {
 		// load font definitions
 		var info fontDefType
-		err := json.Unmarshal(jsonFileBytes, &info)
+		err := unmarshalFontDef(jsonFileBytes, &info)
 
 		if err != nil {
 			f.err = err
@@ -943,7 +942,7 @@ func (f *Fpdf) loadfont(r io.Reader) (def fontDefType) {
 		f.err = err
 		return
 	}
-	err = json.Unmarshal(buf.Bytes(), &def)
+	err = unmarshalFontDef(buf.Bytes(), &def)
 	if err != nil {
 		f.err = err
 		return

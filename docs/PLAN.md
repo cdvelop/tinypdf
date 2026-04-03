@@ -1,346 +1,268 @@
-# PLAN: Reduce WASM binary size of tinywasm/pdf
+# PLAN: Reduce WASM binary — Remaining optimizations
 
-## Current Status: 738 KB (compiled with TinyGo)
+## Current Status: 423.5 KB (post-optimization, down from 738 KB — 43% reduction)
 
-## Goal: ~150 KB (-80%)
-
-## WASM Functional Scope
-- Generate PDF with text, styles, tables
-- Charts (bar, line, pie) rendered as PDF paths
-- Simple images (PNG, JPEG)
-- **NO**: modify existing PDFs, add sheets, PDF protection, GIF
+## Remaining target: ~150 KB
 
 ---
 
-## Size breakdown by dependency (twiggy analysis)
+## Post-execution twiggy analysis
 
-| Dependency          | Bytes  | KB    | %     | Necessary for WASM? |
-|---------------------|--------|-------|-------|-----------------|
-| encoding/json       | 93,474 | 91 KB | 12.4% | NO - only parses fonts |
-| time (stdlib)       | 77,045 | 75 KB | 10.2% | NO - only date metadata |
-| web/ui.setupUI      | 71,945 | 70 KB | 9.5%  | YES - it's the demo, not the lib |
-| runtime             | 62,674 | 61 KB | 8.3%  | YES - irreducible |
-| image/* total       | 58,071 | 57 KB | 7.7%  | PARTIAL |
-| ├─ image/jpeg       | 26,838 | 26 KB |       | YES if used |
-| ├─ image/png        | 17,424 | 17 KB |       | YES if used |
-| └─ image/gif        | 11,914 | 12 KB |       | NO |
-| fpdf core           | 53,482 | 52 KB | 7.1%  | YES |
-| fmt (stdlib)        | 46,204 | 45 KB | 6.1%  | NO - indirectly dragged in |
-| compress/*          | 38,711 | 38 KB | 5.1%  | NO in WASM (no compression) |
-| crypto/*            | 30,719 | 30 KB | 4.1%  | NO - only PDF protection + sha1 |
-| tinywasm/fmt        | 22,948 | 22 KB | 3.0%  | YES |
-| rodata segments     | ~80,000| 78 KB | 10.6% | PARTIAL - reduces with code |
-| pdf pkg             | 12,866 | 13 KB | 1.7%  | YES |
-| others              | ~7,000 | 7 KB  | 0.9%  | various |
-
-### Estimated reduction potential
-
-| Action                                | Estimated Savings |
-|----------------------------------------|-----------------|
-| Remove encoding/json → tinywasm/json | ~90 KB          |
-| Replace time → tinywasm/time        | ~75 KB          |
-| Remove fmt stdlib (indirect)        | ~45 KB          |
-| Remove crypto/* (protection + sha1)  | ~30 KB          |
-| Remove image/gif                     | ~12 KB          |
-| Deactivate compress/* in WASM          | ~38 KB          |
-| Associated rodata reduction              | ~30 KB          |
-| **Estimated Total**                     | **~320 KB (43%)**|
+| Dependency | Before | After | Status |
+|---|---|---|---|
+| encoding/json | 91 KB | 0 KB | Eliminated |
+| time stdlib | 75 KB | ~1 KB | Eliminated |
+| image/gif | 12 KB | 0 KB | Eliminated |
+| compress/* | 38 KB | ~0.1 KB | Eliminated |
+| stdlib fmt | 45 KB | 0 KB | Eliminated |
+| crypto/* | 30 KB | **25 KB** | **Partial — attachments.go still imports crypto/md5** |
+| runtime | 61 KB | 61 KB | Irreducible |
 
 ---
 
 ## STAGES
 
-### Stage 1: Remove crypto/* (PDF protection) — Savings ~30 KB
+### Stage 1: Eliminate crypto/md5 from attachments.go — Savings ~25 KB
 **Risk**: low | **Complexity**: low
 
-**Context**: `crypto/md5`, `crypto/rc4` are used only in `fpdf/protect.go` for PDF encryption.
-`crypto/sha1` is used in `fpdf/def.go:667-671` for `generateFontID()`.
+**Context**: `fpdf/attachments.go` imports `crypto/md5` for the `checksum()` function (line 32-35).
+This is used in `writeCompressedFileObject()` to embed the MD5 checksum of attachment content.
+Attachments are NOT part of the WASM functional scope (generate-only, no embedded files needed in browser).
+
+**Current code** (`fpdf/attachments.go:32-35`):
+```go
+func checksum(data []byte) string {
+    sl := md5.Sum(data)
+    return hex.EncodeToString(sl[:])
+}
+```
 
 **What to do**:
-1. Add `//go:build !wasm` to `fpdf/protect.go`
-2. Create `fpdf/protect_wasm.go` (`//go:build wasm`) with stubs for all public functions in `protect.go` that return no-op or error.
-3. Refactor `generateFontID()` to remove `crypto/sha1`:
-   - Currently: `json.Marshal(&fdt)` → `sha1.Sum(b)` → `fmt.Sprintf("%x", hash)`
-   - New: use `tinywasm/unixid` to generate a unique ID.
-   - `generateFontID` is called in `fonts.go:109` and `fonts.go:952` when loading fonts.
-   - The ID only needs to be unique and deterministic within the session.
+1. Add `//go:build !wasm` to `fpdf/attachments.go`
+2. Create `fpdf/attachments_wasm.go` (`//go:build wasm`) with:
+   - The `Attachment` struct definition (needed for compilation)
+   - Stub functions that set `f.err` with "attachments not supported in WASM"
+   - The `annotationAttach` struct and `pageAttachments` type if referenced elsewhere
 
-**Current `generateFontID` detail** (`fpdf/def.go:667-672`):
-```go
-func generateFontID(fdt fontDefType) (string, error) {
-    fdt.File = ""
-    b, err := json.Marshal(&fdt)
-    return fmt.Sprintf("%x", sha1.Sum(b)), err
-}
+**Important**: before adding build tags, verify what symbols from `attachments.go` are referenced in other files that compile for WASM:
+```bash
+grep -rn "Attachment\|attachments\|pageAttachments\|annotationAttach\|putAttachments\|getEmbeddedFiles\|putAnnotationsAttachments\|putAttachmentAnnotationLinks\|AddAttachmentAnnotation\|SetAttachments" fpdf/*.go | grep -v _test.go | grep -v attachments.go
 ```
-**New** (`fpdf/def.go`, wasm build tag):
-```go
-func generateFontID(fdt fontDefType) (string, error) {
-    // Deterministic ID based on font name and type
-    return fdt.Tp + "_" + fdt.Name, nil
-}
-```
-**Note**: on the backend (`!wasm`), the original SHA1 is maintained. In WASM, the ID only needs to be unique as an internal map key — `Tp_Name` is sufficient and deterministic.
+All referenced symbols must have stubs in the WASM file.
 
-**Files to modify**:
-- `fpdf/protect.go` → add `//go:build !wasm`
-- `fpdf/protect_wasm.go` → new, empty stubs
-- `fpdf/def.go` → split `generateFontID` by build tag: `fpdf/fontid_back.go` (!wasm) and `fpdf/fontid_wasm.go` (wasm)
-
-**Signatures to stub in protect_wasm.go** (check protect.go for complete list):
-- Copy all functions `func (f *Fpdf) SetProtection(...)` etc. with an empty body or `f.err = errors.New("protection not supported in WASM")`
+**Files**:
+- `fpdf/attachments.go` → add `//go:build !wasm`
+- `fpdf/attachments_wasm.go` → new, struct definitions + stub functions
 
 **Validation**:
-1. `wasmbuild` compiles without errors.
-2. `twiggy top ... | grep crypto` → 0 results.
-3. `go test ./...` backend tests still pass.
-4. Generating PDF in WASM works (without protection).
+1. `wasmbuild` compiles without errors
+2. `twiggy top ... | grep crypto` → 0 results
+3. `go test ./...` backend tests still pass
+4. Measure new size: `ls -lh web/public/client.wasm`
 
 ---
 
-### Stage 2: Remove image/gif — Savings ~12 KB
+### Stage 2: Unify fontid — Eliminate duplicated code + crypto/sha1 from backend
 **Risk**: low | **Complexity**: low
 
-**Context**: `image/gif` is imported in `fpdf/fpdf.go` and drags in the full decoder + `compress/lzw`.
+**Context**: `fpdf/fontid_back.go` and `fpdf/fontid_wasm.go` duplicate logic unnecessarily.
+The backend version uses `crypto/sha1` + `encoding/json` for `generateFontID` and SHA1 hashing for `generateImageID`. The WASM version uses simple deterministic strings. The simple version is sufficient for both platforms — IDs only need to be unique map keys within a document session.
+
+**Current state**:
+- `fpdf/fontid_back.go` (!wasm): `crypto/sha1`, `encoding/json` — heavy dependencies for no real benefit
+- `fpdf/fontid_wasm.go` (wasm): simple `Tp + "_" + Name` for fonts, `img_w_h_len(data)` for images
+
+**Problem with WASM image ID**: `img_w_h_len(data)` can collide — two different images with same dimensions and data length get the same ID.
 
 **What to do**:
-1. Search for the `"image/gif"` import in `fpdf/fpdf.go` and the code that uses it.
-2. Move that code to `fpdf/gif_back.go` with `//go:build !wasm`.
-3. Create `fpdf/gif_wasm.go` with a stub that returns a "GIF not supported in WASM" error.
-
-**Search pattern**: search for `gif.` in `fpdf/fpdf.go` to find the exact call sites.
-The GIF code is likely in an image registration/decoding function.
+1. Delete `fpdf/fontid_back.go` and `fpdf/fontid_wasm.go`
+2. Create single `fpdf/fontid.go` (no build tags) with:
+   ```go
+   func generateFontID(fdt fontDefType) (string, error) {
+       return fdt.Tp + "_" + fdt.Name, nil
+   }
+   ```
+3. For `generateImageID`: use `tinywasm/unixid.GetNewID()` — unique, thread-safe, no crypto. Each image gets a unique ID regardless of content.
+   ```go
+   func generateImageID(info *ImageInfoType) (string, error) {
+       var id string
+       uid.SetNewID(&id)
+       return id, nil
+   }
+   ```
+   Where `uid` is a package-level `*unixid.UnixID` instance initialized once.
 
 **Files**:
-- `fpdf/fpdf.go` → extract GIF code to a separate file.
-- `fpdf/gif_back.go` → (!wasm) original GIF code.
-- `fpdf/gif_wasm.go` → (wasm) stub
+- Delete `fpdf/fontid_back.go`
+- Delete `fpdf/fontid_wasm.go`
+- Create `fpdf/fontid.go` — unified, no build tags, uses `tinywasm/unixid`
 
 **Validation**:
-1. `wasmbuild` compiles.
-2. `twiggy top ... | grep "image/gif"` → 0 results.
-3. Test: registering PNG and JPEG images works in WASM.
-4. Backend: GIF still works.
+1. `wasmbuild` compiles
+2. `go test ./...` passes
+3. `twiggy top ... | grep crypto/sha1` → 0 results
+4. Multiple images in same PDF render correctly (no ID collisions)
 
 ---
 
-### Stage 3: Deactivate compress/* in WASM — Savings ~38 KB
+### Stage 3: Unify fonts_json — Remove encoding/json duplication
 **Risk**: low | **Complexity**: low
 
-**Context**: `compress/zlib` is used in `fpdf/xcompr.go` to compress internal PDF streams.
-In WASM, the PDF is generated for local viewing/printing, not transmitted over the network.
-Uncompressed PDF is ~2-3x larger but works the same in any viewer (it's part of the PDF spec).
+**Context**: `fpdf/fonts_json_back.go` uses `encoding/json.Unmarshal` and `fpdf/fonts_json_wasm.go` uses `tinywasm/json.Decode`. Since `tinywasm/json` is platform-agnostic, both can use it.
+
+**Note**: `fpdf/font.go` also imports `encoding/json` for `MakeFont` (build tool, not runtime). That file gets `!wasm` build tag in Stage 4 and keeps `encoding/json` since it's backend-only tooling.
 
 **What to do**:
-1. Add `//go:build !wasm` to `fpdf/xcompr.go`.
-2. Create `fpdf/xcompr_wasm.go` (`//go:build wasm`) with no-op functions:
-   - The compression function simply writes the uncompressed bytes.
-   - Maintain the same signature/interface.
+1. Delete `fpdf/fonts_json_back.go` and `fpdf/fonts_json_wasm.go`
+2. Create single `fpdf/fonts_json.go` (no build tags):
+   ```go
+   package fpdf
 
-**Functions in `fpdf/xcompr.go`** to review (read the file to identify exact signatures):
-- Probably `compress()` or similar wrapping `zlib.Writer`.
+   import "github.com/tinywasm/json"
+
+   func unmarshalFontDef(data []byte, def *fontDefType) error {
+       return json.Decode(data, def)
+   }
+   ```
 
 **Files**:
-- `fpdf/xcompr.go` → add `//go:build !wasm`.
-- `fpdf/xcompr_wasm.go` → new, functions that pass uncompressed data.
+- Delete `fpdf/fonts_json_back.go`
+- Delete `fpdf/fonts_json_wasm.go`
+- Create `fpdf/fonts_json.go` — unified, no build tags
 
 **Validation**:
-1. `wasmbuild` compiles.
-2. `twiggy top ... | grep compress` → 0 results.
-3. PDF generated in WASM opens correctly in Chrome/Firefox (without compression).
-4. Backend: PDFs remain compressed.
+1. `wasmbuild` compiles
+2. `go test ./...` passes — fonts load correctly with tinywasm/json on backend
+3. Generate PDF with multiple fonts to verify character widths (Cw) parse correctly
 
 ---
 
-### Stage 4: Replace time → tinywasm/time@v0.4.0 — Savings ~75 KB
-**Risk**: medium | **Complexity**: medium
+### Stage 4: Add `!wasm` build tag to font.go — Preventive
+**Risk**: low | **Complexity**: low
 
-**Context**: `time` stdlib is used in 3 fpdf files:
-- `fpdf/def.go:497-498` — `creationDate time.Time` and `modDate time.Time` fields.
-- `fpdf/time.go` — Get/Set functions for creation/modification dates.
-- `fpdf/fpdf.go:20-21` — global `creationDate`/`modDate time.Time` fields.
-- `fpdf/document.go:898-901` — formats dates with `creation.Format("20060102150405")`.
-
-**Available tinywasm/time API**:
-- `time.Now() int64` — unix nanoseconds.
-- `time.FormatISO8601(nano) string` — "YYYY-MM-DDTHH:MM:SSZ".
-- `time.FormatDateTime(value) string` — "YYYY-MM-DD HH:MM:SS".
-- **Does not have** the custom `"YYYYMMDDHHmmss"` format that PDF needs.
+**Context**: `fpdf/font.go` imports `encoding/json`, `compress/zlib`, `os` but currently has no build tag.
+TinyGo eliminates it via dead code elimination, but this is fragile — any future call to `MakeFont` from WASM code would silently pull in ~130 KB of dependencies.
 
 **What to do**:
-1. Change the type of `creationDate`/`modDate` fields from `time.Time` to `int64` (unix nano) in WASM builds.
-2. Create a `formatPDFDate(nano int64) string` helper that produces `"D:YYYYMMDDHHmmss"`:
-   - Use `time.FormatISO8601(nano)` → `"2026-04-02T15:30:45Z"`.
-   - Extract components using slicing: `s[0:4]+s[5:7]+s[8:10]+s[11:13]+s[14:16]+s[17:19]`.
-   - Result: `"20260402153045"`.
-3. `timeOrNow()` → if `nano == 0`, return `time.Now()`; otherwise, return nano.
+1. Add `//go:build !wasm` to `fpdf/font.go`
+2. Verify no WASM code calls any function from this file
+
+**Validation**:
+1. `wasmbuild` compiles
+2. `go test ./...` passes
+
+---
+
+### Stage 5: Unify time — Remove time stdlib duplication
+**Risk**: low | **Complexity**: low
+
+**Context**: `fpdf/time_back.go` uses `time.Time` (stdlib) and `fpdf/time_wasm.go` uses `int64` (tinywasm/time). The underlying type `pdfTime` is also split: `types_back.go` defines it as `time.Time`, `types_wasm.go` as `int64`. Since `tinywasm/time` is platform-agnostic and uses `int64` everywhere, unify to `int64` only.
+
+**Files to unify/delete**:
+- Delete `fpdf/types_back.go` and `fpdf/types_wasm.go` → create `fpdf/types.go`: `type pdfTime int64`
+- Delete `fpdf/time_back.go` and `fpdf/time_wasm.go` → create `fpdf/time.go` using `tinywasm/time` only:
+  - API: `SetCreationDate(tm int64)`, `GetCreationDate() int64`, etc.
+  - `timeOrNow(tm pdfTime) int64`: if 0 return `time.Now()`, else return `int64(tm)`
+  - `formatPDFDate(tm pdfTime) string`: use `time.FormatISO8601` + string slicing (from current wasm version)
+
+**Tests to update** (use `int64` unix nano instead of `time.Time`):
+- `fpdf/getter_test.go:126,448` — `TestGetCreationDate`, `TestGetModificationDate`
+- `fpdf/fpdf_test.go:2691` — `Test_SetModificationDate`
+- `fpdf/exampleDir_test.go:55-56` — replace `time.Date(...)` with equivalent unix nano value
+
+**Note**: once `tinywasm/time` has `FormatCompact` (see tinywasm/time PLAN.md), replace the ISO8601 string slicing with `time.FormatCompact(nano)`.
+
+**Validation**:
+1. `wasmbuild` compiles
+2. `go test ./...` passes (tests updated to int64)
+3. `grep -rn '"time"' fpdf/*.go | grep -v _test.go` → 0 results (only tinywasm/time)
+4. PDF CreationDate/ModDate are correct in generated output
+
+---
+
+### Stage 6: Remove `os` from shared production files — Use io interfaces
+**Risk**: low | **Complexity**: low
+
+**Context**: `os` package should not be used in shared fpdf code. The library already has an injection pattern for file operations (`env.front.go`/`env.back.go`, `def.go:431 fileSize func`). Three production files still import `os`:
+
+| File | Usage | Fix |
+|---|---|---|
+| `fpdf/svgbasic.go:302` | `os.ReadFile()` in `SVGBasicFileParse()` | Move file-path variant to `!wasm` file. `SVGBasicParse([]byte)` already exists in shared code |
+| `fpdf/util.go:38,50` | `os.Stat()` in `fileExist()`, `fileSize()` | Only called from `font.go` (already `!wasm`). Move to `!wasm` file |
+| `fpdf/list/list.go:37` | `filepath.Walk` + `os.FileInfo` | Backend-only tooling, add `!wasm` build tag |
+
+**What to do**:
+1. **svgbasic.go**: remove `os` import and `SVGBasicFileParse`. Create `fpdf/svgbasic_back.go` (!wasm) with the file-path variant using `os.ReadFile`.
+2. **util.go**: move `fileExist()` and `fileSize()` to `fpdf/util_back.go` (!wasm). Remove `os` import from `util.go`.
+3. **list/list.go**: add `//go:build !wasm`.
 
 **Files**:
-- `fpdf/def.go` → split time fields: `fpdf/def_time_back.go` (!wasm, time.Time) and `fpdf/def_time_wasm.go` (wasm, int64).
-- `fpdf/time.go` → split: `fpdf/time_back.go` (!wasm) and `fpdf/time_wasm.go` (wasm, tinywasm/time).
-- `fpdf/fpdf.go` → split globals: creationDate/modDate fields by build tag.
-- `fpdf/document.go:898-901` → split: PDF date format by build tag.
+- `fpdf/svgbasic.go` → remove `os` import, remove `SVGBasicFileParse`
+- `fpdf/svgbasic_back.go` → new (!wasm), `SVGBasicFileParse` with `os.ReadFile`
+- `fpdf/util.go` → remove `os` import, remove `fileExist`/`fileSize`
+- `fpdf/util_back.go` → new (!wasm), `fileExist`/`fileSize` with `os.Stat`
+- `fpdf/list/list.go` → add `//go:build !wasm`
 
-**Struct field details**:
-```go
-// fpdf/def.go:497 — currently:
-creationDate     time.Time
-modDate          time.Time
+**Validation**:
+1. `wasmbuild` compiles
+2. `go test ./...` passes
+3. Verify: `grep -rn '"os"' fpdf/*.go | grep -v _test.go | grep -v _back.go` → only `font.go` (already `!wasm`)
 
-// fpdf/fpdf.go:20 — globals:
-creationDate time.Time
-modDate      time.Time
+---
+
+### Stage 6: Verify xcompr_wasm.go imports compress/zlib — Bug fix
+**Risk**: low | **Complexity**: low
+
+**Context**: `fpdf/xcompr_wasm.go` currently imports `compress/zlib` for the `uncompress()` function.
+The agent kept decompression functional in case fonts need it.
+twiggy shows compress/* at only 0.1 KB, suggesting TinyGo may be eliminating most of it.
+
+**What to do**:
+1. Verify if `uncompress()` is actually called in WASM builds (grep for call sites)
+2. If not called: remove `compress/zlib` import, make `uncompress()` return error
+3. If called (e.g., for .z compressed fonts): keep it but document why
+
+**Validation**:
+1. `wasmbuild` compiles
+2. Font loading works in WASM
+3. `twiggy top ... | grep compress` → verify size impact
+
+---
+
+### Stage 7: Analyze remaining size for Round 2 candidates
+**Risk**: N/A | **Complexity**: analysis only
+
+After Stages 1-6, run full twiggy analysis to identify next optimization targets:
+```bash
+twiggy top web/public/client.wasm -n 50
 ```
-These fields are used in the files mentioned above. The split by build tag must be consistent — all files referencing these fields must compile with the correct type.
 
-**Split strategy**: creating a type alias or abstract interface is NOT recommended — it generates unnecessary complexity. Better: split the files that declare and use these fields by build tag.
-
-**Validation**:
-1. `wasmbuild` compiles.
-2. `twiggy top ... | grep "time\."` → 0 results (except for runtime).
-3. PDF generated in WASM has correct CreationDate/ModDate.
-4. Backend: everything remains the same with `time.Time`.
-
----
-
-### Stage 5: encoding/json → tinywasm/json — Savings ~90 KB
-**Risk**: medium | **Complexity**: medium
-
-**Context**: `encoding/json` is used in 4 points of fpdf:
-1. `fpdf/fonts.go:114` — `json.Unmarshal(jsonFileBytes, &info)` where `info` is `fontDefType`.
-2. `fpdf/fonts.go:946` — `json.Unmarshal(buf.Bytes(), &def)` in `loadfont()`, same struct.
-3. `fpdf/def.go:670` — `json.Marshal(&fdt)` in `generateFontID()` (already resolved in Stage 1).
-4. `fpdf/font.go:307` — `json.Marshal(def)` to write font files — **backend only**.
-
-**Structs that need `fmt.Fielder`**:
-
-```go
-// fpdf/def.go:647
-type fontDefType struct {
-    Tp           string        // "Core", "TrueType"
-    Name         string        // "Courier-Bold"
-    Desc         FontDescType  // nested struct
-    Up           int           // underline position
-    Ut           int           // underline thickness (actually int but declared as int)
-    Cw           []int         // character widths (can have up to 65536 entries)
-    Enc          string        // "cp1252"
-    Diff         string        // differences
-    File         string        // "font.z"
-    Size1, Size2 int           // Type1 values
-    OriginalSize int
-    N            int
-    DiffN        int
-    i            string        // private, not serialized by JSON (lowercase)
-    utf8File     *utf8FontFile // private, not serialized
-    usedRunes    map[int]int   // private, not serialized
-}
-
-// fpdf/def.go:610
-type FontDescType struct {
-    Ascent, Descent, CapHeight, Flags int
-    FontBBox FontBoxType  // another nested struct
-    ItalicAngle float64
-    StemV, MissingWidth int
-}
-```
-
-**`fmt.Fielder` implementation**:
-- Only public fields are serialized (same semantics as `encoding/json`).
-- `Cw []int` is the largest field — `tinywasm/json` must support `[]int`.
-- `FontDescType` and `FontBoxType` are sub-structs — verify that `tinywasm/json` supports nested structs via `Fielder`.
-
-**IMPORTANT**: verify that `tinywasm/json.Unmarshal` supports:
-- `[]int` fields (slices of primitives).
-- Nested structs that implement `Fielder`.
-- `float64` fields.
-
-**What to do**:
-1. Implement `Schema()` and `Pointers()` in `fontDefType`, `FontDescType`, `FontBoxType`.
-2. Split: `fpdf/fonts_json_back.go` (!wasm, `encoding/json`) and `fpdf/fonts_json_wasm.go` (wasm, `tinywasm/json`).
-3. Unmarshal functions are abstracted: `unmarshalFontDef(data []byte, def *fontDefType) error`.
-4. `font.go:307` is already backend only (uses `os.Create`) — add `!wasm` build tag if it doesn't have it.
-
-**Files**:
-- `fpdf/def.go` → implement `Fielder` in `fontDefType`, `FontDescType`, `FontBoxType`.
-- `fpdf/fonts.go` → extract `json.Unmarshal` calls to a helper function by build tag.
-- `fpdf/fonts_json_back.go` → (!wasm) uses `encoding/json`.
-- `fpdf/fonts_json_wasm.go` → (wasm) uses `tinywasm/json`.
-- `fpdf/font.go` → verify that it already has the `!wasm` build tag (uses `os.Create`).
-
-**Validation**:
-1. `wasmbuild` compiles.
-2. `twiggy top ... | grep "encoding/json"` → 0 results.
-3. Loading fonts works: generate PDF with text using embedded font.
-4. Verify that character widths (Cw) are parsed correctly — test with varied text.
-5. Backend: fonts still load with `encoding/json`.
-
----
-
-### Stage 6: Remove fmt stdlib (indirect) — Savings ~45 KB
-**Risk**: low | **Complexity**: low (if previous stages are completed)
-
-**Context**: `fmt` stdlib is NOT imported directly in production code.
-It is dragged in by:
-- `encoding/json` (reflection → fmt for `Stringer`) — removed in Stage 5.
-- `crypto/sha1` → `fmt.Sprintf("%x", ...)` in `generateFontID` — removed in Stage 1.
-- Possibly other indirect imports.
-
-**What to do**:
-1. After completing Stages 1-5, compile and verify with `twiggy`.
-2. If `fmt` stdlib persists: `twiggy paths ... fmt.pp` to trace what imports it.
-3. Remove the remaining import chain.
-
-**If it persists**, possible culprits:
-- `errors.New` in some packages may drag in `fmt` via the `error` interface.
-- `strconv` may drag in `fmt` (verify).
-- Some transitive import from `tinywasm/json` or `tinywasm/time`.
-
-**Validation**:
-1. `twiggy top ... | grep "fmt\."` → 0 results (only `tinywasm/fmt`).
-2. Everything still works.
+Known Round 2 candidates (evaluate in separate plan):
+1. `regexp` in `htmlbasic.go` and `ttfparser.go` → manual parsing
+2. `image/jpeg` (26 KB) + `image/png` (17 KB) → decode in JS Canvas API
+3. fpdf dead code: layers, gradients, spot colors, blending modes
+4. Strip "function names" WASM subsection (~36 KB)
+5. `web/ui.setupUI` (70 KB) — demo code, not the library
 
 ---
 
 ## Execution Order
 
 ```
-Stage 1 (crypto/protection) ──┐
-Stage 2 (image/gif)          ──┼── Parallel, low risk (~80 KB)
-Stage 3 (compress/zlib)      ──┘
-
-Stage 4 (time → tinywasm/time) ── Independent (~75 KB)
-
-Stage 5 (json → tinywasm/json) ── Major impact (~90 KB)
-
-Stage 6 (fmt stdlib cleanup)   ── Verify after Stages 1-5 (~45 KB)
+Stage 1 (attachments crypto/md5) ── Main WASM savings (~25 KB)
+Stage 2 (unify fontid)           ── Remove duplication + crypto/sha1
+Stage 3 (unify fonts_json)       ── Remove encoding/json duplication
+Stage 4 (font.go build tag)      ── Preventive
+Stage 5 (unify time)             ── Remove time stdlib duplication
+Stage 6 (remove os from shared)  ── Clean architecture
+Stage 7 (xcompr_wasm.go verify)  ── Bug fix
+Stage 8 (analysis)               ── Plan next round
 ```
 
-**Each stage is an independent commit** to facilitate rollback.
-
-## Validation by stage
+## Validation per stage
 Each stage MUST:
-1. Compile without errors: `wasmbuild`.
-2. Measure size: `ls -lh web/public/client.wasm`.
-3. Analyze with `twiggy`: `twiggy top web/public/client.wasm -n 30`.
-4. Functional test: generate PDF with text, table, chart and image in WASM.
-5. Backend tests: `go test ./...` (without wasm build tag).
-
-## Round 2 (if 150 KB is not reached)
-Evaluate in a separate plan:
-1. Remove `regexp` → manual parsing in `htmlbasic.go` and `ttfparser.go`.
-2. Remove `image/jpeg` + `image/png` → decode in JS (Canvas API) and pass raw pixels.
-3. Strip `fpdf` dead code: layers, attachments, gradients, spot colors.
-4. Strip "function names" subsection from WASM (~36 KB).
-
-## tinywasm dependencies to use
-- `github.com/tinywasm/json` — `encoding/json` replacement (zero-reflection, Fielder-based).
-- `github.com/tinywasm/time` — `time` stdlib replacement (int64 unix nano, browser Date.now()).
-- `github.com/tinywasm/unixid` — `crypto/sha1` replacement for `generateFontID`.
-- `github.com/tinywasm/fmt` — already in use.
-
-## Global Risks
-- **Functionality regression**: each stage has stubs that maintain the public API.
-- **Maintainability**: more files with build tags — mitigated by existing pattern (`env.front.go`/`env.back.go`).
-- **Fonts (Stage 5)**: more delicate — corrupt fonts = unreadable PDFs. Test with multiple fonts and texts.
-- **Uncompressed PDF (Stage 3)**: part of the PDF spec, all viewers support it.
-- **tinywasm/time PDF format**: does not have a custom format — a helper with string slicing of `FormatISO8601` is needed.
+1. Compile: `wasmbuild`
+2. Measure: `ls -lh web/public/client.wasm`
+3. Analyze: `twiggy top web/public/client.wasm -n 30`
+4. Functional: generate PDF with text, table, chart and image in WASM
+5. Backend: `go test ./...`

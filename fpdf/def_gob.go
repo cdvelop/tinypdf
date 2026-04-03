@@ -1,4 +1,4 @@
-//go:build !tinygo && !js && !wasm
+//go:build !wasm
 
 package fpdf
 

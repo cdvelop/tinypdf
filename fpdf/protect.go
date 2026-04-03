@@ -1,6 +1,8 @@
 // PDF protection is adapted from the work of Klemen VODOPIVEC for the docpdf
 // product.
 
+//go:build !wasm
+
 package fpdf
 
 import (
