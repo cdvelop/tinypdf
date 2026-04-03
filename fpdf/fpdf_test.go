@@ -2696,7 +2696,7 @@ func Test_SetModificationDate(t *testing.T) {
 	// ModDate:        Sun Jan  2 10:22:30 2000
 	pdf := NewDocPdfTest()
 	pdf.AddPage()
-	pdf.SetModificationDate(time.Date(2000, 1, 2, 10, 22, 30, 0, time.UTC))
+	pdf.SetModificationDate(time.Date(2000, 1, 2, 10, 22, 30, 0, time.UTC).UnixNano())
 	fileStr := Filename("Test_SetModificationDate")
 	err := pdf.OutputFileAndClose(fileStr)
 	SummaryCompare(err, fileStr)

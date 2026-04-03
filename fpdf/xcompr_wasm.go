@@ -26,6 +26,8 @@ func (pool *xmempool) compress(data []byte) *membuffer {
 	return mem
 }
 
+// uncompress is retained for WASM builds because it is required by fpdf/png.go
+// for supporting PNG alpha channels.
 func (pool *xmempool) uncompress(data []byte) (*membuffer, error) {
 	zr, err := zlib.NewReader(bytes.NewReader(data))
 	if err != nil {

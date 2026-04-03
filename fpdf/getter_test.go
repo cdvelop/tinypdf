@@ -126,11 +126,11 @@ func TestGetConversionRatio(t *testing.T) {
 func TestGetCreationDate(t *testing.T) {
 	setDate, _ := time.Parse(time.RFC3339, "2003-06-17T01:23:45Z")
 	pdf := NewDocPdfTest()
-	pdf.SetCreationDate(setDate)
+	pdf.SetCreationDate(setDate.UnixNano())
 
 	creationDate := pdf.GetCreationDate()
 
-	if got, want := creationDate, setDate; !got.Equal(want) {
+	if got, want := creationDate, setDate.UnixNano(); got != want {
 		t.Errorf("invalid creationDate: got=%v, want=%v", got, want)
 	}
 }
@@ -448,11 +448,11 @@ func TestGetMargins(t *testing.T) {
 func TestGetModificationDate(t *testing.T) {
 	setDate, _ := time.Parse(time.RFC3339, "9-08-02T09:54:32Z")
 	pdf := NewDocPdfTest()
-	pdf.SetModificationDate(setDate)
+	pdf.SetModificationDate(setDate.UnixNano())
 
 	modificationDate := pdf.GetModificationDate()
 
-	if got, want := modificationDate, setDate; !got.Equal(want) {
+	if got, want := modificationDate, setDate.UnixNano(); got != want {
 		t.Errorf("invalid modificationDate: got=%v, want=%v", got, want)
 	}
 }
