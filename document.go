@@ -20,7 +20,7 @@ type Document struct {
 }
 
 // DefaultFontPath is the default path to the Arial UTF-8 font.
-const DefaultFontPath = "fpdf/fonts/Arial.ttf"
+const DefaultFontPath = "fonts/Arial.ttf"
 
 // NewDocument creates a new Document instance with UTF-8 support.
 func NewDocument() *Document {
@@ -304,7 +304,7 @@ func (i *ImageComponent) Draw() *Document {
 				}
 			}
 
-			x = lMargin + (pageWidth - imgW)/2
+			x = lMargin + (pageWidth-imgW)/2
 		}
 	}
 
@@ -315,8 +315,8 @@ func (i *ImageComponent) Draw() *Document {
 // --- Page Header/Footer ---
 
 type PageHeader struct {
-	doc *Document
-	leftText string
+	doc       *Document
+	leftText  string
 	rightText string
 }
 
@@ -351,9 +351,9 @@ func (ph *PageHeader) SetRightText(t string) *PageHeader {
 }
 
 type PageFooter struct {
-	doc *Document
+	doc        *Document
 	centerText string
-	pageTotal bool
+	pageTotal  bool
 }
 
 func (d *Document) SetPageFooter() *PageFooter {
