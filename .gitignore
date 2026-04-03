@@ -39,3 +39,4 @@ test_output.pdf
 demo.pdf
 demo
 *.wasm
+.env
