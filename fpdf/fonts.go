@@ -789,7 +789,11 @@ func (f *Fpdf) putfonts() {
 				mem := xmem.compress(cidToGidMap)
 				cidToGidMap = mem.bytes()
 				f.newobj()
-				f.out("<</Length " + Convert(len(cidToGidMap)).String() + "/Filter /FlateDecode>>")
+				if f.compress {
+						f.out("<</Length " + Convert(len(cidToGidMap)).String() + "/Filter /FlateDecode>>")
+					} else {
+						f.out("<</Length " + Convert(len(cidToGidMap)).String() + ">>")
+					}
 				f.putstream(cidToGidMap)
 				f.out("endobj")
 				mem.release()
@@ -799,7 +803,9 @@ func (f *Fpdf) putfonts() {
 				compressedFontStream := mem.bytes()
 				f.newobj()
 				f.out("<</Length " + Convert(len(compressedFontStream)).String())
-				f.out("/Filter /FlateDecode")
+				if f.compress {
+					f.out("/Filter /FlateDecode")
+				}
 				f.out("/Length1 " + Convert(utf8FontSize).String())
 				f.out(">>")
 				f.putstream(compressedFontStream)

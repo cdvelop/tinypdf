@@ -1061,13 +1061,17 @@ func (f *Fpdf) putOutputIntentStreams() {
 	f.outputIntentStartN = f.n + 1
 	for _, oi := range f.outputIntents {
 		f.newobj()
-		mem := xmem.compress(oi.ICCProfile)
-		compressedICC := mem.bytes()
-		f.outf("<< /N 3 /Alternate /DeviceRGB /Length %d /Filter /FlateDecode >>", len(compressedICC))
-		f.putstream(compressedICC)
+		if f.compress {
+			mem := xmem.compress(oi.ICCProfile)
+			compressedICC := mem.bytes()
+			f.outf("<< /N 3 /Alternate /DeviceRGB /Length %d /Filter /FlateDecode >>", len(compressedICC))
+			f.putstream(compressedICC)
+			mem.release()
+		} else {
+			f.outf("<< /N 3 /Alternate /DeviceRGB /Length %d >>", len(oi.ICCProfile))
+			f.putstream(oi.ICCProfile)
+		}
 		f.out("endobj")
-
-		mem.release()
 	}
 }
 

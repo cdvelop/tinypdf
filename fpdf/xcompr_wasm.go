@@ -8,6 +8,10 @@ import (
 	"sync"
 )
 
+func init() {
+	gl.noCompress = true
+}
+
 var xmem = xmempool{
 	Pool: sync.Pool{
 		New: func() any {

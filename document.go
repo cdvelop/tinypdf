@@ -3,7 +3,6 @@ package pdf
 import (
 	"bytes"
 	"io"
-	"strings"
 
 	. "github.com/tinywasm/fmt"
 	"github.com/tinywasm/pdf/fpdf"
@@ -20,7 +19,11 @@ type Document struct {
 }
 
 // DefaultFontPath is the default path to the Arial UTF-8 font.
-const DefaultFontPath = "fonts/Arial.ttf"
+//const DefaultFontPath = "fonts/Arial.ttf"
+
+const DefaultFontPath = "fonts/Spleen.ttf"
+
+//const DefaultFontPath = "fonts/calligra.ttf"
 
 // NewDocument creates a new Document instance with UTF-8 support.
 func NewDocument() *Document {
@@ -93,7 +96,7 @@ func (d *Document) Load(cb func(error)) {
 		}
 
 		ext := ""
-		if idx := strings.LastIndex(path, "."); idx != -1 {
+		if idx := LastIndex(path, "."); idx != -1 {
 			ext = path[idx+1:]
 		}
 
